@@ -12,6 +12,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, relationship, Session
 import hashlib
 
+from __future__ import annotations  # type: ignore
+
+
 # Créer la base de données
 engine = create_engine(os.environ["DATABASE_URL"], echo=False)
 Base = declarative_base()
@@ -56,7 +59,7 @@ class User(Base):
         """Hache un mot de passe avec SHA-256."""
         return hashlib.sha256(password.encode()).hexdigest()
 
-    def add_friend(self, friend: "User", session: Session) -> None:
+    def add_friend(self, friend: User, session: Session) -> None:
         """
         Ajoute un ami à la liste d'amis.
 
@@ -69,7 +72,7 @@ class User(Base):
             session.add(friendship)
             session.commit()
 
-    def remove_friend(self, friend: "User", session: Session) -> None:
+    def remove_friend(self, friend: User, session: Session) -> None:
         """
         Supprime un ami de la liste d'amis.
 
@@ -88,7 +91,7 @@ class User(Base):
             session.delete(friendship)
             session.commit()
 
-    def is_friend(self, friend: "User") -> bool:
+    def is_friend(self, friend: User) -> bool:
         """
         Vérifie si un utilisateur est ami avec un autre.
 
@@ -100,7 +103,7 @@ class User(Base):
         """
         return any(f.friend_id == friend.id for f in self.friendships_initiated)
 
-    def get_friends(self) -> list["User"]:
+    def get_friends(self) -> list[User]:
         """
         Retourne la liste des amis de l'utilisateur.
 
