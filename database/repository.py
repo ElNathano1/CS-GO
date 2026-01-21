@@ -69,3 +69,21 @@ class AccountRepository:
         if user:
             user.level = new_level  # type: ignore
             self.session.commit()
+
+    def remove_user(self, username: str):
+        user = self.session.query(User).filter_by(username=username).first()
+
+        if not user:
+            return
+
+        friendships = (
+            self.session.query(Friendship)
+            .filter((Friendship.user_id == user.id) | (Friendship.friend_id == user.id))
+            .all()
+        )
+
+        for friendship in friendships:
+            self.session.delete(friendship)
+
+        self.session.delete(user)
+        self.session.commit()

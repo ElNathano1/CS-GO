@@ -99,6 +99,18 @@ def update_level(
     }
 
 
+@app.post("users/{username}/remove_user")
+def remove_user(
+    username: str,
+    repo: AccountRepository = Depends(get_repo),
+):
+    repo.remove_user(username)
+    return {
+        "status": "success",
+        "message": f"{username} removed from the database",
+    }
+
+
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
     file_path = os.path.join(UPLOAD_DIR, file.filename)  # type: ignore
