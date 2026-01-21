@@ -1,0 +1,24 @@
+# === Étape 1 : Choisir l'image Python ===
+FROM python:3.13-slim
+
+# === Étape 2 : Définir le répertoire de travail ===
+WORKDIR /app
+
+# === Étape 3 : Copier les fichiers nécessaires ===
+COPY requirements.txt .
+COPY . .
+
+# === Étape 4 : Installer les dépendances ===
+RUN pip install --no-cache-dir -r requirements.txt
+
+# === Étape 5 : Créer un dossier pour les uploads ===
+RUN mkdir -p /data/uploads
+
+# === Étape 6 : Définir un volume persistant ===
+VOLUME /data/uploads
+
+# === Étape 7 : Exposer le port FastAPI ===
+EXPOSE 8000
+
+# === Étape 8 : Lancer l'application ===
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

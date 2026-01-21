@@ -1,10 +1,15 @@
-from fastapi import FastAPI, HTTPException, Depends
+import os
+
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from pydantic import BaseModel
 from database.models import get_session
 from database.repository import AccountRepository
 from database.account import Account
 
 app = FastAPI(title="CS-GO User Service")
+
+
+UPLOAD_DIR = "/data/uploads"  # correspond au volume Docker
 
 
 def get_repo():
@@ -87,3 +92,11 @@ def update_level(
         "username": username,
         "new_level": level_update.new_level,
     }
+
+
+@app.post("/upload/")
+async def upload_file(file: UploadFile = File(...)):
+    file_path = os.path.join(UPLOAD_DIR, file.filename)  # type: ignore
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
+    return {"filename": file.filename, "path": file_path}
