@@ -3,3 +3,5 @@ tkinter
 PIL
 pygame
 json
+fastapi
+pydantic
