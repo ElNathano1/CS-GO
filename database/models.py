@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from sqlalchemy import (
     create_engine,
@@ -11,8 +13,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, relationship, Session
 import hashlib
-
-from __future__ import annotations  # type: ignore
 
 
 # Créer la base de données
