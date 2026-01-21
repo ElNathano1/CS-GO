@@ -11,6 +11,8 @@ import math
 import random
 import os
 
+import requests
+
 # Add parent directory to path to import goban
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from gui.custom_tkinter_widgets import TexturedButton
@@ -18,6 +20,9 @@ from player.player_classes import Martin, Leo, Magnus
 from game.game_classes import Goban, GoGame
 from game.save_games import save_game
 from gui.save_preferences import save_dictionnary
+
+
+BASE_URL = "https://CS-GO.up.railway.app"
 
 
 class SoundManager:

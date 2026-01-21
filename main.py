@@ -5,8 +5,13 @@ import os
 import sys
 from pathlib import Path
 
+import requests
+
 # Add parent directory to path to import goban
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
+BASE_URL = "https://CS-GO.up.railway.app"
 
 
 def load_preferences() -> dict:
@@ -25,6 +30,8 @@ def load_preferences() -> dict:
             "music_volume": 100,
             "effects_volume": 100,
             "fullscreen": True,
+            "stay_logged_in": True,
+            "logged_username": None,
         }
         save_dictionnary(preferences, "preferences.prefs")
         return preferences
