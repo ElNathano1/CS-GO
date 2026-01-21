@@ -10,6 +10,7 @@ app = FastAPI(title="CS-GO User Service")
 
 
 UPLOAD_DIR = "/data/uploads"  # correspond au volume Docker
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def get_repo():
