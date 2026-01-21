@@ -36,6 +36,11 @@ class LevelUpdate(BaseModel):
 
 
 # === Routes ===
+@app.get("/")
+def root():
+    return {"message": "Hello from Railway!"}
+
+
 @app.get("/users/{username}")
 def get_user(username: str, repo: AccountRepository = Depends(get_repo)):
     account = repo.get_by_username(username)
