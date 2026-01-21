@@ -1,2 +1,6 @@
-.prefs
-.csgogame
+# Thumbnails
+._*
+
+# Ignoring temporary or preferencies files
+*.prefs
+*.csgogame
