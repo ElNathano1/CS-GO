@@ -99,7 +99,7 @@ def update_level(
     }
 
 
-@app.get("users/{username}/remove_user")
+@app.get("/users/{username}/remove_user")
 def remove_user(
     username: str,
     repo: AccountRepository = Depends(get_repo),
