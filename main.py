@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, status
 from pydantic import BaseModel
 from database.models import get_session
 from database.repository import AccountRepository
@@ -99,16 +99,12 @@ def update_level(
     }
 
 
-@app.get("/users/{username}/remove_user")
+@app.delete("/users/{username}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_user(
     username: str,
     repo: AccountRepository = Depends(get_repo),
 ):
     repo.remove_user(username)
-    return {
-        "status": "success",
-        "message": f"{username} removed from the database",
-    }
 
 
 @app.post("/upload/")
