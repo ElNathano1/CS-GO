@@ -13,12 +13,6 @@ from sqlalchemy.orm import declarative_base, relationship, Session
 import hashlib
 
 # Créer la base de données
-os.environ["DATABASE_URL"] = (
-    "mysql://root:sCvDsuGFPFhQgAjClyzAtRnyUeewfZCU@tramway.proxy.rlwy.net:57805/railway"
-)
-engine = create_engine(
-    os.environ["DATABASE_URL"].replace("mysql://", "mysql+pymysql://"), echo=False
-)
 Base = declarative_base()
 
 
