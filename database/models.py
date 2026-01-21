@@ -13,6 +13,7 @@ from sqlalchemy.orm import declarative_base, relationship, Session
 import hashlib
 
 # Créer la base de données
+engine = create_engine(os.environ["DATABASE_URL"], echo=False)
 Base = declarative_base()
 
 
