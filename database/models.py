@@ -144,13 +144,9 @@ class Friendship(Base):
 # Créer les tables
 def init_db():
     """Initialise la base de données."""
-    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 
 def get_session() -> Session:
     """Retourne une nouvelle session SQLAlchemy."""
     return Session(engine)
-
-
-init_db()
