@@ -159,7 +159,3 @@ def init_db():
 def get_session() -> Session:
     """Retourne une nouvelle session SQLAlchemy."""
     return Session(engine)
-
-
-Base.metadata.drop_all(bind=engine)
-init_db()
