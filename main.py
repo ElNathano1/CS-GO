@@ -42,6 +42,23 @@ def root():
     return {"message": "Hello from Railway!"}
 
 
+@app.get("/connected")
+def get_connected(repo: AccountRepository = Depends(get_repo)):
+    accounts = repo.get_connected()
+    if not accounts:
+        raise HTTPException(status_code=404, detail="No connected users found")
+    return [
+        {
+            "username": account.username,
+            "name": account.name,
+            "level": account.level,
+            "friends": account.friends,
+            "connected": account.is_connected,
+        }
+        for account in accounts
+    ]
+
+
 @app.get("/users/{username}")
 def get_user(username: str, repo: AccountRepository = Depends(get_repo)):
     account = repo.get_by_username(username)
@@ -172,23 +189,6 @@ def disconnect(username: str, repo: AccountRepository = Depends(get_repo)):
         "status": "succes",
         "is_connected": 0,
     }
-
-
-@app.get("/users/get_connected")
-def get_connected(repo: AccountRepository = Depends(get_repo)):
-    accounts = repo.get_connected()
-    if not accounts:
-        raise HTTPException(status_code=404, detail="User not found")
-    return [
-        {
-            "username": account.username,
-            "name": account.name,
-            "level": account.level,
-            "friends": account.friends,
-            "connected": account.is_connected,
-        }
-        for account in accounts
-    ]
 
 
 @app.delete("/users/{username}", status_code=status.HTTP_204_NO_CONTENT)
