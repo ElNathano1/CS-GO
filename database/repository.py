@@ -121,21 +121,19 @@ class AccountRepository:
     def connect(self, username: str) -> None:
         user = self.session.query(User).filter_by(username=username).first()
         if user:
-            user.is_connected = True  # type: ignore
+            user.is_connected = 1  # type: ignore
             self.session.commit()
 
     def disconnect(self, username: str) -> None:
         user = self.session.query(User).filter_by(username=username).first()
         if user:
-            user.is_connected = False  # type: ignore
+            user.is_connected = 0  # type: ignore
             self.session.commit()
 
     def get_connected(self) -> list[Account] | None:
-        users = self.session.query(User).filter(User.is_connected.is_(True)).all()
+        users = self.session.query(User).filter_by(is_connected=1).all()
         if not users:
-            users = self.session.query(User).filter(User.is_connected == True).all()
-            if not users:
-                return None
+            return None
 
         connected = []
         for user in users:
