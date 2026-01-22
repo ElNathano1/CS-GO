@@ -55,6 +55,22 @@ def get_user(username: str, repo: AccountRepository = Depends(get_repo)):
     }
 
 
+@app.get("/users")
+def get_all_users(username: str, repo: AccountRepository = Depends(get_repo)):
+    accounts = repo.get_all_users()
+    if not accounts:
+        raise HTTPException(status_code=404, detail="User not found")
+    return [
+        {
+            "username": account.username,
+            "name": account.name,
+            "level": account.level,
+            "friends": account.friends,
+        }
+        for account in accounts
+    ]
+
+
 @app.post("/users/")
 def create_user(user: UserCreate, repo: AccountRepository = Depends(get_repo)):
     if repo.get_by_username(user.username):
@@ -62,6 +78,33 @@ def create_user(user: UserCreate, repo: AccountRepository = Depends(get_repo)):
     account = Account(username=user.username, password=user.password, name=user.name)
     repo.create(account)
     return {"status": "success", "username": user.username}
+
+
+@app.post("/users/{username}/change_password")
+def change_password(
+    username: str,
+    old_password: str,
+    new_password: str,
+    repo: AccountRepository = Depends(get_repo),
+):
+    repo.change_password(username, old_password, new_password)
+    return {
+        "status": "succes",
+        "message": f"{username} changed password",
+    }
+
+
+@app.post("/users/{username}/change_name")
+def change_name(
+    username: str,
+    new_name: str,
+    repo: AccountRepository = Depends(get_repo),
+):
+    repo.change_name(username, new_name)
+    return {
+        "status": "succes",
+        "message": f"{username} changed name to {new_name}",
+    }
 
 
 @app.post("/users/{username}/add_friend")
@@ -98,6 +141,32 @@ def update_level(
         "username": username,
         "new_level": level_update.new_level,
     }
+
+
+@app.post("/users/{username}/connect")
+def connect(username: str, repo: AccountRepository = Depends(get_repo)):
+    repo.connect(username)
+
+
+@app.post("/users/{username}/disconnect")
+def disconnect(username: str, repo: AccountRepository = Depends(get_repo)):
+    repo.disconnect(username)
+
+
+@app.get("/users/get_connected")
+def get_connected(repo: AccountRepository = Depends(get_repo)):
+    accounts = repo.get_connected()
+    if not accounts:
+        raise HTTPException(status_code=404, detail="User not found")
+    return [
+        {
+            "username": account.username,
+            "name": account.name,
+            "level": account.level,
+            "friends": account.friends,
+        }
+        for account in accounts
+    ]
 
 
 @app.delete("/users/{username}", status_code=status.HTTP_204_NO_CONTENT)

@@ -8,6 +8,7 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
+    Boolean,
     ForeignKey,
     UniqueConstraint,
 )
@@ -33,6 +34,7 @@ class User(Base):
     name = Column(String(100), nullable=False)
     level = Column(Integer, default=0)
     profile_picture = Column(String(255), nullable=True)
+    is_connected = Column(Boolean, nullable=False)
 
     # Relations
     friendships_initiated = relationship(
@@ -142,9 +144,13 @@ class Friendship(Base):
 # Créer les tables
 def init_db():
     """Initialise la base de données."""
+    Base.metadata.delete_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 
 def get_session() -> Session:
     """Retourne une nouvelle session SQLAlchemy."""
     return Session(engine)
+
+
+init_db()

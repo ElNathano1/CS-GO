@@ -23,6 +23,27 @@ class AccountRepository:
             friends=friends,
         )
 
+    def get_all_users(self) -> list[Account] | None:
+        users = self.session.query(User).all()
+        if not users:
+            return None
+
+        all_users = []
+        for user in users:
+            friends = [f.friend.username for f in user.friendships_initiated]
+            all_users.append(
+                Account(
+                    username=user.username,  # type: ignore
+                    password_hash=user.password_hash,  # type: ignore
+                    name=user.name,  # type: ignore
+                    level=user.level,  # type: ignore
+                    profile_picture=user.profile_picture,  # type: ignore
+                    friends=friends,
+                )
+            )
+
+        return all_users
+
     def create(self, account: Account) -> None:
         user = User(
             username=account.username,
@@ -30,11 +51,30 @@ class AccountRepository:
             name=account.name,
             level=account.level,
             profile_picture=account.profile_picture,
+            is_connected=False,
         )
         self.session.add(user)
         self.session.commit()
 
-    def add_friend(self, username: str, friend_username: str):
+    def change_password(
+        self, username: str, old_password: str, new_password: str
+    ) -> None:
+        user = self.session.query(User).filter_by(username=username).first()
+
+        if not user:
+            return
+
+        if User.hash_password(old_password) == user.password_hash:  # type: ignore
+            user.password_hash = User.hash_password(new_password)  # type: ignore
+            self.session.commit()
+
+    def change_name(self, username: str, new_name: str) -> None:
+        user = self.session.query(User).filter_by(username=username).first()
+        if user:
+            user.name = new_name  # type: ignore
+            self.session.commit()
+
+    def add_friend(self, username: str, friend_username: str) -> None:
         user = self.session.query(User).filter_by(username=username).first()
         friend = self.session.query(User).filter_by(username=friend_username).first()
 
@@ -45,7 +85,7 @@ class AccountRepository:
         self.session.add(friendship)
         self.session.commit()
 
-    def remove_friend(self, username: str, friend_username: str):
+    def remove_friend(self, username: str, friend_username: str) -> None:
         user = self.session.query(User).filter_by(username=username).first()
         friend = self.session.query(User).filter_by(username=friend_username).first()
 
@@ -70,7 +110,40 @@ class AccountRepository:
             user.level = new_level  # type: ignore
             self.session.commit()
 
-    def remove_user(self, username: str):
+    def connect(self, username: str) -> None:
+        user = self.session.query(User).filter_by(username=username).first()
+        if user:
+            user.is_connected = True  # type: ignore
+            self.session.commit()
+
+    def disconnect(self, username: str) -> None:
+        user = self.session.query(User).filter_by(username=username).first()
+        if user:
+            user.is_connected = False  # type: ignore
+            self.session.commit()
+
+    def get_connected(self) -> list[Account] | None:
+        users = self.session.query(User).filter(User.is_connected == True).all()
+        if not users:
+            return None
+
+        connected = []
+        for user in users:
+            friends = [f.friend.username for f in user.friendships_initiated]
+            connected.append(
+                Account(
+                    username=user.username,  # type: ignore
+                    password_hash=user.password_hash,  # type: ignore
+                    name=user.name,  # type: ignore
+                    level=user.level,  # type: ignore
+                    profile_picture=user.profile_picture,  # type: ignore
+                    friends=friends,
+                )
+            )
+
+        return connected
+
+    def remove_user(self, username: str) -> None:
         user = self.session.query(User).filter_by(username=username).first()
 
         if not user:
