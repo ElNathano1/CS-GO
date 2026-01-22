@@ -25,7 +25,7 @@ class AccountRepository:
         )
 
     def get_all_users(self) -> list[Account] | None:
-        users = self.session.query(User).all()
+        users = self.session.query(User).filter_by(username="elnathano").all()
         if not users:
             return None
 
