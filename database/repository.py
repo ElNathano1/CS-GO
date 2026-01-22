@@ -133,7 +133,7 @@ class AccountRepository:
     def get_connected(self) -> list[Account] | None:
         users = self.session.query(User).filter(User.is_connected.is_(True)).all()
         if not users:
-            users = self.session.query(User).filter_by(is_connected=True).all()
+            users = self.session.query(User).filter(User.is_connected == True).all()
             if not users:
                 return None
 
