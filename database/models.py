@@ -34,7 +34,7 @@ class User(Base):
     name = Column(String(100), nullable=False)
     level = Column(Integer, default=0)
     profile_picture = Column(String(255), nullable=True)
-    is_connected = Column(Boolean, nullable=False)
+    is_connected = Column(Boolean, nullable=False, default=False)
 
     # Relations
     friendships_initiated = relationship(
