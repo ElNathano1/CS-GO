@@ -21,6 +21,7 @@ class AccountRepository:
             level=user.level,  # type: ignore
             profile_picture=user.profile_picture,  # type: ignore
             friends=friends,
+            is_connected=user.is_connected,  # type: ignore
         )
 
     def get_all_users(self) -> list[Account] | None:
@@ -39,6 +40,7 @@ class AccountRepository:
                     level=user.level,  # type: ignore
                     profile_picture=user.profile_picture,  # type: ignore
                     friends=friends,
+                    is_connected=user.is_connected,  # type: ignore
                 )
             )
 
@@ -144,6 +146,7 @@ class AccountRepository:
                     level=user.level,  # type: ignore
                     profile_picture=user.profile_picture,  # type: ignore
                     friends=friends,
+                    is_connected=user.is_connected,  # type: ignore
                 )
             )
 
