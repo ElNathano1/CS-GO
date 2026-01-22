@@ -4,3 +4,4 @@ fastapi==0.105.0
 pymysql==1.1.1
 pydantic>=1.10.12
 python-multipart==0.0.6
+Pillow>=10.0.0
