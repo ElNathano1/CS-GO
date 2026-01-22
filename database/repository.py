@@ -8,7 +8,7 @@ class AccountRepository:
         self.session = session
 
     def get_by_username(self, username: str) -> Account | None:
-        user = self.session.query(User).filter(User.username == username).first()
+        user = self.session.query(User).first()
         if not user:
             return None
 
@@ -53,7 +53,7 @@ class AccountRepository:
             name=account.name,
             level=account.level,
             profile_picture=account.profile_picture,
-            is_connected=False,
+            is_connected=account.is_connected,
         )
         self.session.add(user)
         self.session.commit()

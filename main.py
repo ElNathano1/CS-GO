@@ -161,7 +161,7 @@ def connect(username: str, repo: AccountRepository = Depends(get_repo)):
     repo.connect(username)
     return {
         "status": "succes",
-        "is_connected": True,
+        "is_connected": 1,
     }
 
 
@@ -170,7 +170,7 @@ def disconnect(username: str, repo: AccountRepository = Depends(get_repo)):
     repo.disconnect(username)
     return {
         "status": "succes",
-        "is_connected": False,
+        "is_connected": 0,
     }
 
 
