@@ -68,6 +68,12 @@ class AccountRepository:
             user.password_hash = User.hash_password(new_password)  # type: ignore
             self.session.commit()
 
+    def reset_password(self, username: str, new_password: str) -> None:
+        user = self.session.query(User).filter_by(username=username).first()
+        if user:
+            user.password_hash = User.hash_password(new_password)  # type: ignore
+            self.session.commit()
+
     def change_name(self, username: str, new_name: str) -> None:
         user = self.session.query(User).filter_by(username=username).first()
         if user:

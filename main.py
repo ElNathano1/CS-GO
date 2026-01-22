@@ -52,11 +52,12 @@ def get_user(username: str, repo: AccountRepository = Depends(get_repo)):
         "name": account.name,
         "level": account.level,
         "friends": account.friends,
+        "connected": account.is_connected,
     }
 
 
 @app.get("/users")
-def get_all_users(username: str, repo: AccountRepository = Depends(get_repo)):
+def get_all_users(repo: AccountRepository = Depends(get_repo)):
     accounts = repo.get_all_users()
     if not accounts:
         raise HTTPException(status_code=404, detail="User not found")
@@ -66,6 +67,7 @@ def get_all_users(username: str, repo: AccountRepository = Depends(get_repo)):
             "name": account.name,
             "level": account.level,
             "friends": account.friends,
+            "connected": account.is_connected,
         }
         for account in accounts
     ]
@@ -91,6 +93,17 @@ def change_password(
     return {
         "status": "succes",
         "message": f"{username} changed password",
+    }
+
+
+@app.post("/users/{username}/reset_password")
+def reset_password(
+    username: str, new_password: str, repo: AccountRepository = Depends(get_repo)
+):
+    repo.reset_password(username, new_password)
+    return {
+        "status": "succes",
+        "message": f"{username} reset password",
     }
 
 
@@ -146,11 +159,19 @@ def update_level(
 @app.post("/users/{username}/connect")
 def connect(username: str, repo: AccountRepository = Depends(get_repo)):
     repo.connect(username)
+    return {
+        "status": "succes",
+        "is_connected": True,
+    }
 
 
 @app.post("/users/{username}/disconnect")
 def disconnect(username: str, repo: AccountRepository = Depends(get_repo)):
     repo.disconnect(username)
+    return {
+        "status": "succes",
+        "is_connected": False,
+    }
 
 
 @app.get("/users/get_connected")
@@ -164,6 +185,7 @@ def get_connected(repo: AccountRepository = Depends(get_repo)):
             "name": account.name,
             "level": account.level,
             "friends": account.friends,
+            "connected": account.is_connected,
         }
         for account in accounts
     ]
