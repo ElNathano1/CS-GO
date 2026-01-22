@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean
+from sqlalchemy import true
 from sqlalchemy.orm import Session
 from database.models import User, Friendship
 from database.account import Account
@@ -132,7 +132,7 @@ class AccountRepository:
             self.session.commit()
 
     def get_connected(self) -> list[Account] | None:
-        users = self.session.query(User).filter(User.is_connected == 1).all()
+        users = self.session.query(User).filter(User.is_connected == true()).all()
         if not users:
             return None
 
