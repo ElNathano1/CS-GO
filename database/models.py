@@ -40,13 +40,13 @@ class User(Base):
     friendships_initiated = relationship(
         "Friendship",
         foreign_keys="Friendship.user_id",
-        backref="user",
+        back_populates="user",
         cascade="all, delete-orphan",
     )
     friendships_received = relationship(
         "Friendship",
         foreign_keys="Friendship.friend_id",
-        backref="friend",
+        back_populates="friend",
         cascade="all, delete-orphan",
     )
 
@@ -137,6 +137,13 @@ class Friendship(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     friend_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
+    user = relationship(
+        "User", foreign_keys=[user_id], back_populates="friendships_initiated"
+    )
+    friend = relationship(
+        "User", foreign_keys=[friend_id], back_populates="friendships_received"
+    )
+
     def __repr__(self) -> str:
         return f"Friendship(user_id={self.user_id}, friend_id={self.friend_id})"
 
@@ -150,3 +157,7 @@ def init_db():
 def get_session() -> Session:
     """Retourne une nouvelle session SQLAlchemy."""
     return Session(engine)
+
+
+Base.metadata.drop_all(bind=engine)
+init_db()
