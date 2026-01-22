@@ -144,7 +144,7 @@ class Friendship(Base):
 # Créer les tables
 def init_db():
     """Initialise la base de données."""
-    Base.metadata.delete_all(bind=engine)
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 
