@@ -8,7 +8,7 @@ class AccountRepository:
         self.session = session
 
     def get_by_username(self, username: str) -> Account | None:
-        user = self.session.query(User).first()
+        user = self.session.query(User).filter_by(username=username).first()
         if not user:
             return None
 
@@ -25,7 +25,7 @@ class AccountRepository:
         )
 
     def get_all_users(self) -> list[Account] | None:
-        users = self.session.query(User).filter_by(username="elnathano").all()
+        users = self.session.query(User).all()
         if not users:
             return None
 
