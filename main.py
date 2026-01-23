@@ -373,7 +373,10 @@ async def get_profile_picture(
     return FileResponse(
         path=file_path,
         media_type=media_type,
-        headers={"Cache-Control": "public, max-age=2592000"},  # 30 days cache
+        headers={
+            "Cache-Control": "private, no-store, max-age=0",
+            "Pragma": "no-cache",
+        },
     )
 
 
@@ -410,7 +413,10 @@ async def get_profile_picture_thumb(
     return FileResponse(
         path=file_path,
         media_type=media_type,
-        headers={"Cache-Control": "public, max-age=2592000"},  # 30 days cache
+        headers={
+            "Cache-Control": "private, no-store, max-age=0",
+            "Pragma": "no-cache",
+        },
     )
 
 
