@@ -318,7 +318,7 @@ async def upload_profile_picture(
 
         # Store relative path in database
         relative_path = f"profiles/{username}/profile.webp"
-        account.profile_picture = relative_path
+        account.profile_picture = username
         repo.session.commit()
 
         return {
