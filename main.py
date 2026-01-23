@@ -316,10 +316,12 @@ async def upload_profile_picture(
         # Process and convert image
         webp_path, jpeg_path = process_profile_picture(file_bytes, username)
 
-        # Store relative path in database
+        # Store relative path in database and persist to DB
         relative_path = f"profiles/{username}/profile.webp"
+        # Update the actual DB record via repository to avoid stale Account instance
+        repo.change_profile_picture(username, username)
+        # Keep local in-memory value in sync for this response
         account.profile_picture = username
-        repo.session.commit()
 
         return {
             "status": "success",
@@ -352,7 +354,7 @@ async def get_profile_picture(
     if not account:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not account.profile_picture:
+    if not account.profile_picture or account.profile_picture == "default":
         raise HTTPException(status_code=404, detail="User has no profile picture")
 
     pic_dir = get_profile_pic_dir(account.profile_picture)
@@ -387,7 +389,7 @@ async def get_profile_picture_thumb(
     if not account:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not account.profile_picture:
+    if not account.profile_picture or account.profile_picture == "default":
         raise HTTPException(status_code=404, detail="User has no profile picture")
 
     pic_dir = get_profile_pic_dir(account.profile_picture)
@@ -432,9 +434,8 @@ async def delete_profile_picture(
         if os.path.exists(pic_dir):
             shutil.rmtree(pic_dir)
 
-        # Clear database reference
-        account.profile_picture = "default"
-        repo.session.commit()
+        # Clear database reference (persist via repository)
+        repo.change_profile_picture(username, "default")
 
         return {
             "status": "success",
