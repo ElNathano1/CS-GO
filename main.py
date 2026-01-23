@@ -115,6 +115,7 @@ def get_connected(repo: AccountRepository = Depends(get_repo)):
             "name": account.name,
             "level": account.level,
             "friends": account.friends,
+            "profile_picture": account.profile_picture,
             "connected": account.is_connected,
         }
         for account in accounts
@@ -131,6 +132,7 @@ def get_user(username: str, repo: AccountRepository = Depends(get_repo)):
         "name": account.name,
         "level": account.level,
         "friends": account.friends,
+        "profile_picture": account.profile_picture,
         "connected": account.is_connected,
     }
 
@@ -146,6 +148,7 @@ def get_all_users(repo: AccountRepository = Depends(get_repo)):
             "name": account.name,
             "level": account.level,
             "friends": account.friends,
+            "profile_picture": account.profile_picture,
             "connected": account.is_connected,
         }
         for account in accounts
