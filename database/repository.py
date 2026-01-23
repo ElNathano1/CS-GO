@@ -82,6 +82,12 @@ class AccountRepository:
             user.name = new_name  # type: ignore
             self.session.commit()
 
+    def change_profile_picture(self, username: str, new_profile_picture: str) -> None:
+        user = self.session.query(User).filter_by(username=username).first()
+        if user:
+            user.profile_picture = new_profile_picture  # type: ignore
+            self.session.commit()
+
     def add_friend(self, username: str, friend_username: str) -> None:
         user = self.session.query(User).filter_by(username=username).first()
         friend = self.session.query(User).filter_by(username=friend_username).first()

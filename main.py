@@ -41,10 +41,10 @@ class LevelUpdate(BaseModel):
 
 
 # === Helper functions for profile pictures ===
-def get_profile_pic_dir(username: str) -> str:
+def get_profile_pic_dir(profile_picture: str) -> str:
     """Get profile picture directory for a user"""
     upload_dir = os.environ["UPLOAD_DIR"]
-    return os.path.join(upload_dir, "profiles", username)
+    return os.path.join(upload_dir, "profiles", profile_picture)
 
 
 def ensure_profile_pic_dir(username: str) -> str:
@@ -199,6 +199,19 @@ def change_name(
     }
 
 
+@app.post("/users/{username}/change_profile_picture")
+def change_profile_picture(
+    username: str,
+    new_profile_picture: str,
+    repo: AccountRepository = Depends(get_repo),
+):
+    repo.change_profile_picture(username, new_profile_picture)
+    return {
+        "status": "succes",
+        "message": f"{username} changed profile picture to {new_profile_picture}",
+    }
+
+
 @app.post("/users/{username}/add_friend")
 def add_friend(
     username: str, action: FriendAction, repo: AccountRepository = Depends(get_repo)
@@ -342,8 +355,7 @@ async def get_profile_picture(
     if not account.profile_picture:
         raise HTTPException(status_code=404, detail="User has no profile picture")
 
-    upload_dir = os.environ["UPLOAD_DIR"]
-    pic_dir = get_profile_pic_dir(username)
+    pic_dir = get_profile_pic_dir(account.profile_picture)
 
     # Determine file format
     if format.lower() == "jpg":
@@ -378,7 +390,7 @@ async def get_profile_picture_thumb(
     if not account.profile_picture:
         raise HTTPException(status_code=404, detail="User has no profile picture")
 
-    pic_dir = get_profile_pic_dir(username)
+    pic_dir = get_profile_pic_dir(account.profile_picture)
 
     # Determine file format
     if format.lower() == "jpg":
@@ -411,17 +423,17 @@ async def delete_profile_picture(
     if not account:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not account.profile_picture:
+    if account.profile_picture == "default":
         raise HTTPException(status_code=404, detail="User has no profile picture")
 
     try:
-        pic_dir = get_profile_pic_dir(username)
+        pic_dir = get_profile_pic_dir(account.profile_picture)
 
         if os.path.exists(pic_dir):
             shutil.rmtree(pic_dir)
 
         # Clear database reference
-        account.profile_picture = None
+        account.profile_picture = "default"
         repo.session.commit()
 
         return {

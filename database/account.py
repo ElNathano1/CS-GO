@@ -27,7 +27,7 @@ class Account:
         password_hash: str | None = None,
         name: str = "",
         level: int = 0,
-        profile_picture: str | None = None,
+        profile_picture: str = "default",
         friends: list[str] | None = None,
         is_connected: int = 0,
     ):
@@ -39,7 +39,7 @@ class Account:
             password (str): The password of the account.
             name (str): The name of the account holder.
             level (int): The skill level of the account holder. Defaults to 0.
-            profile_picture (str): The path to the profile picture of the account holder. Defaults to None.
+            profile_picture (str): The path to the profile picture directory of the account holder. Defaults to "default".
 
             friends (list[str]): The list of usernames of friends. Defaults to empty list.
         """
