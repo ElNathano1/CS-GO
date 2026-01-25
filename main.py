@@ -357,7 +357,7 @@ async def get_profile_picture(
     if not account:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not account.profile_picture or account.profile_picture == "default":
+    if not account.profile_picture:
         raise HTTPException(status_code=404, detail="User has no profile picture")
 
     pic_dir = get_profile_pic_dir(account.profile_picture)
@@ -395,7 +395,7 @@ async def get_profile_picture_thumb(
     if not account:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if not account.profile_picture or account.profile_picture == "default":
+    if not account.profile_picture:
         raise HTTPException(status_code=404, detail="User has no profile picture")
 
     pic_dir = get_profile_pic_dir(account.profile_picture)
@@ -434,7 +434,7 @@ async def delete_profile_picture(
     if not account:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if account.profile_picture == "default" or not account.profile_picture:
+    if not account.profile_picture:
         raise HTTPException(status_code=404, detail="User has no profile picture")
 
     try:
@@ -445,7 +445,7 @@ async def delete_profile_picture(
         # Delete files from disk
         if os.path.exists(pic_dir):
             shutil.rmtree(pic_dir)
-        
+
         # Only update DB if files were actually deleted
         # This ensures the DB only says "default" if the files are gone
         repo.change_profile_picture(username, "default")
