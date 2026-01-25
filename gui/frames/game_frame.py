@@ -14,7 +14,7 @@ from pathlib import Path
 from PIL import Image, ImageTk
 
 from gui.game_canvas import StoneBowl
-from game.game_classes import Goban, GoGame
+from game.core import Goban, GoGame
 from player.player_classes import Martin, Leo, Magnus
 
 if TYPE_CHECKING:

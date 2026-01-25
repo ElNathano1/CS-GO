@@ -7,7 +7,7 @@ import random as rd
 
 # Add parent directory to path to import goban
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from game.game_classes import Goban, GoGame
+from game.core import Goban, GoGame
 
 
 class Player:

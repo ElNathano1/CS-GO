@@ -1,3 +1,14 @@
+"""
+Core game logic for Go (Weiqi/Baduk).
+
+This module contains the fundamental classes for implementing a Go game:
+- Goban: The game board with all core Go rules (captures, ko, scoring)
+- GoGame: Game state management (turns, passing, game end detection)
+
+These classes handle all the game mechanics following standard Go rules,
+including Chinese-style scoring.
+"""
+
 import numpy as np
 from collections import deque
 from typing import Set, Tuple, Dict, List

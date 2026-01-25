@@ -25,8 +25,8 @@ from gui.frames import LobbyFrame
 
 # Game logic imports
 from player.player_classes import Martin, Leo, Magnus
-from game.game_classes import Goban, GoGame
-from game.save_games import save_game
+from game.core import Goban, GoGame
+from game.utils import save_game
 
 # API base URL
 BASE_URL = "https://CS-GO.up.railway.app"

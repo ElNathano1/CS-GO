@@ -3,7 +3,7 @@ from gui.utils import (
     save_preferences as save_dictionnary,
     load_preferences as load_dictionnary,
 )
-from game.game_classes import GoGame
+from game.core import GoGame
 
 import os
 import sys
@@ -49,7 +49,7 @@ def load_current_game() -> GoGame | None:
         GoGame | None: Loaded game or None if no saved game exists
     """
 
-    from game.save_games import load_game
+    from game.utils import load_game
 
     if os.path.exists("saves/autosave.csgogame"):
         return load_game("saves/autosave.csgogame")

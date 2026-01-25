@@ -1,7 +1,14 @@
+"""
+Game persistence utilities for saving and loading Go games.
+
+This module provides JSON-based serialization for GoGame instances,
+allowing games to be saved and resumed later.
+"""
+
 import json
 import numpy as np
 
-from game.game_classes import GoGame
+from game.core import GoGame
 
 
 def save_game(game: GoGame, filename: str) -> None:

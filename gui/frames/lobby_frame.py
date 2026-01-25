@@ -12,7 +12,7 @@ from tkinter import messagebox
 
 if TYPE_CHECKING:
     from gui.app import App
-    from game.game_classes import GoGame
+    from game.core import GoGame
 
 
 class LobbyFrame(ttk.Frame):
