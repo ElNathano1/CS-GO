@@ -1,5 +1,9 @@
-from gui.gui_classes import *
-from gui.save_preferences import save_dictionnary, load_dictionnary
+from gui.app import *
+from gui.utils import (
+    save_preferences as save_dictionnary,
+    load_preferences as load_dictionnary,
+)
+from game.game_classes import GoGame
 
 import os
 import sys

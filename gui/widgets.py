@@ -1,7 +1,23 @@
+"""
+Custom Tkinter widgets for the Go game application.
+
+This module provides custom widgets that extend standard Tkinter components
+with enhanced functionality and visual styling.
+
+Classes:
+    TexturedButton: Button with textured background, overlay image, and custom text
+    TopLevelWindow: Base class for modal dialog windows with overlay effect
+"""
+
+from typing import TYPE_CHECKING
 import tkinter as tk
+import tkinter.ttk as ttk
 from pathlib import Path
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 import platform
+
+if TYPE_CHECKING:
+    from gui.app import App
 
 
 def _get_font_path(font_name: str) -> str | None:
@@ -387,3 +403,209 @@ class TexturedButton(tk.Button):
             self.config(bg=self._original_bg)
             self.text_color = self._original_text_color
             self._update_texture()
+
+
+class TopLevelWindow(tk.Toplevel):
+    """
+    A custom top level window for dialogs with no toolbar, modal behavior,
+    and standard dialog features.
+
+    Features:
+    - No title bar (overrideredirect)
+    - Modal (blocks parent window)
+    - Centered on screen
+    - Keyboard shortcuts (Escape to close)
+    - Result value support
+    - Semi-transparent overlay/shadow
+    - Fade-in animation
+    - Standardized button area
+    """
+
+    def __init__(
+        self,
+        master: "App",  # Forward reference to avoid circular import
+        width: int,
+        height: int,
+        fade_in: bool = True,
+        overlay: bool = True,
+        overlay_color: str = "#000000",
+        overlay_alpha: float = 0.5,
+        **kwargs,
+    ):
+        """
+        Initializes the window
+
+        Args:
+            master (App): The parent application
+            width (int): The width of the window
+            height (int): The height of the window
+            fade_in (bool): Enable fade-in animation
+            overlay (bool): Create a semi-transparent overlay behind the dialog
+            overlay_color (str): Color of the overlay
+            overlay_alpha (float): Opacity of the overlay (0.0 to 1.0)
+        """
+
+        # Create overlay window first (before the dialog)
+        self.overlay_window = None
+        if overlay:
+            self.overlay_window = self._create_overlay(
+                master, overlay_color, overlay_alpha
+            )
+
+        super().__init__(**kwargs)
+        self.master = master
+        self.result = None
+        self.transient(master)
+        self.overrideredirect(True)
+        self.withdraw()
+
+        self.geometry(f"{width}x{height}")
+
+        # Create main container
+        self.container = ttk.Frame(self)
+        self.container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # Body frame (for content)
+        self.body_frame = ttk.Frame(self.container)
+        self.body_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+
+        # Button frame (at bottom)
+        self.button_frame = ttk.Frame(self.container)
+        self.button_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
+
+        # Keyboard shortcuts
+        self.bind("<Escape>", lambda e: self.close(None))
+        self.bind("<Return>", lambda e: self.on_validate())
+
+        # Drawing the body (override in subclasses)
+        self.body(**kwargs)
+
+        # Center window on screen
+        self.update_idletasks()
+        self._center_window()
+
+        # Show window
+        self.wm_deiconify()
+
+        # Fade-in animation
+        if fade_in:
+            self._fade_in()
+
+        # Wait for window to appear on screen before calling grab_set
+        self.wait_visibility()
+        self.grab_set()
+        self.wait_window(self)
+
+    def _center_window(self) -> None:
+        """
+        Center the application window on the screen.
+        """
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f"+{x}+{y}")
+
+    def _create_overlay(self, master: tk.Tk, color: str, alpha: float) -> tk.Toplevel:
+        """
+        Create a semi-transparent overlay window that covers the parent.
+
+        Args:
+            master: Parent window to cover
+            color: Overlay color
+            alpha: Opacity (0.0 to 1.0)
+
+        Returns:
+            The overlay Toplevel window
+        """
+        overlay = tk.Toplevel(master)
+        overlay.overrideredirect(True)
+        overlay.configure(bg=color)
+
+        # Get parent window geometry
+        master.update_idletasks()
+        x = master.winfo_x()
+        y = master.winfo_y()
+        width = master.winfo_width()
+        height = master.winfo_height()
+
+        # Position overlay to cover parent exactly
+        overlay.geometry(f"{width}x{height}+{x}+{y}")
+
+        # Set transparency
+        overlay.attributes("-alpha", alpha)
+
+        # Make it stay below the dialog but above the parent
+        overlay.transient(master)
+        overlay.lift(master)
+
+        return overlay
+
+    def _fade_in(self, alpha: float = 0.0, step: float = 0.15) -> None:
+        """
+        Fade-in animation for window appearance.
+
+        Args:
+            alpha (float): Current alpha value (0.0 to 1.0)
+            step (float): Increment step for each frame
+        """
+        if alpha < 1.0:
+            self.attributes("-alpha", alpha)
+            self.after(20, lambda: self._fade_in(alpha + step, step))
+        else:
+            self.attributes("-alpha", 1.0)
+
+    def _add_icon(self, icon_type: str = "info", size: int = 32) -> tk.Label:
+        """
+        Add a standard icon to the dialog.
+
+        Args:
+            icon_type (str): One of 'info', 'warning', 'error', 'question'
+            size (int): Icon size in pixels
+
+        Returns:
+            tk.Label: The icon label widget
+        """
+        icons = {"info": "ℹ️", "warning": "⚠️", "error": "❌", "question": "❓"}
+
+        icon_text = icons.get(icon_type, "ℹ️")
+        icon_label = tk.Label(
+            self.body_frame,
+            text=icon_text,
+            font=("Segoe UI Emoji", size),
+            bg=self.body_frame["bg"],
+        )
+        return icon_label
+
+    def close(self, result=None) -> None:
+        """
+        Close the dialog with an optional result.
+
+        Args:
+            result: The result value to return to caller
+        """
+        self.result = result
+
+        # Destroy overlay window if it exists
+        if self.overlay_window:
+            self.overlay_window.destroy()
+
+        self.grab_release()
+        self.destroy()
+
+    def on_validate(self) -> None:
+        """
+        Called when Enter key is pressed.
+        Override in subclasses for custom validation logic.
+        Default: close with True result.
+        """
+        self.close(True)
+
+    def body(self, **kwargs) -> None:
+        """
+        Override this method in subclasses to create dialog content.
+        Use self.body_frame as the parent for content widgets.
+        Use self._create_button_area() to add buttons.
+        """
+        pass

@@ -1,0 +1,133 @@
+"""
+Settings frame for the Go game application.
+
+This module provides the settings interface where users can adjust sound preferences,
+volume levels, and other application settings.
+"""
+
+from typing import TYPE_CHECKING
+import tkinter as tk
+import tkinter.ttk as ttk
+
+if TYPE_CHECKING:
+    from gui.app import App
+
+
+class SettingsFrame(ttk.Frame):
+    """
+    Frame for application settings.
+
+    Allows the user to adjust sound settings and other preferences.
+    """
+
+    def __init__(self, parent: ttk.Frame, app: "App"):
+        """
+        Initialize the settings frame.
+
+        Args:
+            parent (ttk.Frame): The parent frame.
+            app (App): The main application instance.
+        """
+
+        super().__init__(parent)
+
+        self.app = app
+
+        # Title
+        title = ttk.Label(
+            self, text="Paramètres", font=("Arial", 24, "bold"), background="#f0f0f0"
+        )
+        title.pack(pady=(40, 20))
+
+        # Sound options frame
+        option_frame = ttk.LabelFrame(self, padding=20)
+        option_frame.pack(pady=20)
+
+        # Sound settings
+        self.sound_enabled = tk.BooleanVar(value=self.app.preferences["sound_enabled"])
+        sound_enabled = ttk.Checkbutton(
+            option_frame,
+            text="Activer le son",
+            variable=self.sound_enabled,
+            takefocus=False,
+        )
+        sound_enabled.pack(pady=10, fill=tk.X)
+
+        # Volume controls
+        master_volume_frame = ttk.Frame(option_frame)
+        master_volume_frame.pack(pady=10, fill=tk.X)
+
+        ttk.Label(master_volume_frame, text="Volume principal:").pack()
+        self.master_volume_slider = ttk.Scale(
+            master_volume_frame,
+            from_=0,
+            to=100,
+            orient=tk.HORIZONTAL,
+            variable=tk.IntVar(value=self.app.preferences["master_volume"]),
+            takefocus=False,
+        )
+        self.master_volume_slider.pack(fill=tk.X, expand=True)
+
+        music_volume_frame = ttk.Frame(option_frame)
+        music_volume_frame.pack(pady=10, fill=tk.X)
+
+        ttk.Label(music_volume_frame, text="Volume de la musique:").pack()
+        self.music_volume_slider = ttk.Scale(
+            music_volume_frame,
+            from_=0,
+            to=100,
+            orient=tk.HORIZONTAL,
+            variable=tk.IntVar(value=self.app.preferences["music_volume"]),
+            takefocus=False,
+        )
+        self.music_volume_slider.pack(fill=tk.X, expand=True)
+
+        effects_volume_frame = ttk.Frame(option_frame)
+        effects_volume_frame.pack(pady=10, fill=tk.X)
+        ttk.Label(effects_volume_frame, text="Volume des effets:").pack()
+        self.effects_volume_slider = ttk.Scale(
+            effects_volume_frame,
+            from_=0,
+            to=100,
+            orient=tk.HORIZONTAL,
+            variable=tk.IntVar(value=self.app.preferences["effects_volume"]),
+            takefocus=False,
+        )
+        self.effects_volume_slider.pack(fill=tk.X, expand=True)
+
+        # Return to Lobby button
+        self.app.Button(
+            self,
+            text="Retour au Lobby",
+            overlay_path=self.app.return_icon_path,
+            command=self._return_to_lobby,
+            takefocus=False,
+        ).pack(pady=20)
+
+        # Save settings when sliders or checkbox are changed
+        sound_enabled.config(command=self._save_settings)
+        self.master_volume_slider.config(command=lambda e: self._save_settings())
+        self.music_volume_slider.config(command=lambda e: self._save_settings())
+        self.effects_volume_slider.config(command=lambda e: self._save_settings())
+
+    def _save_settings(self) -> None:
+        """
+        Save the current settings to the application preferences.
+        """
+
+        # Save sound settings
+        self.app.preferences["sound_enabled"] = self.sound_enabled.get()
+        self.app.preferences["master_volume"] = self.master_volume_slider.get()
+        self.app.preferences["music_volume"] = self.music_volume_slider.get()
+        self.app.preferences["effects_volume"] = self.effects_volume_slider.get()
+
+        # Apply updated preferences
+        self.app.apply_preferences()
+
+    def _return_to_lobby(self) -> None:
+        """
+        Return to the lobby frame.
+        """
+        from gui.frames.lobby_frame import LobbyFrame
+
+        self.app.show_frame(LobbyFrame)
