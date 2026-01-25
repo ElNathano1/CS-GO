@@ -1,3 +1,18 @@
+"""
+AI players for the Go game.
+
+This module contains various AI implementations for playing Go:
+- Player: Base class for all players (human and AI)
+- Martin: Simple random-move AI (easy difficulty)
+- TrueAI: Base class for lookahead AI players
+- Leo: Intermediate AI with basic strategy (medium difficulty)
+- Magnus: Advanced AI with deeper lookahead (hard difficulty)
+- TruePlayer: Human player class
+
+AI players use different strategies and search depths to provide
+varying levels of challenge for human players.
+"""
+
 import numpy as np
 import sys
 from pathlib import Path

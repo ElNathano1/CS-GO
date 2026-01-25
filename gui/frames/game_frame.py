@@ -15,7 +15,7 @@ from PIL import Image, ImageTk
 
 from gui.game_canvas import StoneBowl
 from game.core import Goban, GoGame
-from player.player_classes import Martin, Leo, Magnus
+from player.ai import Martin, Leo, Magnus
 
 if TYPE_CHECKING:
     from gui.app import App

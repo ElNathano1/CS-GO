@@ -24,7 +24,7 @@ from gui.utils import save_preferences as save_dictionnary  # Legacy name
 from gui.frames import LobbyFrame
 
 # Game logic imports
-from player.player_classes import Martin, Leo, Magnus
+from player.ai import Martin, Leo, Magnus
 from game.core import Goban, GoGame
 from game.utils import save_game
 
