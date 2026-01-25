@@ -14,7 +14,7 @@ from client import MultiplayerClient, Event
 # Try a list of public echo WebSocket endpoints (some networks block DNS)
 ECHO_URLS = [
     "wss://echo.websocket.events",  # primary
-    "wss://ws.ifelse.io",           # fallback 1
+    "wss://ws.ifelse.io",  # fallback 1
     "wss://demo.piesocket.com/v3/echo?api_key=TEST",  # fallback 2
 ]
 
@@ -28,7 +28,11 @@ if __name__ == "__main__":
     for url in ECHO_URLS:
         try:
             # Temporarily override the client's URLs to the echo server
-            client = MultiplayerClient(base_url=url.replace("wss://", "https://"), username="demo", on_event=on_event)
+            client = MultiplayerClient(
+                base_url=url.replace("wss://", "https://"),
+                username="demo",
+                on_event=on_event,
+            )
             client.ws_url_lobby = url
             print(f"Connecting to: {url}")
             client.start()

@@ -139,7 +139,12 @@ class MultiplayerClient:
         Args:
             level: Player level/rating used for matchmaking
         """
-        self._send({"type": "queue.join", "payload": {"level": level, "username": self.username}})
+        self._send(
+            {
+                "type": "queue.join",
+                "payload": {"level": level, "username": self.username},
+            }
+        )
 
     def leave_queue(self) -> None:
         """Leave the matchmaking queue."""
@@ -167,7 +172,9 @@ class MultiplayerClient:
     def leave_room(self) -> None:
         """Leave the current game room."""
         if self._current_room_id:
-            self._send({"type": "room.leave", "payload": {"room_id": self._current_room_id}})
+            self._send(
+                {"type": "room.leave", "payload": {"room_id": self._current_room_id}}
+            )
             self._current_room_id = None
 
     def send_move(self, x: int, y: int) -> None:
