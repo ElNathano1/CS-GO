@@ -10,6 +10,7 @@ This FastAPI service powers user accounts, profile pictures, file utilities, and
 
 ## Environment
 - `UPLOAD_DIR`: Absolute path used to store files and profile pictures
+- `DATABASE_URL`: URL to the user management PyMySQL database
 
 ## Run Locally
 ```bash
@@ -22,14 +23,14 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 - `GET /connected` — List connected users
 - `GET /users` — List all users
 - `GET /users/{username}` — Get a user
-- `POST /users/` — Create user `{ username, password, name }`
+- `POST /users/` — Create user `{"username": string, "password": string, "name": string}`
 - `POST /users/{username}/connect` — Mark user connected
 - `POST /users/{username}/disconnect` — Mark user disconnected
-- `POST /users/{username}/update_level` — Update `{ new_level }`
-- `POST /users/{username}/add_friend` — `{ friend_username }`
-- `POST /users/{username}/remove_friend` — `{ friend_username }`
-- `POST /users/{username}/change_name` — `{ new_name }`
-- `POST /users/{username}/change_password` — `{ old_password, new_password }`
+- `POST /users/{username}/update_level` — Update user level `{"new_level": int}`
+- `POST /users/{username}/add_friend` — Add a friend to user where user is initiator `{"friend_username": string}`
+- `POST /users/{username}/remove_friend` — Remove a friend to user's friends list `{"friend_username": string}`
+- `POST /users/{username}/change_name` — Change user name`{ "new_name": string}`
+- `POST /users/{username}/change_password` — Change user password `{"old_password: string, "new_password": string}`
 
 ### Profile Pictures
 - `POST /users/{username}/profile-picture` — Upload `file`
@@ -40,12 +41,12 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ### Files (scoped to `UPLOAD_DIR`)
 - `GET /files/?folder_path=` — List
 - `GET /files/info/?file_path=` — Info
-- `POST /files/copy/` — `{ source_path, destination_path }`
-- `POST /files/move/` — `{ source_path, destination_path }`
-- `POST /files/rename/` — `{ file_path, new_name }`
-- `POST /folders/` — `{ folder_path }`
-- `DELETE /folders/` — `{ folder_path }`
-- `DELETE /files/` — `{ file_path }`
+- `POST /files/copy/` — Copy source to destination `{"source_path": string, "destination_path": string}`
+- `POST /files/move/` — Move source to destination `{"source_path": string, "destination_path": string}`
+- `POST /files/rename/` — Rename file`{"file_path": string, "new_name": string}`
+- `POST /folders/` — Create folder`{"folder_path": string}`
+- `DELETE /folders/` — Delete folder `{"folder_path": string}`
+- `DELETE /files/` — Delete file `{"file_path": string}`
 
 ## WebSockets
 
@@ -62,34 +63,34 @@ Quick diagnostics endpoint. Client connects and sends JSON; server echoes back.
 
 ### Lobby `/ws/lobby` (auth required)
 - **Auth**: Requires `Authorization: Bearer <token>` header
-- Connect and send: `{"type":"client.hello","payload":{"username":"alice"}}`
-- Join queue: `{"type":"queue.join","payload":{"level":1200}}`
-- Leave queue: `{"type":"queue.leave","payload":{}}`
-- Send invite: `{"type":"invite.send","payload":{"to":"bob"}}`
-- Accept invite: `{"type":"invite.accept","payload":{"invite_id":"..."}}`
-- Decline invite: `{"type":"invite.decline","payload":{"invite_id":"..."}}`
+- Connect and send: `{"type": "client.hello", "payload": {"username":"alice"}}`
+- Join queue: `{"type": "queue.join", "payload": {"level":1200}}`
+- Leave queue: `{"type": "queue.leave", "payload": {}}`
+- Send invite: `{"type": "invite.send", "payload": {"to": "bob"}}`
+- Accept invite: `{"type": "invite.accept", "payload": {"invite_id": "..."}}`
+- Decline invite: `{"type": "invite.decline", "payload": {"invite_id":"..."}}`
 
 Server events:
-- `queue.match_found { room_id, opponent }`
-- `invite.received { invite_id, from }`
-- `invite.sent { invite_id }`
-- `invite.declined { invite_id, to? }`
-- `error { message }`
+- `queue.match_found {"room_id": str, "opponent": dict[str, str | int]}`
+- `invite.received {"invite_id": str, "from": str}`
+- `invite.sent {"invite_id": str}`
+- `invite.declined {"invite_id": str, "to"?: str}`
+- `error {"message": str}`
 
 ### Room `/ws/room/{room_id}` (auth required)
 - **Auth**: Requires `Authorization: Bearer <token>` header
-- Connect and send: `{"type":"client.hello","payload":{"username":"alice"}}`
-- Play move: `{"type":"move.play","payload":{"x":3,"y":4}}`
-- Send chat: `{"type":"chat.send","payload":{"message":"gg"}}`
-- Leave: `{"type":"room.leave","payload":{}}`
+- Connect and send: `{"type": "client.hello", "payload": {"username": "alice"}}`
+- Play move: `{"type": "move.play", "payload": {"x": 3, "y": 4}}`
+- Send chat: `{"type": "chat.send", "payload": {"message": "gg"}}`
+- Leave: `{"type": "room.leave", "payload": {}}`
 
 Server events:
-- `room.joined { room_id }`
-- `room.user_joined { username }`
-- `room.user_left { username }`
-- `move.played { x, y, from, color }`
-- `chat.message { from, message }`
-- `error { message }`
+- `room.joined {"room_id": str}`
+- `room.user_joined {"username": str}`
+- `room.user_left {"username": str}`
+- `move.played {"x": int, "y": int, "from": str, "color": int}`
+- `chat.message {"from": str, "message": str}`
+- `error {"message": str}`
 
 ## Notes
 - All WebSocket messages are JSON objects with `type` and `payload` keys.
