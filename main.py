@@ -1,3 +1,40 @@
+"""
+CS-GO User Service (Railway branch)
+
+This FastAPI service provides:
+- Account management APIs (users, friends, levels, connection state)
+- Profile picture processing (upload, convert to WebP/JPEG, thumbnails)
+- File management utilities scoped to `UPLOAD_DIR`
+- Realtime multiplayer support via WebSockets:
+  - `/ws/lobby`: matchmaking queue by level and invitations
+  - `/ws/room/{room_id}`: in-room events (moves, chat, presence)
+
+WebSocket Protocol (JSON):
+Outgoing from client:
+- `client.hello`: `{ username }`
+- `queue.join`: `{ level, username }`
+- `queue.leave`: `{}`
+- `invite.send`: `{ to }`
+- `invite.accept`: `{ invite_id }`
+- `invite.decline`: `{ invite_id }`
+- `room.join`: `{ room_id }` (handled in room socket)
+- `move.play`: `{ x, y }`
+- `chat.send`: `{ message }`
+
+Incoming from server:
+- `lobby.welcome`: `{ username }`
+- `queue.match_found`: `{ room_id, opponent: { username, level } }`
+- `invite.received`: `{ invite_id, from }`
+- `invite.sent`: `{ invite_id }`
+- `invite.declined`: `{ invite_id, to? }`
+- `room.joined`: `{ room_id }`
+- `room.user_joined`: `{ username }`
+- `room.user_left`: `{ username }`
+- `move.played`: `{ x, y, from, color }`
+- `chat.message`: `{ from, message }`
+- `error`: `{ message }`
+"""
+
 import os
 import shutil
 from pathlib import Path
@@ -6,10 +43,14 @@ from io import BytesIO
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, status
 from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from database.models import get_session
 from database.repository import AccountRepository
 from database.account import Account
+import asyncio
+import json
+import uuid
 
 app = FastAPI(title="CS-GO User Service")
 
@@ -711,3 +752,465 @@ def get_file_info(file_path: str):
         raise HTTPException(
             status_code=500, detail=f"Error getting file info: {str(e)}"
         )
+
+
+# =============================
+# Realtime (WebSocket) endpoints
+# =============================
+
+
+class WSManager:
+    """In-memory manager for lobby connections, matchmaking, invites and rooms.
+
+    This is a simple implementation suitable for a single process. For
+    production scaling, consider using a shared store (Redis) for state.
+    """
+
+    def __init__(self) -> None:
+        self.lock = asyncio.Lock()
+        self.lobby_clients: dict[str, WebSocket] = {}
+        self.client_levels: dict[str, int] = {}
+        self.queue: list[str] = []
+        self.invites: dict[str, dict] = {}
+        self.rooms: dict[str, set[WebSocket]] = {}
+        self.room_users: dict[str, set[str]] = {}
+        self.room_colors: dict[str, dict[str, int]] = {}  # Goban.BLACK=1, WHITE=2
+
+    async def send(self, ws: WebSocket, obj: dict) -> None:
+        await ws.send_text(json.dumps(obj))
+
+    async def broadcast_room(
+        self, room_id: str, sender: WebSocket | None, obj: dict
+    ) -> None:
+        if room_id not in self.rooms:
+            return
+        payload = json.dumps(obj)
+        for ws in list(self.rooms[room_id]):
+            if sender is not None and ws is sender:
+                continue
+            try:
+                await ws.send_text(payload)
+            except Exception:
+                # best effort
+                pass
+
+
+ws_manager = WSManager()
+
+
+def extract_token(headers: dict[str, str]) -> str | None:
+    """
+    Extract Bearer token from WebSocket headers.
+
+    Expected format: "Authorization: Bearer <token>"
+
+    Args:
+        headers: Dict of HTTP headers from WebSocket handshake
+
+    Returns:
+        Token string if valid Bearer format, None otherwise
+    """
+    auth_header = headers.get("authorization", "") or headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None
+    return auth_header[7:]  # strip "Bearer "
+
+
+@app.websocket("/ws/health")
+async def ws_health(ws: WebSocket):
+    """
+    Simple WebSocket health check and echo endpoint (no auth required).
+
+    Use this for diagnostics and to verify WebSocket connectivity without
+    authentication overhead. Client sends any JSON message; server echoes
+    it back with `type: "health.echo"`.
+
+    Example:
+        Send: {"message": "ping"}
+        Recv: {"type": "health.echo", "payload": {"message": "ping"}}
+    """
+    await ws.accept()
+    try:
+        while True:
+            raw = await ws.receive_text()
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                await ws.send_text(
+                    json.dumps(
+                        {"type": "error", "payload": {"message": "invalid-json"}}
+                    )
+                )
+                continue
+            await ws.send_text(json.dumps({"type": "health.echo", "payload": data}))
+    except WebSocketDisconnect:
+        pass
+
+
+@app.websocket("/ws/lobby")
+async def ws_lobby(ws: WebSocket):
+    """
+    WebSocket lobby endpoint.
+
+    Authentication: Requires `Authorization: Bearer <token>` header.
+    If missing or invalid, connection is rejected.
+
+    Responsibilities:
+    - Accept `client.hello { username }`
+    - Handle matchmaking via `queue.join { level }` and `queue.leave`
+    - Handle social invitations: `invite.send`, `invite.accept`, `invite.decline`
+    - Emit `queue.match_found { room_id, opponent }` when a match is ready
+
+    Messages are JSON objects with `type` and `payload` fields.
+    """
+    # Validate auth token
+    headers = {k: v for k, v in ws.headers}
+    token = extract_token(headers)
+    if not token:
+        await ws.close(code=1008, reason="unauthorized")
+        return
+
+    await ws.accept()
+    username: str | None = None
+
+    try:
+        while True:
+            raw = await ws.receive_text()
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                await ws.send_text(
+                    json.dumps(
+                        {"type": "error", "payload": {"message": "invalid-json"}}
+                    )
+                )
+                continue
+
+            msg_type = data.get("type")
+            payload = data.get("payload", {})
+
+            # Identify client
+            if msg_type == "client.hello":
+                username = str(payload.get("username"))
+                if not username:
+                    await ws_manager.send(
+                        ws,
+                        {"type": "error", "payload": {"message": "username-required"}},
+                    )
+                    continue
+                async with ws_manager.lock:
+                    ws_manager.lobby_clients[username] = ws
+                await ws_manager.send(
+                    ws, {"type": "lobby.welcome", "payload": {"username": username}}
+                )
+                continue
+
+            if username is None:
+                await ws_manager.send(
+                    ws, {"type": "error", "payload": {"message": "hello-first"}}
+                )
+                continue
+
+            # Queue join/leave
+            if msg_type == "queue.join":
+                level = int(payload.get("level", 0))
+                async with ws_manager.lock:
+                    ws_manager.client_levels[username] = level
+                    if username not in ws_manager.queue:
+                        ws_manager.queue.append(username)
+
+                    # Try to find the closest level opponent
+                    opponent: str | None = None
+                    best_diff = 1_000_000
+                    for other in ws_manager.queue:
+                        if other == username:
+                            continue
+                        diff = abs(level - ws_manager.client_levels.get(other, level))
+                        if diff < best_diff:
+                            best_diff = diff
+                            opponent = other
+
+                    if opponent:
+                        # Create room
+                        room_id = uuid.uuid4().hex
+                        # Remove from queue
+                        ws_manager.queue = [
+                            u for u in ws_manager.queue if u not in (username, opponent)
+                        ]
+                        # Notify both
+                        opp_ws = ws_manager.lobby_clients.get(opponent)
+                        await ws_manager.send(
+                            ws,
+                            {
+                                "type": "queue.match_found",
+                                "payload": {
+                                    "room_id": room_id,
+                                    "opponent": {
+                                        "username": opponent,
+                                        "level": ws_manager.client_levels.get(opponent),
+                                    },
+                                },
+                            },
+                        )
+                        if opp_ws:
+                            await ws_manager.send(
+                                opp_ws,
+                                {
+                                    "type": "queue.match_found",
+                                    "payload": {
+                                        "room_id": room_id,
+                                        "opponent": {
+                                            "username": username,
+                                            "level": level,
+                                        },
+                                    },
+                                },
+                            )
+
+                        # Assign colors deterministically
+                        ws_manager.room_colors[room_id] = {username: 1, opponent: 2}
+                        ws_manager.room_users[room_id] = {username, opponent}
+                continue
+
+            if msg_type == "queue.leave":
+                async with ws_manager.lock:
+                    ws_manager.queue = [u for u in ws_manager.queue if u != username]
+                await ws_manager.send(ws, {"type": "queue.left", "payload": {}})
+                continue
+
+            # Invitations
+            if msg_type == "invite.send":
+                to_user = payload.get("to")
+                if not to_user:
+                    await ws_manager.send(
+                        ws, {"type": "error", "payload": {"message": "to-required"}}
+                    )
+                    continue
+                invite_id = uuid.uuid4().hex
+                async with ws_manager.lock:
+                    ws_manager.invites[invite_id] = {"from": username, "to": to_user}
+                to_ws = ws_manager.lobby_clients.get(str(to_user))
+                if to_ws:
+                    await ws_manager.send(
+                        to_ws,
+                        {
+                            "type": "invite.received",
+                            "payload": {"invite_id": invite_id, "from": username},
+                        },
+                    )
+                    await ws_manager.send(
+                        ws, {"type": "invite.sent", "payload": {"invite_id": invite_id}}
+                    )
+                else:
+                    await ws_manager.send(
+                        ws, {"type": "error", "payload": {"message": "user-offline"}}
+                    )
+                continue
+
+            if msg_type == "invite.accept":
+                invite_id = payload.get("invite_id")
+                async with ws_manager.lock:
+                    invite = ws_manager.invites.pop(str(invite_id), None)
+                if not invite or invite.get("to") != username:
+                    await ws_manager.send(
+                        ws, {"type": "error", "payload": {"message": "invalid-invite"}}
+                    )
+                    continue
+                room_id = uuid.uuid4().hex
+                inviter = str(invite.get("from"))
+                inviter_ws = ws_manager.lobby_clients.get(inviter)
+                # Assign colors deterministically
+                ws_manager.room_colors[room_id] = {inviter: 1, username: 2}
+                ws_manager.room_users[room_id] = {inviter, username}
+                await ws_manager.send(
+                    ws,
+                    {
+                        "type": "queue.match_found",
+                        "payload": {
+                            "room_id": room_id,
+                            "opponent": {"username": inviter},
+                        },
+                    },
+                )
+                if inviter_ws:
+                    await ws_manager.send(
+                        inviter_ws,
+                        {
+                            "type": "queue.match_found",
+                            "payload": {
+                                "room_id": room_id,
+                                "opponent": {"username": username},
+                            },
+                        },
+                    )
+                continue
+
+            if msg_type == "invite.decline":
+                invite_id = payload.get("invite_id")
+                async with ws_manager.lock:
+                    invite = ws_manager.invites.pop(str(invite_id), None)
+                if invite:
+                    inviter = str(invite.get("from"))
+                    inviter_ws = ws_manager.lobby_clients.get(inviter)
+                    if inviter_ws:
+                        await ws_manager.send(
+                            inviter_ws,
+                            {
+                                "type": "invite.declined",
+                                "payload": {
+                                    "invite_id": str(invite_id),
+                                    "to": username,
+                                },
+                            },
+                        )
+                await ws_manager.send(
+                    ws,
+                    {
+                        "type": "invite.declined",
+                        "payload": {"invite_id": str(invite_id)},
+                    },
+                )
+                continue
+
+            # Default: unknown message
+            await ws_manager.send(
+                ws,
+                {
+                    "type": "error",
+                    "payload": {"message": "unknown-message", "received": msg_type},
+                },
+            )
+
+    except WebSocketDisconnect:
+        # Cleanup on disconnect
+        async with ws_manager.lock:
+            if username:
+                ws_manager.lobby_clients.pop(username, None)
+                ws_manager.client_levels.pop(username, None)
+                ws_manager.queue = [u for u in ws_manager.queue if u != username]
+
+
+@app.websocket("/ws/room/{room_id}")
+async def ws_room(ws: WebSocket, room_id: str):
+    """
+    WebSocket room endpoint.
+
+    Authentication: Requires `Authorization: Bearer <token>` header.
+    If missing or invalid, connection is rejected.
+
+    Responsibilities:
+    - Accept `client.hello { username }` and join user to room
+    - Broadcast `room.user_joined` and `room.user_left`
+    - Relay `move.play { x, y }` as `move.played { x, y, from, color }`
+    - Relay `chat.send { message }` as `chat.message { from, message }`
+
+    Rooms are created on demand and kept in memory.
+    """
+    # Validate auth token
+    headers = {k: v for k, v in ws.headers}
+    token = extract_token(headers)
+    if not token:
+        await ws.close(code=1008, reason="unauthorized")
+        return
+
+    await ws.accept()
+    username: str | None = None
+
+    # Create room on demand
+    async with ws_manager.lock:
+        ws_manager.rooms.setdefault(room_id, set())
+        ws_manager.room_users.setdefault(room_id, set())
+        ws_manager.room_colors.setdefault(room_id, {})
+
+    try:
+        while True:
+            raw = await ws.receive_text()
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                await ws.send_text(
+                    json.dumps(
+                        {"type": "error", "payload": {"message": "invalid-json"}}
+                    )
+                )
+                continue
+
+            msg_type = data.get("type")
+            payload = data.get("payload", {})
+
+            if msg_type == "client.hello":
+                username = str(payload.get("username"))
+                async with ws_manager.lock:
+                    ws_manager.rooms[room_id].add(ws)
+                    ws_manager.room_users[room_id].add(username)
+                await ws_manager.send(
+                    ws, {"type": "room.joined", "payload": {"room_id": room_id}}
+                )
+                # Broadcast presence
+                await ws_manager.broadcast_room(
+                    room_id,
+                    sender=ws,
+                    obj={"type": "room.user_joined", "payload": {"username": username}},
+                )
+                continue
+
+            if username is None:
+                await ws_manager.send(
+                    ws, {"type": "error", "payload": {"message": "hello-first"}}
+                )
+                continue
+
+            if msg_type == "move.play":
+                x = int(payload.get("x", -1))
+                y = int(payload.get("y", -1))
+                color = ws_manager.room_colors.get(room_id, {}).get(username)
+                await ws_manager.broadcast_room(
+                    room_id,
+                    sender=ws,
+                    obj={
+                        "type": "move.played",
+                        "payload": {"x": x, "y": y, "from": username, "color": color},
+                    },
+                )
+                continue
+
+            if msg_type == "chat.send":
+                message = str(payload.get("message", ""))
+                await ws_manager.broadcast_room(
+                    room_id,
+                    sender=None,
+                    obj={
+                        "type": "chat.message",
+                        "payload": {"from": username, "message": message},
+                    },
+                )
+                continue
+
+            if msg_type == "room.leave":
+                async with ws_manager.lock:
+                    if room_id in ws_manager.rooms and ws in ws_manager.rooms[room_id]:
+                        ws_manager.rooms[room_id].remove(ws)
+                await ws_manager.send(
+                    ws, {"type": "room.left", "payload": {"room_id": room_id}}
+                )
+                break
+
+            await ws_manager.send(
+                ws,
+                {
+                    "type": "error",
+                    "payload": {"message": "unknown-message", "received": msg_type},
+                },
+            )
+
+    except WebSocketDisconnect:
+        async with ws_manager.lock:
+            if room_id in ws_manager.rooms and ws in ws_manager.rooms[room_id]:
+                ws_manager.rooms[room_id].remove(ws)
+        # Broadcast user left if we know the username
+        if username:
+            await ws_manager.broadcast_room(
+                room_id,
+                sender=None,
+                obj={"type": "room.user_left", "payload": {"username": username}},
+            )
