@@ -26,12 +26,12 @@ LOBBY_URL = f"wss://{RAILWAY_URL}/ws/lobby"
 # Demo credentials (create these users first via REST API)
 DEMO_USER_1 = "elnathano"
 DEMO_USER_2 = "biggo"
-DEMO_PASSWORD = "password123"
+DEMO_PASSWORD = "cs go"
 DEMO_TOKEN = None  # Will be generated via login
 
 
 class WebSocketDemo:
-    def __init__(self, url: str, token: str = None):
+    def __init__(self, url: str, token: str = None):  # type: ignore
         self.url = url
         self.token = token
         self.ws = None
@@ -42,7 +42,7 @@ class WebSocketDemo:
             kwargs = {}
             if self.token:
                 kwargs["additional_headers"] = {"Authorization": f"Bearer {self.token}"}
-            
+
             self.ws = await websockets.connect(self.url, **kwargs)
             print(f"✅ Connected to {self.url}")
             return True
@@ -92,14 +92,14 @@ async def test_login():
     print("\n" + "=" * 60)
     print("TEST 1: Login & Generate Bearer Token")
     print("=" * 60)
-    
+
     global DEMO_TOKEN
-    
+
     try:
         async with httpx.AsyncClient(verify=False) as client:
             response = await client.post(
                 f"{REST_API}/auth/login",
-                params={"username": DEMO_USER_1, "password": DEMO_PASSWORD}
+                params={"username": DEMO_USER_1, "password": DEMO_PASSWORD},
             )
             if response.status_code == 200:
                 data = response.json()
@@ -142,7 +142,7 @@ async def test_lobby_connection():
     print("TEST 3: Lobby Connection (with auth)")
     print("=" * 60)
 
-    demo = WebSocketDemo(LOBBY_URL, token=DEMO_TOKEN)
+    demo = WebSocketDemo(LOBBY_URL, token=DEMO_TOKEN)  # type: ignore
 
     if not await demo.connect():
         print("❌ Auth may be required. Create a user first:")
@@ -168,7 +168,7 @@ async def test_queue_join():
     print("TEST 4: Queue Join")
     print("=" * 60)
 
-    demo = WebSocketDemo(LOBBY_URL, token=DEMO_TOKEN)
+    demo = WebSocketDemo(LOBBY_URL, token=DEMO_TOKEN)  # type: ignore
 
     if not await demo.connect():
         return False
@@ -200,7 +200,7 @@ async def test_room_connection():
     room_id = str(uuid.uuid4())
     room_url = f"wss://{RAILWAY_URL}/ws/room/{room_id}"
 
-    demo = WebSocketDemo(room_url, token=DEMO_TOKEN)
+    demo = WebSocketDemo(room_url, token=DEMO_TOKEN)  # type: ignore
 
     if not await demo.connect():
         return False
@@ -220,7 +220,7 @@ async def test_invitation_flow():
     print("TEST 6: Invitation Flow")
     print("=" * 60)
 
-    demo = WebSocketDemo(LOBBY_URL, token=DEMO_TOKEN)
+    demo = WebSocketDemo(LOBBY_URL, token=DEMO_TOKEN)  # type: ignore
 
     if not await demo.connect():
         return False
@@ -282,6 +282,6 @@ if __name__ == "__main__":
     print("   1. Railway deployment is live")
     print("   2. Test users exist (elnathano, biggo)")
     print("   3. User passwords match DEMO_PASSWORD")
-    
+
     success = asyncio.run(run_all_tests())
     exit(0 if success else 1)

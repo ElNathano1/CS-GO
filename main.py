@@ -197,7 +197,7 @@ def login(username: str, password: str, repo: AccountRepository = Depends(get_re
     account = repo.get_by_username(username)
     if not account or not account.check_password(password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     token = generate_token(username)
     return {
         "status": "success",
@@ -222,7 +222,7 @@ def verify_auth(token: str):
     username = verify_token(token)
     if not username:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
     return {"status": "success", "username": username}
 
 
