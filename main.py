@@ -37,6 +37,8 @@ Incoming from server:
 
 import os
 import shutil
+import jwt
+from datetime import datetime, timedelta
 from pathlib import Path
 from PIL import Image
 from io import BytesIO
@@ -53,6 +55,46 @@ import json
 import uuid
 
 app = FastAPI(title="CS-GO User Service")
+
+# JWT Secret - use environment variable in production
+JWT_SECRET = os.environ.get("JWT_SECRET", "your-secret-key-change-in-production")
+JWT_ALGORITHM = "HS256"
+TOKEN_EXPIRE_HOURS = 24
+
+
+def generate_token(username: str) -> str:
+    """
+    Generate a JWT token for a user.
+
+    Args:
+        username: The username to encode in the token
+
+    Returns:
+        JWT token string
+    """
+    payload = {
+        "username": username,
+        "exp": datetime.utcnow() + timedelta(hours=TOKEN_EXPIRE_HOURS),
+        "iat": datetime.utcnow(),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def verify_token(token: str) -> str | None:
+    """
+    Verify and decode a JWT token.
+
+    Args:
+        token: JWT token string
+
+    Returns:
+        Username if token is valid, None otherwise
+    """
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload.get("username")
+    except Exception:
+        return None
 
 
 os.makedirs(os.environ["UPLOAD_DIR"], exist_ok=True)
@@ -140,9 +182,48 @@ def process_profile_picture(file_bytes: bytes, username: str) -> tuple[str, str]
     return webp_path, jpeg_path
 
 
-@app.get("/")
-def root():
-    return {"message": "Hello from Railway!"}
+@app.post("/auth/login")
+def login(username: str, password: str, repo: AccountRepository = Depends(get_repo)):
+    """
+    Login endpoint - verify credentials and return JWT token.
+
+    Args:
+        username: User's username
+        password: User's password (plaintext)
+
+    Returns:
+        JWT token for use in WebSocket connections
+    """
+    account = repo.get_by_username(username)
+    if not account or not account.check_password(password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = generate_token(username)
+    return {
+        "status": "success",
+        "username": username,
+        "token": token,
+        "token_type": "Bearer",
+        "expires_in": TOKEN_EXPIRE_HOURS * 3600,  # seconds
+    }
+
+
+@app.get("/auth/verify")
+def verify_auth(token: str):
+    """
+    Verify if a token is valid.
+
+    Args:
+        token: JWT token to verify
+
+    Returns:
+        Username if valid
+    """
+    username = verify_token(token)
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    return {"status": "success", "username": username}
 
 
 @app.get("/connected")
@@ -798,22 +879,25 @@ class WSManager:
 ws_manager = WSManager()
 
 
-def extract_token(headers: dict[str, str]) -> str | None:
+def extract_token(ws: WebSocket) -> str | None:
     """
     Extract Bearer token from WebSocket headers.
 
     Expected format: "Authorization: Bearer <token>"
 
     Args:
-        headers: Dict of HTTP headers from WebSocket handshake
+        ws: WebSocket connection object
 
     Returns:
         Token string if valid Bearer format, None otherwise
     """
-    auth_header = headers.get("authorization", "") or headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
+    try:
+        auth_header = ws.headers.get("authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return None
+        return auth_header[7:]  # strip "Bearer "
+    except Exception:
         return None
-    return auth_header[7:]  # strip "Bearer "
 
 
 @app.websocket("/ws/health")
@@ -864,8 +948,7 @@ async def ws_lobby(ws: WebSocket):
     Messages are JSON objects with `type` and `payload` fields.
     """
     # Validate auth token
-    headers = {k: v for k, v in ws.headers}
-    token = extract_token(headers)
+    token = extract_token(ws)
     if not token:
         await ws.close(code=1008, reason="unauthorized")
         return
@@ -1107,8 +1190,7 @@ async def ws_room(ws: WebSocket, room_id: str):
     Rooms are created on demand and kept in memory.
     """
     # Validate auth token
-    headers = {k: v for k, v in ws.headers}
-    token = extract_token(headers)
+    token = extract_token(ws)
     if not token:
         await ws.close(code=1008, reason="unauthorized")
         return
