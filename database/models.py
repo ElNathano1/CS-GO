@@ -1,3 +1,17 @@
+"""
+Database models and ORM configuration for the CS-GO user service.
+
+This module provides:
+- SQLAlchemy ORM models (User, Friendship)
+- Database engine initialization
+- Password hashing utilities
+- Session management
+
+Models:
+- User: Represents a player account with profile, level, and friends
+- Friendship: Represents a directional friendship relationship between users
+"""
+
 from __future__ import annotations
 
 import os
@@ -25,7 +39,18 @@ Base = declarative_base()
 
 class User(Base):
     """
-    Modèle SQLAlchemy pour représenter un utilisateur.
+    SQLAlchemy ORM model for a user account.
+
+    Attributes:
+        id: Primary key
+        username: Unique username (indexed for fast lookup)
+        password_hash: SHA-256 hash of password
+        name: Display name of the user
+        level: Rating/skill level (for matchmaking)
+        profile_picture: Path identifier for user's profile picture
+        is_connected: Connection status (1=connected, 0=offline)
+        friendships_initiated: List of friendships where this user is the initiator
+        friendships_received: List of friendships where this user is the friend
     """
 
     __tablename__ = "users"
@@ -60,16 +85,24 @@ class User(Base):
 
     @staticmethod
     def hash_password(password: str) -> str:
-        """Hache un mot de passe avec SHA-256."""
+        """
+        Hash a password using SHA-256.
+
+        Args:
+            password: The plaintext password to hash
+
+        Returns:
+            Hexadecimal SHA-256 hash of the password
+        """
         return hashlib.sha256(password.encode()).hexdigest()
 
     def add_friend(self, friend: User, session: Session) -> None:
         """
-        Ajoute un ami à la liste d'amis.
+        Add a friend to this user's friend list.
 
         Args:
-            friend (User): L'utilisateur à ajouter en ami.
-            session (Session): La session SQLAlchemy.
+            friend: The User object to add as friend
+            session: SQLAlchemy session for database operations
         """
         if not self.is_friend(friend):
             friendship = Friendship(user_id=self.id, friend_id=friend.id)
@@ -78,11 +111,11 @@ class User(Base):
 
     def remove_friend(self, friend: User, session: Session) -> None:
         """
-        Supprime un ami de la liste d'amis.
+        Remove a friend from this user's friend list.
 
         Args:
-            friend (User): L'utilisateur à supprimer de la liste d'amis.
-            session (Session): La session SQLAlchemy.
+            friend: The User object to remove from friends
+            session: SQLAlchemy session for database operations
         """
         friendship = (
             session.query(Friendship)
@@ -97,38 +130,48 @@ class User(Base):
 
     def is_friend(self, friend: User) -> bool:
         """
-        Vérifie si un utilisateur est ami avec un autre.
+        Check if another user is a friend of this user.
 
         Args:
-            friend (User): L'utilisateur à vérifier.
+            friend: The User object to check
 
         Returns:
-            bool: True si c'est un ami, False sinon.
+            True if user is a friend, False otherwise
         """
         return any(f.friend_id == friend.id for f in self.friendships_initiated)
 
     def get_friends(self) -> list[User]:
         """
-        Retourne la liste des amis de l'utilisateur.
+        Get list of all friends of this user.
 
         Returns:
-            list[User]: Liste des amis.
+            List of User objects that are friends
         """
         return [f.friend for f in self.friendships_initiated]
 
     def get_friend_count(self) -> int:
         """
-        Retourne le nombre d'amis.
+        Get the number of friends.
 
         Returns:
-            int: Nombre d'amis.
+            Integer count of friends
         """
         return len(self.friendships_initiated)
 
 
 class Friendship(Base):
     """
-    Modèle SQLAlchemy pour représenter une amitié entre deux utilisateurs.
+    SQLAlchemy ORM model for a friendship relationship between two users.
+
+    Represents a directional friendship from user_id to friend_id.
+    Includes a unique constraint to prevent duplicate friendships.
+
+    Attributes:
+        id: Primary key
+        user_id: Foreign key to User (friend initiator)
+        friend_id: Foreign key to User (friend being followed)
+        user: Relationship to the initiating User
+        friend: Relationship to the friend User
     """
 
     __tablename__ = "friendships"
@@ -150,12 +193,17 @@ class Friendship(Base):
         return f"Friendship(user_id={self.user_id}, friend_id={self.friend_id})"
 
 
-# Créer les tables
+# Database initialization
 def init_db():
-    """Initialise la base de données."""
+    """Initialize database and create all tables."""
     Base.metadata.create_all(bind=engine)
 
 
 def get_session() -> Session:
-    """Retourne une nouvelle session SQLAlchemy."""
+    """
+    Get a new SQLAlchemy session.
+
+    Returns:
+        A new Session bound to the database engine
+    """
     return Session(engine)
