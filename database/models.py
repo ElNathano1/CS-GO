@@ -30,9 +30,6 @@ import hashlib
 
 
 # Créer la base de données
-os.environ["DATABASE_URL"] = (
-    "mysql+pymysql://root:sCvDsuGFPFhQgAjClyzAtRnyUeewfZCU@tramway.proxy.rlwy.net:57805/railway"
-)
 engine = create_engine(os.environ["DATABASE_URL"], echo=False)
 Base = declarative_base()
 
