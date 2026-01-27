@@ -34,14 +34,14 @@ class SettingsFrame(ttk.Frame):
         self.app = app
 
         # Title
-        title = ttk.Label(
-            self, text="Paramètres", font=("Arial", 24, "bold"), background="#f0f0f0"
-        )
+        title = ttk.Label(self, text="Paramètres", style="Title.TLabel")
         title.pack(pady=(40, 20))
 
         # Sound options frame
-        option_frame = ttk.LabelFrame(self, padding=20)
-        option_frame.pack(pady=20)
+        main_option_frame = self.app.Frame(self, bg="black", bd=1)
+        main_option_frame.pack(pady=20)
+        option_frame = self.app.Frame(main_option_frame)
+        option_frame.pack(pady=3, padx=3)
 
         # Sound settings
         self.sound_enabled = tk.BooleanVar(value=self.app.preferences["sound_enabled"])
@@ -51,55 +51,48 @@ class SettingsFrame(ttk.Frame):
             variable=self.sound_enabled,
             takefocus=False,
         )
-        sound_enabled.pack(pady=10, fill=tk.X)
+        sound_enabled.pack(padx=20, pady=(20, 10), fill=tk.X)
 
         # Volume controls
-        master_volume_frame = ttk.Frame(option_frame)
-        master_volume_frame.pack(pady=10, fill=tk.X)
-
-        ttk.Label(master_volume_frame, text="Volume principal:").pack()
+        ttk.Label(option_frame, text="Volume principal").pack(padx=20, pady=(10, 0))
         self.master_volume_slider = ttk.Scale(
-            master_volume_frame,
+            option_frame,
             from_=0,
             to=100,
             orient=tk.HORIZONTAL,
             variable=tk.IntVar(value=self.app.preferences["master_volume"]),
             takefocus=False,
         )
-        self.master_volume_slider.pack(fill=tk.X, expand=True)
+        self.master_volume_slider.pack(padx=20, pady=10, fill=tk.X, expand=True)
 
-        music_volume_frame = ttk.Frame(option_frame)
-        music_volume_frame.pack(pady=10, fill=tk.X)
-
-        ttk.Label(music_volume_frame, text="Volume de la musique:").pack()
+        ttk.Label(option_frame, text="Volume de la musique").pack(padx=20, pady=(10, 0))
         self.music_volume_slider = ttk.Scale(
-            music_volume_frame,
+            option_frame,
             from_=0,
             to=100,
             orient=tk.HORIZONTAL,
             variable=tk.IntVar(value=self.app.preferences["music_volume"]),
             takefocus=False,
         )
-        self.music_volume_slider.pack(fill=tk.X, expand=True)
+        self.music_volume_slider.pack(padx=20, pady=10, fill=tk.X, expand=True)
 
-        effects_volume_frame = ttk.Frame(option_frame)
-        effects_volume_frame.pack(pady=10, fill=tk.X)
-        ttk.Label(effects_volume_frame, text="Volume des effets:").pack()
+        ttk.Label(option_frame, text="Volume des effets").pack(padx=20, pady=(10, 0))
         self.effects_volume_slider = ttk.Scale(
-            effects_volume_frame,
+            option_frame,
             from_=0,
             to=100,
             orient=tk.HORIZONTAL,
             variable=tk.IntVar(value=self.app.preferences["effects_volume"]),
             takefocus=False,
         )
-        self.effects_volume_slider.pack(fill=tk.X, expand=True)
+        self.effects_volume_slider.pack(padx=20, pady=(10, 20), fill=tk.X, expand=True)
 
         # Return to Lobby button
         self.app.Button(
             self,
             text="Retour au Lobby",
             overlay_path=self.app.return_icon_path,
+            hover_overlay_path=self.app.hovered_return_icon_path,
             command=self._return_to_lobby,
             takefocus=False,
         ).pack(pady=20)

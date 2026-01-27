@@ -90,6 +90,7 @@ class TexturedButton(tk.Button):
         texture_path: str | Path,
         text: str = "",
         overlay_path: str | Path | None = None,
+        hover_overlay_path: str | Path | None = None,
         width: int = 120,
         height: int = 40,
         overlay_compound: str = "left",
@@ -108,6 +109,7 @@ class TexturedButton(tk.Button):
         """
         Args:
             texture_path: Path to the large texture image (e.g., 1920x1080).
+            hover_texture_path: Path to the large texture image (e.g., 1920x1080).
             text: Button text (drawn in PIL, not Tkinter).
             overlay_path: Optional path to an image to draw next to the text.
             width, height: Button size in pixels.
@@ -119,7 +121,8 @@ class TexturedButton(tk.Button):
             bd: Border width in pixels (default: 0).
             hover_border_color: Border color on hover (default: same as background).
             font_dpi_scale: Scale factor for font size based on DPI (default: 96
-            highlightthickness: Highlight border thickness in pixels (default: 0).            **kwargs: Other tk.Button arguments (command, etc.) — NOT compound, padx, pady, or text.
+            highlightthickness: Highlight border thickness in pixels (default: 0).
+            **kwargs: Other tk.Button arguments (command, etc.) — NOT compound, padx, pady, or text.
         """
         # Initialize button with empty text (all rendering is in PIL)
         super().__init__(parent, text="", width=width, height=height, bg=bg, **kwargs)
@@ -128,6 +131,9 @@ class TexturedButton(tk.Button):
         self.height = height
         self.texture_path = Path(texture_path)
         self.overlay_path = Path(overlay_path) if overlay_path else None
+        self.hover_overlay_path = (
+            Path(hover_overlay_path) if hover_overlay_path else None
+        )
         self.overlay_compound = overlay_compound
         self.overlay_padding = overlay_padding
         self.text = text
@@ -144,6 +150,7 @@ class TexturedButton(tk.Button):
         self._is_disabled = False
         self._original_command = None
         self._original_text_color = text_color
+        self._original_overlay_path = overlay_path
 
         # Set_disabled
         self.set_disabled(disabled)
@@ -316,7 +323,9 @@ class TexturedButton(tk.Button):
             # Restore the original command
             if self._original_command:
                 self.configure(
-                    command=self._original_command, text_color=self._original_text_color
+                    command=self._original_command,
+                    text_color=self._original_text_color,
+                    texture_path=self._original_overlay_path,
                 )
             self._original_command = None
 
@@ -372,6 +381,7 @@ class TexturedButton(tk.Button):
 
         super().config(**kwargs)
         self._original_text_color = self.text_color
+        self._original_overlay_path = self.texture_path
         self._original_bg = self.bg
         self._update_texture()
 
@@ -388,6 +398,7 @@ class TexturedButton(tk.Button):
         if not self.is_disabled():
             self.config(bg=self.hover_border_color)  # type: ignore
             self.text_color = self.hover_text_color
+            self.overlay_path = self.hover_overlay_path
             self._update_texture()
 
     def hover_effect_on_leave(self, event):
@@ -403,7 +414,94 @@ class TexturedButton(tk.Button):
         if not self.is_disabled():
             self.config(bg=self._original_bg)
             self.text_color = self._original_text_color
+            self.overlay_path = self._original_overlay_path
             self._update_texture()
+
+
+class TexturedFrame(tk.Frame):
+    """
+    A Frame with a textured background rendered in PIL.
+    Uses a Label as background and allows normal widget placement with pack/grid.
+    The frame can adapt to its children or have a fixed size.
+    """
+
+    def __init__(
+        self,
+        parent,
+        texture_path: str | Path,
+        width: int | None = None,
+        height: int | None = None,
+        bd: int = 0,
+        padx: int = 0,
+        pady: int = 0,
+        **kwargs,
+    ):
+        """
+        Args:
+            parent: Parent widget
+            texture_path: Path to the texture image
+            width: Frame width in pixels (None for auto-size based on children)
+            height: Frame height in pixels (None for auto-size based on children)
+            bd: Border width
+            padx: Internal horizontal padding (space between texture edge and content)
+            pady: Internal vertical padding (space between texture edge and content)
+            **kwargs: Other tk.Frame arguments
+        """
+        super().__init__(parent, bd=bd, **kwargs)
+
+        self.texture_path = Path(texture_path)
+        self.fixed_width = width
+        self.fixed_height = height
+        self.bd = bd
+        self.padx = padx
+        self.pady = pady
+
+        # Create background label for texture
+        self.bg_label = tk.Label(self, bd=0, highlightthickness=0)
+        self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        self.bg_label.lower()  # Keep it behind other widgets
+
+        # Create content frame - always reference self for transparent padding
+        # The padding is applied via pack() on the parent TexturedFrame
+        self.content_frame = self
+
+        # Load initial texture if fixed size is provided
+        if width and height:
+            self._update_texture(width, height)
+            self.config(width=width, height=height)
+        else:
+            # Bind to configure event for auto-sizing
+            self.bind("<Configure>", self._on_resize)
+
+    def _on_resize(self, event):
+        """Called when frame is resized, updates texture to match."""
+        if event.widget == self and (event.width > 1 and event.height > 1):
+            self._update_texture(event.width, event.height)
+
+    def _update_texture(self, width: int, height: int):
+        """Load texture, crop/resize to frame size, and apply as background."""
+        # Load and crop texture to frame size
+        tex_img = Image.open(self.texture_path).convert("RGBA")
+        tex_w, tex_h = tex_img.size
+        left = max(0, (tex_w - width) // 2)
+        top = max(0, (tex_h - height) // 2)
+        right = min(tex_w, left + width)
+        bottom = min(tex_h, top + height)
+
+        cropped = tex_img.crop((left, top, right, bottom))
+        texture = cropped.resize((width, height), Image.Resampling.LANCZOS)
+
+        # Convert to PhotoImage
+        photo = ImageTk.PhotoImage(texture)
+        self.bg_label._photo = photo  # type: ignore # Keep reference
+        self.bg_label.config(image=photo)
+
+    def resize(self, new_width: int, new_height: int):
+        """Dynamically resize frame and re-render texture."""
+        self.fixed_width = new_width
+        self.fixed_height = new_height
+        self.config(width=new_width, height=new_height)
+        self._update_texture(new_width, new_height)
 
 
 class TopLevelWindow(tk.Toplevel):

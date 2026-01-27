@@ -38,14 +38,17 @@ class GameLobbyFrame(ttk.Frame):
         self.ai = None
 
         # Title
-        title = ttk.Label(
-            self, text="Game Lobby", font=("Arial", 24, "bold"), background="#f0f0f0"
-        )
+        title = ttk.Label(self, text="Game Lobby", style="Title.TLabel")
         title.pack(pady=(40, 20))
 
+        self.container = ttk.Frame(self)
+        self.container.pack()
+
         # Number of players selection frame
-        player_frame = ttk.LabelFrame(self, padding=20)
-        player_frame.pack(pady=20)
+        main_player_frame = self.app.Frame(self.container, bg="black", bd=1)
+        main_player_frame.pack(pady=20, fill=tk.X)
+        player_frame = self.app.Frame(main_player_frame)
+        player_frame.pack(pady=3, padx=3, fill=tk.X)
 
         # Buttons for number of players
         ttk.Radiobutton(
@@ -54,18 +57,20 @@ class GameLobbyFrame(ttk.Frame):
             variable=self.multiplayer,
             value=False,
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(padx=20, pady=(20, 10), fill=tk.X)
         ttk.Radiobutton(
             player_frame,
             text="Deux joueurs (local)",
             variable=self.multiplayer,
             value=True,
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(padx=20, pady=(10, 20), fill=tk.X)
 
         # Board size selection frame
-        size_frame = ttk.LabelFrame(self, padding=20)
-        size_frame.pack(pady=20)
+        main_size_frame = self.app.Frame(self.container, bg="black", bd=1)
+        main_size_frame.pack(pady=20, fill=tk.X)
+        size_frame = self.app.Frame(main_size_frame)
+        size_frame.pack(pady=3, padx=3, fill=tk.X)
 
         # Buttons for different board sizes
         ttk.Radiobutton(
@@ -74,38 +79,39 @@ class GameLobbyFrame(ttk.Frame):
             variable=self.board_size,
             value=9,
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(padx=20, pady=(20, 10), fill=tk.X)
         ttk.Radiobutton(
             size_frame,
             text="13x13",
             variable=self.board_size,
             value=13,
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(padx=20, pady=10, fill=tk.X)
         ttk.Radiobutton(
             size_frame,
             text="19x19",
             variable=self.board_size,
             value=19,
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(padx=20, pady=(10, 20), fill=tk.X)
 
         # Start Game button
         self.app.Button(
-            self,
+            self.container,
             text="Démarrer la partie",
             command=self._start_game,
             takefocus=False,
-        ).pack(pady=20)
+        ).pack(pady=(20, 10), fill=tk.X)
 
         # Return to Lobby button
         self.app.Button(
-            self,
+            self.container,
             text="Retour au Lobby",
             overlay_path=self.app.return_icon_path,
+            hover_overlay_path=self.app.hovered_return_icon_path,
             command=self._return_to_lobby,
             takefocus=False,
-        ).pack(pady=20)
+        ).pack(pady=(10, 20), fill=tk.X)
 
     def _start_game(self) -> None:
         """

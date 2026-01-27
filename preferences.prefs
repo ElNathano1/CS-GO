@@ -4,5 +4,5 @@
   "music_volume": 100,
   "effects_volume": 100,
   "stay_logged_in": true,
-  "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVsbmF0aGFubyIsImV4cCI6MTc2OTYxMjUwOSwiaWF0IjoxNzY5NTI2MTA5fQ.6s5xdkDzFi1udC6RC3LnKXORfKZyVSbel5kVC7a-xi4"
+  "auth_token": null
 }

@@ -22,7 +22,7 @@ import threading
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import from reorganized modules
-from gui.widgets import TexturedButton, TopLevelWindow
+from gui.widgets import TexturedButton, TexturedFrame, TopLevelWindow
 from gui.sound_manager import SoundManager
 from gui.game_canvas import StoneBowl
 from gui.utils import save_preferences as save_dictionnary  # Legacy name
@@ -111,15 +111,17 @@ class App(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.return_to_desktop)
 
         # Defer login dialog opening until mainloop is active
-        # Only show immediately if there's no saved token to verify
-        if self.username is None or self.token is None:
-            if self.preferences.get("stay_logged_in") and self.preferences.get("auth_token"):
-                # Token verification in progress, wait for result
-                # Fallback: show dialog after 3 seconds if verification takes too long
-                self.after(3000, self._show_login_dialog_if_needed)
-            else:
-                # No token to verify, show dialog immediately
-                self.after(100, self._show_login_dialog)
+        # First, start token verification if applicable
+        if self.preferences.get("stay_logged_in") and self.preferences.get(
+            "auth_token"
+        ):
+            # Start token verification after mainloop is active
+            self.after(50, self._start_token_verification)
+            # Show login dialog after timeout if verification takes too long
+            self.after(3000, self._show_login_dialog_if_needed)
+        elif self.username is None or self.token is None:
+            # No token to verify, show dialog immediately
+            self.after(100, self._show_login_dialog)
 
     def _on_global_click(self, event: tk.Event) -> None:
         """
@@ -162,11 +164,11 @@ class App(tk.Tk):
         banner_dir = Path(__file__).parent / "images/banners"
 
         # Load welcome banner
-        self.welcome_banner_path = banner_dir / "cs_go_banner.png"
-        if self.welcome_banner_path.exists():
-            self.welcome_banner = ImageTk.PhotoImage(
-                Image.open(self.welcome_banner_path).resize(
-                    (1000, 300), Image.Resampling.LANCZOS
+        self.cs_go_banner_path = banner_dir / "cs_go_banner.png"
+        if self.cs_go_banner_path.exists():
+            self.cs_go_banner = ImageTk.PhotoImage(
+                Image.open(self.cs_go_banner_path).resize(
+                    (600, 182), Image.Resampling.LANCZOS
                 )
             )
 
@@ -188,12 +190,26 @@ class App(tk.Tk):
             self.ai_icon = ImageTk.PhotoImage(
                 Image.open(self.ai_icon_path).resize((32, 32), Image.Resampling.LANCZOS)
             )
+        self.hovered_ai_icon_path = images_dir / "hovered_ai.png"
+        if self.hovered_ai_icon_path.exists():
+            self.hovered_ai_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_ai_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
 
         # Load pass icon
         self.pass_icon_path = images_dir / "pass.png"
         if self.pass_icon_path.exists():
             self.pass_icon = ImageTk.PhotoImage(
                 Image.open(self.pass_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_pass_icon_path = images_dir / "hovered_pass.png"
+        if self.hovered_pass_icon_path.exists():
+            self.hovered_pass_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_pass_icon_path).resize(
                     (32, 32), Image.Resampling.LANCZOS
                 )
             )
@@ -206,12 +222,26 @@ class App(tk.Tk):
                     (32, 32), Image.Resampling.LANCZOS
                 )
             )
+        self.hovered_prefs_icon_path = images_dir / "hovered_preferences.png"
+        if self.hovered_prefs_icon_path.exists():
+            self.hovered_prefs_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_prefs_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
 
         # Load resign icon
         self.resign_icon_path = images_dir / "resign.png"
         if self.resign_icon_path.exists():
             self.resign_icon = ImageTk.PhotoImage(
                 Image.open(self.resign_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_resign_icon_path = images_dir / "hovered_resign.png"
+        if self.hovered_resign_icon_path.exists():
+            self.hovered_resign_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_resign_icon_path).resize(
                     (32, 32), Image.Resampling.LANCZOS
                 )
             )
@@ -224,6 +254,13 @@ class App(tk.Tk):
                     (32, 32), Image.Resampling.LANCZOS
                 )
             )
+        self.hovered_return_icon_path = images_dir / "hovered_return.png"
+        if self.hovered_return_icon_path.exists():
+            self.hovered_return_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_return_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
 
         # Load revenge icon
         self.revenge_icon_path = images_dir / "revenge.png"
@@ -233,12 +270,26 @@ class App(tk.Tk):
                     (32, 32), Image.Resampling.LANCZOS
                 )
             )
+        self.hovered_revenge_icon_path = images_dir / "hovered_revenge.png"
+        if self.hovered_revenge_icon_path.exists():
+            self.hovered_revenge_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_revenge_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
 
         # Load rules icon
         self.rules_icon_path = images_dir / "rules.png"
         if self.rules_icon_path.exists():
             self.rules_icon = ImageTk.PhotoImage(
                 Image.open(self.rules_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_rules_icon_path = images_dir / "hovered_rules.png"
+        if self.hovered_rules_icon_path.exists():
+            self.hovered_rules_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_rules_icon_path).resize(
                     (32, 32), Image.Resampling.LANCZOS
                 )
             )
@@ -267,21 +318,44 @@ class App(tk.Tk):
         Sets up consistent colors, fonts, and appearance for the application.
         """
 
+        self._load_banners()
         self._load_icons()
         self._load_textures()
 
         style = ttk.Style()
         style.theme_use("clam")
 
+        # Configure frame style
+        style.configure("TFrame", background="#1e1e1e")
+
+        # Configure framed frame style
+        style.configure(
+            "Framed.TFrame",
+            background="#1e1e1e",
+            ipadx=10,
+            ipady=10,
+            relief=tk.RIDGE,
+            borderwidth=2,
+            bordercolor="#f6a90d",
+        )
+
         # Configure button style
         style.configure("TButton", font=("Spell of Asia", 18), padding=5)
 
         # Configure label style
-        style.configure("TLabel", font=("Spell of Asia", 18), background="#f0f0f0")
+        style.configure(
+            "TLabel",
+            font=("Spell of Asia", 18),
+            background="#1e1e1e",
+            foreground="white",
+        )
 
         # Configure title label style
         style.configure(
-            "Title.TLabel", font=("Spell of Asia", 24, "bold"), background="#f0f0f0"
+            "Title.TLabel",
+            font=("Spell of Asia", 24, "bold"),
+            background="#1e1e1e",
+            foreground="white",
         )
 
     def Button(
@@ -291,6 +365,7 @@ class App(tk.Tk):
         / "images/textures/light_wood_texture.png",
         text: str = "",
         overlay_path: str | Path | None = None,
+        hover_overlay_path: str | Path | None = None,
         width: int = 230,
         height: int = 40,
         overlay_compound: str = "left",
@@ -318,6 +393,7 @@ class App(tk.Tk):
             texture_path=texture_path,
             text=text,
             overlay_path=overlay_path,
+            hover_overlay_path=hover_overlay_path,
             width=width,
             height=height,
             overlay_compound=overlay_compound,
@@ -331,6 +407,42 @@ class App(tk.Tk):
             relief=relief,
             cursor=cursor,
             disabled=disabled,
+            **kwargs,
+        )
+
+    def Frame(
+        self,
+        parent,
+        texture_path: str | Path = Path(__file__).parent
+        / "images/textures/dark_wood_texture.png",
+        width: int | None = None,
+        height: int | None = None,
+        bd: int = 2,
+        padx: int = 20,
+        pady: int = 20,
+        highlightthickness: int = 0,
+        bg: str = "#d79a10",
+        relief=tk.FLAT,
+        **kwargs,
+    ) -> TexturedFrame:
+        """
+        Create a default textured frame for the application.
+
+        Returns:
+            TexturedFrame: Default texture frame for the app.
+        """
+
+        return TexturedFrame(
+            parent=parent,
+            texture_path=texture_path,
+            width=width,
+            height=height,
+            bd=bd,
+            padx=padx,
+            pady=pady,
+            bg=bg,
+            relief=relief,
+            highlightthickness=highlightthickness,
             **kwargs,
         )
 
@@ -384,14 +496,7 @@ class App(tk.Tk):
             for event in self.sound_manager.sounds:
                 self.sound_manager.sounds[event].set_volume(0)
 
-        # Apply account preferences
-        if self.preferences.get("stay_logged_in"):
-            token = self.preferences.get("auth_token")
-            if token is not None:
-                thread = threading.Thread(
-                    target=lambda: asyncio.run(self._verify_token(token))
-                )
-                thread.start()
+        # Token verification will be done after mainloop starts
 
     async def _verify_token(self, token: str) -> None:
         """
@@ -420,6 +525,15 @@ class App(tk.Tk):
             # Network error or invalid token
             print(f"Token verification error: {e}")
             self.after(0, self._on_token_invalid)
+
+    def _start_token_verification(self) -> None:
+        """Start token verification in a background thread."""
+        token = self.preferences.get("auth_token")
+        if token:
+            thread = threading.Thread(
+                target=lambda: asyncio.run(self._verify_token(token))
+            )
+            thread.start()
 
     def _on_token_verified(self, data: dict, token: str) -> None:
         """Called in main thread when token is verified."""

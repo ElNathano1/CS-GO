@@ -42,13 +42,11 @@ class LoginFrame(ttk.Frame):
         self.app = app
 
         # Title
-        title = ttk.Label(
-            self, text="Connexion", font=("Arial", 24, "bold"), background="#f0f0f0"
-        )
+        title = ttk.Label(self, text="Connexion", style="Title.TLabel")
         title.pack(pady=(40, 20))
 
         # Login frame
-        login_frame = ttk.LabelFrame(self, padding=20)
+        login_frame = ttk.Frame(self, style="Framed.TFrame", padding=20)
         login_frame.pack(pady=20)
 
         # Username entry

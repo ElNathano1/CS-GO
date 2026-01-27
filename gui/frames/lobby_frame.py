@@ -43,52 +43,69 @@ class LobbyFrame(ttk.Frame):
             self.app.sound_manager.play_exclusive("background_music")
 
         # Title
-        title = ttk.Label(
-            self, text="CS Go", font=("Arial", 24, "bold"), background="#f0f0f0"
+        title = tk.Canvas(
+            self,
+            width=600,
+            height=182,
+            relief=tk.FLAT,
+            bd=0,
+            highlightthickness=0,
+            bg="#1e1e1e",
         )
-        title.pack(pady=(40, 20))
+        title.create_image(
+            0,
+            0,
+            image=app.cs_go_banner,
+            anchor="nw",
+        )
+        title.pack(pady=(20, 20))
 
-        # Options frame
-        option_frame = ttk.LabelFrame(self, padding=20)
-        option_frame.pack(pady=20)
+        # Menu frame
+        main_menu_frame = self.app.Frame(self, bg="black", bd=1)
+        main_menu_frame.pack(pady=20, padx=20)
+        menu_frame = self.app.Frame(main_menu_frame)
+        menu_frame.pack(pady=3, padx=3)
 
-        # Buttons for different options
+        # Buttons for menu options
         self.app.Button(
-            option_frame,
+            menu_frame.content_frame,
             text="Continuer la partie",
             command=lambda: self._resume_game(game=self.app.current_game),  # type: ignore
             disabled=True if self.app.current_game is None else False,
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(pady=(20, 10), fill=tk.X, padx=20)
         self.app.Button(
-            option_frame,
+            menu_frame.content_frame,
             text="Nouvelle partie",
             command=lambda: self._open_game(),
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(pady=10, fill=tk.X, padx=20)
         self.app.Button(
-            option_frame,
+            menu_frame.content_frame,
             overlay_path=self.app.prefs_icon_path,
+            hover_overlay_path=self.app.hovered_prefs_icon_path,
             text="Paramètres",
             command=lambda: self._open_settings(),
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(pady=10, fill=tk.X, padx=20)
         self.app.Button(
-            option_frame,
+            menu_frame.content_frame,
             overlay_path=self.app.rules_icon_path,
+            hover_overlay_path=self.app.hovered_rules_icon_path,
             text="Règles du jeu",
             command=lambda: self._open_rules(),
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(pady=10, fill=tk.X, padx=20)
 
         # Return to Desktop button
         self.app.Button(
-            option_frame,
+            menu_frame.content_frame,
             overlay_path=self.app.return_icon_path,
+            hover_overlay_path=self.app.hovered_return_icon_path,
             text="Retour au bureau",
             command=lambda: self.app.return_to_desktop(),
             takefocus=False,
-        ).pack(pady=10, fill=tk.X)
+        ).pack(pady=(10, 20), fill=tk.X, padx=20)
 
     def _open_game(self) -> None:
         """

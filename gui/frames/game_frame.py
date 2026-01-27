@@ -229,7 +229,7 @@ class GameFrame(ttk.Frame):
         main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
 
         # Left side: Game board
-        board_frame = ttk.LabelFrame(main_frame, padding=20)
+        board_frame = ttk.Frame(main_frame, style="Framed.TFrame", padding=20)
         board_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Create canvas for drawing the board using calculated dimensions
@@ -248,6 +248,7 @@ class GameFrame(ttk.Frame):
             relief=tk.SOLID,
             bd=0,
             highlightthickness=0,  # Remove canvas border highlight
+            bg="#1e1e1e",
         )
         self.canvas.pack(anchor="center", expand=True)
         self.canvas.bind("<Button-1>", self._on_board_click)
@@ -264,7 +265,7 @@ class GameFrame(ttk.Frame):
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(10, 0))
 
         # Game status frame
-        status_frame = ttk.LabelFrame(right_frame, padding=20)
+        status_frame = ttk.Frame(right_frame, style="Framed.TFrame", padding=20)
         status_frame.pack(fill=tk.X, pady=(0, 10))
 
         # Current player display
@@ -276,48 +277,54 @@ class GameFrame(ttk.Frame):
         self.moves_label.pack(pady=5)
 
         # Control buttons frame
-        buttons_frame = ttk.LabelFrame(right_frame, padding=20)
-        buttons_frame.pack(fill=tk.X, pady=(0, 10))
+        main_buttons_frame = self.app.Frame(right_frame, bg="black", bd=1)
+        main_buttons_frame.pack(fill=tk.X, pady=(0, 10))
+        buttons_frame = self.app.Frame(main_buttons_frame)
+        buttons_frame.pack(pady=3, padx=3, expand=True)
 
         # Pass button
         self.pass_button = self.app.Button(
             buttons_frame,
             text="Passer",
             overlay_path=self.app.pass_icon_path,
+            hover_overlay_path=self.app.hovered_pass_icon_path,
             command=lambda: self._on_pass(),
             takefocus=False,
         )
-        self.pass_button.pack(fill=tk.X, pady=3)
+        self.pass_button.pack(fill=tk.X, pady=(20, 10), padx=20)
 
         # Resign button
         self.resign_button = self.app.Button(
             buttons_frame,
             text="Abandon",
             overlay_path=self.app.resign_icon_path,
+            hover_overlay_path=self.app.hovered_resign_icon_path,
             command=lambda: self._on_resign(),
             takefocus=False,
         )
-        self.resign_button.pack(fill=tk.X, pady=3)
+        self.resign_button.pack(fill=tk.X, pady=10, padx=20)
 
         # New game button
         self.new_game_button = self.app.Button(
             buttons_frame,
             text="Revanche",
             overlay_path=self.app.revenge_icon_path,
+            hover_overlay_path=self.app.hovered_revenge_icon_path,
             command=lambda: self._on_new_game(),
             takefocus=False,
         )
-        self.new_game_button.pack(fill=tk.X, pady=3)
+        self.new_game_button.pack(fill=tk.X, pady=10, padx=20)
 
         # Back to Lobby button
         self.back_button = self.app.Button(
             buttons_frame,
             text="Retour au lobby",
             overlay_path=self.app.return_icon_path,
+            hover_overlay_path=self.app.hovered_return_icon_path,
             command=lambda: self._on_back_to_lobby(),
             takefocus=False,
         )
-        self.back_button.pack(fill=tk.X, pady=3)
+        self.back_button.pack(fill=tk.X, pady=(10, 20), padx=20)
 
         # Draw the initial board state
         self._draw_board()
