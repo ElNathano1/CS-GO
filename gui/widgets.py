@@ -310,7 +310,8 @@ class TexturedButton(tk.Button):
         if disabled:
             # Store the original command and replace it with a no-op
             self._original_command = self.cget("command")
-            self.configure(command=lambda: None, text_color="gray")
+            self.text_color = "gray"
+            self._update_texture()
         else:
             # Restore the original command
             if self._original_command:
@@ -491,10 +492,7 @@ class TopLevelWindow(tk.Toplevel):
         if fade_in:
             self._fade_in()
 
-        # Wait for window to appear on screen before calling grab_set
-        self.wait_visibility()
-        self.grab_set()
-        self.wait_window(self)
+        # Grab/wait are deferred so callers can attach content before showing
 
     def _center_window(self) -> None:
         """
@@ -523,15 +521,12 @@ class TopLevelWindow(tk.Toplevel):
         overlay.overrideredirect(True)
         overlay.configure(bg=color)
 
-        # Get parent window geometry
-        master.update_idletasks()
-        x = master.winfo_x()
-        y = master.winfo_y()
-        width = master.winfo_width()
-        height = master.winfo_height()
-
-        # Position overlay to cover parent exactly
-        overlay.geometry(f"{width}x{height}+{x}+{y}")
+        # Apply full screen window
+        try:
+            overlay.state("zoomed")
+        except tk.TclError:
+            overlay.attributes("-fullscreen", True)
+        overlay.update_idletasks()
 
         # Set transparency
         overlay.attributes("-alpha", alpha)
@@ -578,6 +573,34 @@ class TopLevelWindow(tk.Toplevel):
         )
         return icon_label
 
+    def show(self, wait: bool = True) -> None:
+        """
+        Display the dialog, grab focus, and optionally block until closed.
+
+        Args:
+            wait (bool): When True, block until the dialog is closed (blocking mode).
+                        When False, show dialog non-blocking without grab.
+        """
+
+        # Make dialog visible
+        self.deiconify()
+
+        # Ensure dialog is above overlay and parent
+        if self.overlay_window:
+            self.overlay_window.lift(self.master)
+        self.lift()
+        self.focus_force()
+
+        if wait:
+            # Blocking mode: grab input and wait for closure
+            self.grab_set()
+            self.wait_visibility()
+            self.wait_window(self)
+        else:
+            # Non-blocking mode: just show without grab
+            # Allow parent to remain responsive
+            pass
+
     def close(self, result=None) -> None:
         """
         Close the dialog with an optional result.
@@ -587,20 +610,39 @@ class TopLevelWindow(tk.Toplevel):
         """
         self.result = result
 
-        # Destroy overlay window if it exists
-        if self.overlay_window:
-            self.overlay_window.destroy()
+        try:
+            # Release grab
+            try:
+                self.grab_release()
+            except (tk.TclError, RuntimeError):
+                pass  # Grab already released or window already destroyed
 
-        self.grab_release()
-        self.destroy()
+            # Return focus to parent
+            try:
+                self.master.focus_set()
+            except (tk.TclError, RuntimeError):
+                pass
+
+            # Destroy overlay window if it exists
+            if self.overlay_window:
+                try:
+                    self.overlay_window.destroy()
+                except (tk.TclError, RuntimeError):
+                    pass  # Already destroyed
+        finally:
+            # Always destroy self
+            try:
+                self.destroy()
+            except (tk.TclError, RuntimeError):
+                pass
 
     def on_validate(self) -> None:
         """
-        Called when Enter key is pressed.
-        Override in subclasses for custom validation logic.
-        Default: close with True result.
+        Called when the user validates the dialog (e.g., presses Enter).
+        Override in subclasses to handle validation.
+        By default, closes the dialog with result=True.
         """
-        self.close(True)
+        self.close(result=True)
 
     def body(self, **kwargs) -> None:
         """

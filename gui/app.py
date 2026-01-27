@@ -13,15 +13,19 @@ from pathlib import Path
 from PIL import Image, ImageTk
 import os
 
+import requests
+import threading
+
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import from reorganized modules
-from gui.widgets import TexturedButton
+from gui.widgets import TexturedButton, TopLevelWindow
 from gui.sound_manager import SoundManager
 from gui.game_canvas import StoneBowl
 from gui.utils import save_preferences as save_dictionnary  # Legacy name
 from gui.frames import LobbyFrame
+from gui.frames.login_dialog import LoginFrame
 
 # Game logic imports
 from player.ai import Martin, Leo, Magnus
@@ -46,7 +50,11 @@ class App(tk.Tk):
         current_game (GoGame, optional): The current game instance for resuming later.
     """
 
-    def __init__(self, preferences: dict, current_game: GoGame | None = None):
+    def __init__(
+        self,
+        preferences: dict,
+        current_game: GoGame | None = None,
+    ):
         """
         Initialize the main application window.
 
@@ -64,6 +72,8 @@ class App(tk.Tk):
         self.sound_manager = SoundManager()
 
         # Store and apply preferences
+        self.username = None
+        self.token = None
         self.preferences = preferences
         self.apply_preferences()
 
@@ -78,9 +88,12 @@ class App(tk.Tk):
 
         self.current_frame = None
 
-        # Center window on screen
+        # Apply full screen window
+        try:
+            self.state("zoomed")
+        except tk.TclError:
+            self.attributes("-fullscreen", True)
         self.update_idletasks()
-        self._center_window()
 
         # Save current game state for resuming later
         self.current_game = current_game
@@ -93,6 +106,10 @@ class App(tk.Tk):
 
         # Replace the default close behavior to save preferences
         self.protocol("WM_DELETE_WINDOW", self.return_to_desktop)
+
+        # Defer login dialog opening until mainloop is active
+        if self.username is None or self.token is None:
+            self.after(100, self._show_login_dialog)
 
     def _on_global_click(self, event: tk.Event) -> None:
         """
@@ -310,8 +327,13 @@ class App(tk.Tk):
         Apply user preferences to the application.
         """
 
+        # Ensure expected preference keys exist
+        self.preferences.setdefault("fullscreen", True)
+        self.preferences.setdefault("stay_logged_in", True)
+        self.preferences.setdefault("auth_token", None)
+
         # Apply sound preference
-        if self.preferences["sound_enabled"]:
+        if self.preferences.get("sound_enabled", True):
             if not self.sound_manager.is_enabled():
                 self.sound_manager.toggle()
 
@@ -337,12 +359,61 @@ class App(tk.Tk):
             for event in self.sound_manager.sounds:
                 self.sound_manager.sounds[event].set_volume(0)
 
-        # Fullscreen preference
-        if self.preferences["fullscreen"]:
-            self.attributes("-fullscreen", True)
-        else:
-            self.attributes("-fullscreen", False)
-            self.wm_state(newstate="zoomed")
+        # Apply account preferences
+        if self.preferences.get("stay_logged_in"):
+            token = self.preferences.get("auth_token")
+            if token is not None:
+                thread = threading.Thread(target=self._verify_token, args=(token,))
+                thread.start()
+                self._verify_token(token)
+
+    def _verify_token(self, token: str) -> None:
+        """
+        Verify the authentication token with the backend API.
+
+        Args:
+            token (str): The authentication token to verify.
+        """
+
+        try:
+            response = requests.post(
+                f"{BASE_URL}/api/verify_token",
+                json={"token": token},
+                timeout=10,
+            )
+            response_data = response.json()
+
+            if response.status_code == 200 and response_data.get("valid", False):
+                self.username = response_data.get("username")
+                self.token = token
+            else:
+                self.preferences["auth_token"] = None
+
+        except:
+            pass
+
+    def open_dialog(
+        self, dialog: TopLevelWindow, frame_class: type[tk.Frame] | None = None
+    ) -> None:
+        """
+        Open a dialog window and optionally mount a frame inside.
+
+        Args:
+            dialog: An initialized TopLevelWindow instance
+            frame_class: Optional frame class to display inside the dialog
+        """
+
+        if frame_class is not None:
+            frame = frame_class(dialog.body_frame, self)  # type: ignore
+            frame.pack(fill=tk.BOTH, expand=True)
+        dialog.show(wait=False)
+
+    def _show_login_dialog(self) -> None:
+        """
+        Show the login dialog (called after mainloop is active).
+        """
+
+        self.open_dialog(TopLevelWindow(self, width=400, height=600), LoginFrame)  # type: ignore
 
     def _center_window(self) -> None:
         """

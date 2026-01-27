@@ -3,7 +3,8 @@
   "master_volume": 100,
   "music_volume": 100,
   "effects_volume": 100,
-  "fullscreen": true,
   "stay_logged_in": true,
-  "logged_username": null
+  "logged_username": null,
+  "auth_token": null,
+  "fullscreen": true
 }

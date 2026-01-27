@@ -15,7 +15,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-BASE_URL = "https://CS-GO.up.railway.app"
+BASE_URL = "https://cs-go-production.up.railway.app"
 
 
 def load_preferences() -> dict:
@@ -33,9 +33,8 @@ def load_preferences() -> dict:
             "master_volume": 100,
             "music_volume": 100,
             "effects_volume": 100,
-            "fullscreen": True,
             "stay_logged_in": True,
-            "logged_username": None,
+            "auth_token": None,
         }
         save_dictionnary(preferences, "preferences.prefs")
         return preferences
