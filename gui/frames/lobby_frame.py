@@ -58,7 +58,7 @@ class LobbyFrame(ttk.Frame):
             image=app.cs_go_banner,
             anchor="nw",
         )
-        title.pack(pady=(20, 20))
+        title.pack(pady=40)
 
         # Menu frame
         main_menu_frame = self.app.Frame(self, bg="black", bd=1)
