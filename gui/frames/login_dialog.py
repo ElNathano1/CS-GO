@@ -157,6 +157,7 @@ class LoginFrame(ttk.Frame):
         if isinstance(dialog, TopLevelWindow):
             dialog.close()
 
+        self.app.preferences["auth_token"] = self.app.token
         self.app.show_frame(LobbyFrame)
 
     def _on_login_error(self, error: str) -> None:

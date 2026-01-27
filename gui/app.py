@@ -13,7 +13,9 @@ from pathlib import Path
 from PIL import Image, ImageTk
 import os
 
+import httpx
 import requests
+import asyncio
 import threading
 
 # Add parent directory to path
@@ -33,7 +35,7 @@ from game.core import Goban, GoGame
 from game.utils import save_game
 
 # API base URL
-BASE_URL = "https://CS-GO.up.railway.app"
+BASE_URL = "https://cs-go-production.up.railway.app"
 
 
 class App(tk.Tk):
@@ -67,6 +69,7 @@ class App(tk.Tk):
 
         self.title("CS Go")
         self.resizable(False, False)
+        self.overrideredirect(True)
 
         # Initialize sound manager
         self.sound_manager = SoundManager()
@@ -108,8 +111,15 @@ class App(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.return_to_desktop)
 
         # Defer login dialog opening until mainloop is active
+        # Only show immediately if there's no saved token to verify
         if self.username is None or self.token is None:
-            self.after(100, self._show_login_dialog)
+            if self.preferences.get("stay_logged_in") and self.preferences.get("auth_token"):
+                # Token verification in progress, wait for result
+                # Fallback: show dialog after 3 seconds if verification takes too long
+                self.after(3000, self._show_login_dialog_if_needed)
+            else:
+                # No token to verify, show dialog immediately
+                self.after(100, self._show_login_dialog)
 
     def _on_global_click(self, event: tk.Event) -> None:
         """
@@ -143,6 +153,22 @@ class App(tk.Tk):
                 self.sound_manager.play("click_effect")
             if widget.is_disabled():
                 self.sound_manager.play("invalid_move_effect")
+
+    def _load_banners(self) -> None:
+        """
+        Load banner image for the application.
+        """
+
+        banner_dir = Path(__file__).parent / "images/banners"
+
+        # Load welcome banner
+        self.welcome_banner_path = banner_dir / "cs_go_banner.png"
+        if self.welcome_banner_path.exists():
+            self.welcome_banner = ImageTk.PhotoImage(
+                Image.open(self.welcome_banner_path).resize(
+                    (1000, 300), Image.Resampling.LANCZOS
+                )
+            )
 
     def _load_icons(self) -> None:
         """
@@ -328,7 +354,6 @@ class App(tk.Tk):
         """
 
         # Ensure expected preference keys exist
-        self.preferences.setdefault("fullscreen", True)
         self.preferences.setdefault("stay_logged_in", True)
         self.preferences.setdefault("auth_token", None)
 
@@ -363,11 +388,12 @@ class App(tk.Tk):
         if self.preferences.get("stay_logged_in"):
             token = self.preferences.get("auth_token")
             if token is not None:
-                thread = threading.Thread(target=self._verify_token, args=(token,))
+                thread = threading.Thread(
+                    target=lambda: asyncio.run(self._verify_token(token))
+                )
                 thread.start()
-                self._verify_token(token)
 
-    def _verify_token(self, token: str) -> None:
+    async def _verify_token(self, token: str) -> None:
         """
         Verify the authentication token with the backend API.
 
@@ -376,21 +402,35 @@ class App(tk.Tk):
         """
 
         try:
-            response = requests.post(
-                f"{BASE_URL}/api/verify_token",
-                json={"token": token},
-                timeout=10,
-            )
-            response_data = response.json()
+            async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
+                response = await client.get(
+                    f"{BASE_URL}/auth/verify",
+                    params={"token": token},
+                )
 
-            if response.status_code == 200 and response_data.get("valid", False):
-                self.username = response_data.get("username")
-                self.token = token
-            else:
-                self.preferences["auth_token"] = None
+                if response.status_code == 200:
+                    data = response.json()
+                    # Update in main thread
+                    self.after(0, self._on_token_verified, data, token)
+                else:
+                    # Invalid token, clear it
+                    self.after(0, self._on_token_invalid)
 
-        except:
-            pass
+        except Exception as e:
+            # Network error or invalid token
+            print(f"Token verification error: {e}")
+            self.after(0, self._on_token_invalid)
+
+    def _on_token_verified(self, data: dict, token: str) -> None:
+        """Called in main thread when token is verified."""
+        self.username = data.get("username")
+        self.token = token
+
+    def _on_token_invalid(self) -> None:
+        """Called in main thread when token is invalid."""
+        self.preferences["auth_token"] = None
+        # Show login dialog since token is invalid
+        self._show_login_dialog()
 
     def open_dialog(
         self, dialog: TopLevelWindow, frame_class: type[tk.Frame] | None = None
@@ -414,6 +454,14 @@ class App(tk.Tk):
         """
 
         self.open_dialog(TopLevelWindow(self, width=400, height=600), LoginFrame)  # type: ignore
+
+    def _show_login_dialog_if_needed(self) -> None:
+        """
+        Show login dialog only if user is still not logged in (fallback after token verification timeout).
+        """
+
+        if self.username is None or self.token is None:
+            self._show_login_dialog()
 
     def _center_window(self) -> None:
         """
