@@ -69,7 +69,6 @@ class App(tk.Tk):
 
         self.title("CS Go")
         self.resizable(False, False)
-        self.overrideredirect(True)
 
         # Initialize sound manager
         self.sound_manager = SoundManager()
@@ -92,10 +91,7 @@ class App(tk.Tk):
         self.current_frame = None
 
         # Apply full screen window
-        try:
-            self.state("zoomed")
-        except tk.TclError:
-            self.attributes("-fullscreen", True)
+        self.attributes("-fullscreen", True)
         self.update_idletasks()
 
         # Save current game state for resuming later
