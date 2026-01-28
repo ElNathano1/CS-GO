@@ -26,7 +26,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from gui.widgets import TexturedButton, TexturedFrame, TopLevelWindow, TransparentLabel
 from gui.sound_manager import SoundManager
 from gui.game_canvas import StoneBowl
-from gui.utils import save_preferences as save_dictionnary  # Legacy name
+from gui.utils import (
+    save_preferences as save_dictionnary,
+    random_username,
+)  # Legacy name
 from gui.frames import LobbyFrame
 from gui.frames.login_dialog import LoginFrame
 
@@ -36,7 +39,7 @@ from game.core import Goban, GoGame
 from game.utils import save_game
 
 # API base URL
-BASE_URL = "https://cs-go-production.up.railway.app"
+from config import BASE_URL, APP_NAME
 
 
 class App(tk.Tk):
@@ -68,7 +71,7 @@ class App(tk.Tk):
 
         super().__init__()
 
-        self.title("CS Go")
+        self.title(APP_NAME)
         self.resizable(False, False)
 
         # Initialize sound manager
@@ -103,9 +106,6 @@ class App(tk.Tk):
         self.username_updated_callback = None
         self.profile_photo_updated_callback = None
 
-        # Create account panel once (will be shown/hidden by frames)
-        self._create_account_panel()
-
         # Show lobby frame on startup
         self.show_frame(LobbyFrame)
 
@@ -127,6 +127,9 @@ class App(tk.Tk):
         elif self.username is None or self.token is None:
             # No token to verify, show dialog immediately
             self.after(100, self._show_login_dialog)
+
+        # Create account panel once (will be shown/hidden by frames)
+        self._create_account_panel()
 
     def _on_global_click(self, event: tk.Event) -> None:
         """
@@ -676,13 +679,12 @@ class App(tk.Tk):
         Create account info panel in top right corner (created once, reused across frames).
         """
         self.account_panel = ttk.Frame(self)
-        self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
 
         # Account info button
         initial_photo = self.get_profile_photo()
         self.account_profile_photo = ttk.Button(
             self.account_panel,
-            text=(f"{self.name}  " if self.name else ""),
+            text=(f"{self.name}  " if self.name else f"{random_username()}  "),
             image=initial_photo,
             command=self._show_account_dialog,
             compound=tk.RIGHT,
@@ -808,7 +810,7 @@ class App(tk.Tk):
         self._show_login_dialog()
 
     def open_dialog(
-        self, dialog: TopLevelWindow, frame_class: type[tk.Frame] | None = None
+        self, dialog: TopLevelWindow, frame_class: type[tk.Frame] | None = None, show_account_panel: bool = True
     ) -> None:
         """
         Open a dialog window and optionally mount a frame inside.
@@ -816,11 +818,28 @@ class App(tk.Tk):
         Args:
             dialog: An initialized TopLevelWindow instance
             frame_class: Optional frame class to display inside the dialog
+            show_account_panel: Whether to display the account panel (default: True)
         """
 
         if frame_class is not None:
             frame = frame_class(dialog.body_frame, self)  # type: ignore
             frame.pack(fill=tk.BOTH, expand=True)
+        
+        # If account panel should be shown, display it
+        if show_account_panel:
+            self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+        else:
+            # Otherwise, schedule to show it after dialog closes
+            def show_panel_on_close():
+                if dialog.winfo_exists():
+                    # Dialog still exists, wait and check again
+                    self.after(100, show_panel_on_close)
+                else:
+                    # Dialog has closed, show the panel
+                    self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+            
+            self.after(100, show_panel_on_close)
+        
         dialog.show(wait=False)
 
     def _show_login_dialog(self) -> None:
@@ -828,7 +847,7 @@ class App(tk.Tk):
         Show the login dialog (called after mainloop is active).
         """
 
-        self.open_dialog(TopLevelWindow(self, width=400, height=650), LoginFrame)  # type: ignore
+        self.open_dialog(TopLevelWindow(self, width=400, height=650), LoginFrame, show_account_panel=False)  # type: ignore
 
     def _show_login_dialog_if_needed(self) -> None:
         """
@@ -838,7 +857,7 @@ class App(tk.Tk):
         if self.username is None or self.token is None:
             self._show_login_dialog()
 
-    def get_profile_photo(self) -> ImageTk.PhotoImage:
+    def get_profile_photo(self, size: int = 32) -> ImageTk.PhotoImage:
         """
         Get the user's profile photo as a PhotoImage.
 
@@ -855,9 +874,12 @@ class App(tk.Tk):
                 )
                 if response.status_code == 200:
                     image_data = response.content
-                    image = Image.open(BytesIO(image_data)).resize(
-                        (32, 32), Image.Resampling.LANCZOS
-                    )
+                    if size:
+                        image = Image.open(BytesIO(image_data)).resize(
+                            (size, size), Image.Resampling.LANCZOS
+                        )
+                    else:
+                        image = Image.open(BytesIO(image_data))
                     return ImageTk.PhotoImage(image)
 
             except Exception as e:

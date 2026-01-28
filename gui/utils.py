@@ -8,6 +8,8 @@ saving and loading preferences to/from JSON files.
 import json
 from pathlib import Path
 
+from config import LOCAL_USERNAMES
+
 
 def save_preferences(preferences: dict, filename: str | Path) -> None:
     """
@@ -53,6 +55,22 @@ def load_preferences(filename: str | Path) -> dict:
         preferences = json.load(f)
 
     return preferences
+
+
+def random_username() -> str:
+    """
+    Generate a random username.
+
+    Returns:
+        str: A randomly generated username
+    """
+    import random
+    import string
+
+    adjectives = random.choice(LOCAL_USERNAMES["adjectives"])
+    noun, genre = random.choice(LOCAL_USERNAMES["nouns"])
+
+    return f"{noun} {adjectives[genre]}"
 
 
 # Legacy function names for backwards compatibility

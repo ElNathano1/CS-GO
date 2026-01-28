@@ -85,7 +85,6 @@ class LobbyFrame(ttk.Frame):
             menu_frame.content_frame,
             text="Partie locale",
             command=lambda: self._open_local_game(),
-            disabled=True if self.app.current_game is None else False,
             takefocus=False,
         ).pack(pady=(20, 10), fill=tk.X, padx=30)
         self.app.Button(

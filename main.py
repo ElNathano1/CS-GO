@@ -15,7 +15,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-BASE_URL = "https://cs-go-production.up.railway.app"
+from config import BASE_URL, DEFAULT_VOLUME
 
 
 def load_preferences() -> dict:
@@ -29,7 +29,7 @@ def load_preferences() -> dict:
 
     else:
         preferences = {
-            "master_volume": 100,
+            "master_volume": DEFAULT_VOLUME,
             "music_volume": 100,
             "effects_volume": 100,
             "stay_logged_in": True,
