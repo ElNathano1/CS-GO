@@ -5,6 +5,7 @@ This module contains the App class which is the main window and controller
 for the entire application.
 """
 
+from io import BytesIO
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
@@ -22,7 +23,7 @@ import threading
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import from reorganized modules
-from gui.widgets import TexturedButton, TexturedFrame, TopLevelWindow
+from gui.widgets import TexturedButton, TexturedFrame, TopLevelWindow, TransparentLabel
 from gui.sound_manager import SoundManager
 from gui.game_canvas import StoneBowl
 from gui.utils import save_preferences as save_dictionnary  # Legacy name
@@ -75,6 +76,7 @@ class App(tk.Tk):
 
         # Store and apply preferences
         self.username = None
+        self.name = None
         self.token = None
         self.preferences = preferences
         self.apply_preferences()
@@ -96,6 +98,10 @@ class App(tk.Tk):
 
         # Save current game state for resuming later
         self.current_game = current_game
+
+        # Initialize callback attributes
+        self.username_updated_callback = None
+        self.profile_photo_updated_callback = None
 
         # Show lobby frame on startup
         self.show_frame(LobbyFrame)
@@ -131,23 +137,17 @@ class App(tk.Tk):
         if isinstance(widget, ttk.Button):
             # Exclude specific buttons from click sound
             excluded_texts = {"Passer"}
-            excluded_states = {tk.DISABLED, "disabled"}
-            if (
-                widget.cget("text") not in excluded_texts
-                and widget.cget("state") not in excluded_states
-            ):
+            widget_state = str(widget.cget("state"))
+            if widget.cget("text") not in excluded_texts and widget_state != "disabled":
                 self.sound_manager.play("click_effect")
-            if widget.cget("state") == "disabled":
+            if widget_state == "disabled":
                 self.sound_manager.play("invalid_move_effect")
 
         if isinstance(widget, TexturedButton):
             # Exclude specific buttons from click sound
             excluded_texts = {"Passer"}
-            excluded_states = {tk.DISABLED, "disabled"}
-            if (
-                widget.cget("text") not in excluded_texts
-                and widget.cget("state") not in excluded_states
-            ):
+            widget_state = str(widget.cget("state"))
+            if widget.cget("text") not in excluded_texts and widget_state != "disabled":
                 self.sound_manager.play("click_effect")
             if widget.is_disabled():
                 self.sound_manager.play("invalid_move_effect")
@@ -336,12 +336,40 @@ class App(tk.Tk):
         )
 
         # Configure button style
-        style.configure("TButton", font=("Spell of Asia", 18), padding=5)
+        style.configure(
+            "TButton",
+            font=("Skranji", 14, "bold"),
+            background="#1e1e1e",
+            foreground="white",
+            borderwidth=0,
+            relief=tk.FLAT,
+        )
+        style.map(
+            "TButton",
+            background=[("active", "#1e1e1e"), ("!active", "#1e1e1e")],
+            foreground=[("disabled", "gray")],
+        )
+
+        # Configure account button style
+        style.configure(
+            "Account.TButton",
+            font=("Skranji", 14, "bold"),
+            background="#1e1e1e",
+            foreground="white",
+            padding=5,
+            borderwidth=0,
+            relief=tk.FLAT,
+        )
+        style.map(
+            "Account.TButton",
+            background=[("active", "#1e1e1e"), ("!active", "#1e1e1e")],
+            foreground=[("disabled", "gray")],
+        )
 
         # Configure label style
         style.configure(
             "TLabel",
-            font=("Spell of Asia", 18),
+            font=("Skranji", 14, "bold"),
             background="#1e1e1e",
             foreground="white",
         )
@@ -354,6 +382,32 @@ class App(tk.Tk):
             foreground="white",
         )
 
+        # Configure account label style
+        style.configure(
+            "Account.TLabel",
+            font=("Skranji-Bold", 12),
+            background="#1e1e1e",
+            foreground="white",
+        )
+
+        # Configure entry style
+        style.configure(
+            "TEntry",
+            foreground="white",
+            fieldbackground="#1e1e1e",
+            borderwidth=2,
+            relief=tk.SOLID,
+            bordercolor="black",
+            padding=2,
+            insertcolor="white",
+        )
+        style.map(
+            "TEntry",
+            lightcolor=[("focus", "white"), ("!focus", "black")],
+            lightthickness=[("focus", 2), ("!focus", 0)],
+            bordercolor=[("focus", "white"), ("!focus", "black")],
+        )
+
     def Button(
         self,
         parent,
@@ -363,11 +417,11 @@ class App(tk.Tk):
         overlay_path: str | Path | None = None,
         hover_overlay_path: str | Path | None = None,
         width: int = 230,
-        height: int = 40,
+        height: int = 50,
         overlay_compound: str = "left",
-        overlay_padding: int = 8,
+        overlay_padding: int = 10,
         text_color: str = "black",
-        font: tuple[str, int] | None = ("Spell of Asia", 16),
+        font: tuple[str, int] | None = ("Skranji-Bold", 14),
         font_dpi_scale: float = 96 / 72,
         bd: int = 2,
         highlightthickness: int = 0,
@@ -439,6 +493,37 @@ class App(tk.Tk):
             bg=bg,
             relief=relief,
             highlightthickness=highlightthickness,
+            **kwargs,
+        )
+
+    def Label(
+        self,
+        parent,
+        text: str = "",
+        image_path: str | Path | None = None,
+        font: tuple[str, int] | None = ("Skranji-Bold", 14),
+        text_color: str = "white",
+        font_dpi_scale: float = 96 / 72,
+        compound: str = "left",
+        padding: int = 6,
+        **kwargs,
+    ) -> TransparentLabel:
+        """
+        Create a default transparent label for the application.
+
+        Returns:
+            TransparentLabel: Transparent label with text and/or image rendered via PIL.
+        """
+
+        return TransparentLabel(
+            parent=parent,
+            text=text,
+            image_path=image_path,
+            font=font,
+            text_color=text_color,
+            font_dpi_scale=font_dpi_scale,
+            compound=compound,
+            padding=padding,
             **kwargs,
         )
 
@@ -536,6 +621,44 @@ class App(tk.Tk):
         self.username = data.get("username")
         self.token = token
 
+        # Fetch full user data to get the name
+        self._fetch_user_data()
+
+        # Mark user as connected in database
+        self._mark_user_connected()
+
+        # Notify listeners that username and profile photo have been updated
+        self.notify_username_updated()
+        self.notify_profile_photo_updated()
+
+    def _fetch_user_data(self) -> None:
+        """Fetch user data from API to get the name."""
+        if self.username:
+            try:
+                response = requests.get(
+                    f"{BASE_URL}/users/{self.username}",
+                    timeout=5,
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    self.name = data.get("name")
+            except Exception as e:
+                print(f"Error fetching user data: {e}")
+                self.name = None
+
+    def _mark_user_connected(self) -> None:
+        """Mark user as connected in the database."""
+        if self.username:
+            try:
+                response = requests.post(
+                    f"{BASE_URL}/users/{self.username}/connect",
+                    timeout=5,
+                )
+                if response.status_code == 200:
+                    print(f"User {self.username} marked as connected")
+            except Exception as e:
+                print(f"Error marking user as connected: {e}")
+
     def _on_token_invalid(self) -> None:
         """Called in main thread when token is invalid."""
         self.preferences["auth_token"] = None
@@ -573,16 +696,75 @@ class App(tk.Tk):
         if self.username is None or self.token is None:
             self._show_login_dialog()
 
-    def _center_window(self) -> None:
+    def get_profile_photo(self) -> ImageTk.PhotoImage:
         """
-        Center the application window on the screen.
+        Get the user's profile photo as a PhotoImage.
+
+        Returns:
+            ImageTk.PhotoImage: The profile photo image.
         """
-        self.update_idletasks()
-        width = self.winfo_width()
-        height = self.winfo_height()
-        x = (self.winfo_screenwidth() // 2) - (width // 2)
-        y = (self.winfo_screenheight() // 2) - (height // 2)
-        self.geometry(f"+{x}+{y}")
+
+        # Try to load user's profile photo from the web API
+        if self.username:
+            try:
+                response = requests.get(
+                    f"{BASE_URL}/users/{self.username}/profile-picture/thumb",
+                    timeout=5,
+                )
+                if response.status_code == 200:
+                    image_data = response.content
+                    image = Image.open(BytesIO(image_data)).resize(
+                        (32, 32), Image.Resampling.LANCZOS
+                    )
+                    return ImageTk.PhotoImage(image)
+
+            except Exception as e:
+                pass
+
+        return self._get_default_profile_photo()
+
+    def _get_default_profile_photo(self) -> ImageTk.PhotoImage:
+        """
+        Get the default profile photo.
+
+        Returns:
+            ImageTk.PhotoImage: The default profile photo image.
+        """
+
+        images_dir = Path(__file__).parent / "images/profiles"
+        default_photo_path = images_dir / "default_profile_photo.png"
+
+        if default_photo_path.exists():
+            return ImageTk.PhotoImage(
+                Image.open(default_photo_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        else:
+            # Create a blank image if default not found
+            blank_image = Image.new("RGBA", (32, 32), (255, 255, 255, 0))
+            return ImageTk.PhotoImage(blank_image)
+
+    def _show_account_dialog(self) -> None:
+        """
+        Show the account dialog (called when clicking on profile photo).
+        """
+
+        print("Account dialog opened")
+
+    def notify_username_updated(self) -> None:
+        """
+        Notify listeners that the username has been updated.
+        """
+        if self.username_updated_callback:
+            self.username_updated_callback()
+
+    def notify_profile_photo_updated(self) -> None:
+        """
+        Notify listeners that the profile photo has been updated.
+        """
+        if self.profile_photo_updated_callback:
+            self.profile_photo_updated_callback()
 
     def return_to_desktop(self) -> None:
         """

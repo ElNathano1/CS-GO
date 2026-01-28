@@ -54,7 +54,9 @@ class SettingsFrame(ttk.Frame):
         sound_enabled.pack(padx=20, pady=(20, 10), fill=tk.X)
 
         # Volume controls
-        ttk.Label(option_frame, text="Volume principal").pack(padx=20, pady=(10, 0))
+        self.app.Label(option_frame, text="Volume principal").pack(
+            padx=20, pady=(10, 0)
+        )
         self.master_volume_slider = ttk.Scale(
             option_frame,
             from_=0,
@@ -65,7 +67,9 @@ class SettingsFrame(ttk.Frame):
         )
         self.master_volume_slider.pack(padx=20, pady=10, fill=tk.X, expand=True)
 
-        ttk.Label(option_frame, text="Volume de la musique").pack(padx=20, pady=(10, 0))
+        self.app.Label(option_frame, text="Volume de la musique").pack(
+            padx=20, pady=(10, 0)
+        )
         self.music_volume_slider = ttk.Scale(
             option_frame,
             from_=0,
@@ -76,7 +80,9 @@ class SettingsFrame(ttk.Frame):
         )
         self.music_volume_slider.pack(padx=20, pady=10, fill=tk.X, expand=True)
 
-        ttk.Label(option_frame, text="Volume des effets").pack(padx=20, pady=(10, 0))
+        self.app.Label(option_frame, text="Volume des effets").pack(
+            padx=20, pady=(10, 0)
+        )
         self.effects_volume_slider = ttk.Scale(
             option_frame,
             from_=0,

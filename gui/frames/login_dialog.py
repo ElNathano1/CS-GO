@@ -46,35 +46,39 @@ class LoginFrame(ttk.Frame):
         title.pack(pady=(40, 20))
 
         # Login frame
-        login_frame = ttk.Frame(self, style="Framed.TFrame", padding=20)
-        login_frame.pack(pady=20)
+        main_login_frame = self.app.Frame(self, bg="black", bd=1)
+        main_login_frame.pack(pady=20, fill=tk.X, padx=20)
+        login_frame = self.app.Frame(main_login_frame)
+        login_frame.pack(pady=3, padx=3, fill=tk.X)
 
         # Username entry
         self.username_var = tk.StringVar()
-        ttk.Label(
+        self.app.Label(
             login_frame,
             text="Nom d'utilisateur",
-        ).pack(pady=(10, 5), fill=tk.X)
+        ).pack(pady=(20, 5), padx=20)
         self.username_entry = ttk.Entry(
             login_frame,
             textvariable=self.username_var,
-            takefocus=False,
+            takefocus=True,
+            font=("Skranji", 14),
         )
-        self.username_entry.pack(pady=(0, 10), fill=tk.X)
+        self.username_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
         # Password entry
         self.password_var = tk.StringVar()
-        ttk.Label(
+        self.app.Label(
             login_frame,
             text="Mot de passe",
-        ).pack(pady=(10, 5), fill=tk.X)
+        ).pack(pady=(10, 5), padx=20)
         self.password_entry = ttk.Entry(
             login_frame,
             textvariable=self.password_var,
-            takefocus=False,
+            takefocus=True,
+            font=("Skranji", 14),
             show="*",
         )
-        self.password_entry.pack(pady=(0, 10), fill=tk.X)
+        self.password_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
         # Login button
         self.login_button = self.app.Button(
@@ -83,7 +87,7 @@ class LoginFrame(ttk.Frame):
             command=self._login,
             takefocus=False,
         )
-        self.login_button.pack(pady=10)
+        self.login_button.pack(pady=(10, 20), padx=20)
 
         # Error label
         self.error_label = ttk.Label(
@@ -91,16 +95,42 @@ class LoginFrame(ttk.Frame):
             text="",
             foreground="red",
         )
-        self.error_label.pack(pady=(0, 10), fill=tk.X)
+        self.error_label.pack(pady=(0, 10), padx=20, fill=tk.X)
 
         # Register button
-        self.register_button = self.app.Button(
+        self.register_button = ttk.Button(
             self,
-            text="S'inscrire",
+            text="Pas de compte ? S'inscrire",
             command=self._on_register,
             takefocus=False,
+            cursor="hand2",
+            padding=0,
         )
         self.register_button.pack(pady=10)
+
+        # Return button
+        self.return_button = self.app.Button(
+            self,
+            text="Retour",
+            overlay_path=self.app.return_icon_path,
+            hover_overlay_path=self.app.hovered_return_icon_path,
+            command=self._on_return,
+            takefocus=False,
+        )
+        self.return_button.pack(pady=10, padx=20, anchor=tk.S)
+
+        # Bind Enter key to login
+        self.bind("<Return>", lambda event: self._login())
+        self.username_entry.bind("<Return>", lambda event: self._login())
+        self.password_entry.bind("<Return>", lambda event: self._login())
+
+        # Bind Tab key to navigate between entries
+        self.username_entry.bind(
+            "<Tab>", lambda e: (self.password_entry.focus_set(), "break")[1]
+        )
+        self.password_entry.bind(
+            "<Tab>", lambda e: (self.username_entry.focus_set(), "break")[1]
+        )
 
     def _login(self) -> None:
         """
@@ -147,6 +177,16 @@ class LoginFrame(ttk.Frame):
         self.app.token = data["token"]
         self.app.username = data["username"]
 
+        # Fetch full user data to get the name
+        self.app._fetch_user_data()
+
+        # Mark user as connected in database
+        self.app._mark_user_connected()
+
+        # Notify that username and profile photo have been updated
+        self.app.notify_username_updated()
+        self.app.notify_profile_photo_updated()
+
         # Import here to avoid circular dependency at module load time
         from gui.frames import LobbyFrame
 
@@ -191,3 +231,13 @@ class LoginFrame(ttk.Frame):
 
         # Implementation of registration logic goes here
         pass
+
+    def _on_return(self) -> None:
+        """
+        Handle return action to go back to the previous frame.
+        """
+
+        # Close dialog
+        dialog = self.winfo_toplevel()
+        if isinstance(dialog, TopLevelWindow):
+            dialog.close()

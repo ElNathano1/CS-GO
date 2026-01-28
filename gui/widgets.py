@@ -77,6 +77,254 @@ def _get_font_path(font_name: str) -> str | None:
     return None
 
 
+class TransparentLabel(tk.Label):
+    """
+    A Label that captures parent texture and composites text/image over it.
+    Works best when parent is a TexturedFrame.
+    """
+
+    def __init__(
+        self,
+        parent,
+        text: str = "",
+        image_path: str | Path | None = None,
+        font: tuple[str, int] | None = None,
+        text_color: str = "white",
+        font_dpi_scale: float = 96 / 72,
+        compound: str = "left",
+        padding: int = 6,
+        width: int | None = None,
+        height: int | None = None,
+        **kwargs,
+    ):
+        """
+        Args:
+            parent: Parent widget (preferably TexturedFrame)
+            text: Label text
+            image_path: Path to image file to display
+            font: Tuple (font_name, font_size) for PIL
+            text_color: Color of the text
+            font_dpi_scale: Scale factor for font size
+            compound: Position of image relative to text ("left", "right", "top", "bottom", "center")
+            padding: Spacing between image and text
+            width: Label width (auto if None)
+            height: Label height (auto if None)
+            **kwargs: Other Label arguments
+        """
+        super().__init__(parent, bd=0, highlightthickness=0, **kwargs)
+
+        self.parent = parent
+        self.text = text
+        self.image_path = Path(image_path) if image_path else None
+        self.font = font or ("Arial", 12)
+        self.text_color = text_color
+        self.font_dpi_scale = font_dpi_scale
+        self.compound = compound
+        self.padding = padding
+        self.desired_width = width
+        self.desired_height = height
+        self._photo = None
+        self._rendered = False
+
+        # Defer rendering until widget is actually placed and visible
+        self.bind("<Map>", self._on_map, add="+")
+
+    def _on_map(self, event):
+        """Called when widget becomes visible - render with proper position."""
+        if not self._rendered and (self.text or self.image_path):
+            # Wait a bit more for layout to stabilize
+            self.after(50, self._update_content)
+            self._rendered = True
+
+    def _get_parent_texture(self, width: int, height: int) -> Image.Image:
+        """Capture texture from parent TexturedFrame at label's exact position."""
+        # Try to get texture from TexturedFrame parent
+        if hasattr(self.parent, "texture_path"):
+            try:
+                # Get parent frame size
+                try:
+                    parent_w = self.parent.winfo_width()
+                    parent_h = self.parent.winfo_height()
+                except:
+                    parent_w, parent_h = 800, 600  # Fallback
+
+                # Load texture and apply EXACT same logic as TexturedFrame._update_texture()
+                tex_img = Image.open(self.parent.texture_path).convert("RGBA")
+                tex_w, tex_h = tex_img.size
+                left = max(0, (tex_w - parent_w) // 2)
+                top = max(0, (tex_h - parent_h) // 2)
+                right = min(tex_w, left + parent_w)
+                bottom = min(tex_h, top + parent_h)
+
+                cropped = tex_img.crop((left, top, right, bottom))
+                scaled_texture = cropped.resize(
+                    (parent_w, parent_h), Image.Resampling.LANCZOS
+                )
+
+                # Get label position relative to parent
+                try:
+                    label_x = self.winfo_x()
+                    label_y = self.winfo_y()
+                except:
+                    label_x, label_y = 0, 0
+
+                # Crop exactly at label position from scaled texture
+                label_left = max(0, label_x)
+                label_top = max(0, label_y)
+                label_right = min(parent_w, label_x + width)
+                label_bottom = min(parent_h, label_y + height)
+
+                label_texture = scaled_texture.crop(
+                    (label_left, label_top, label_right, label_bottom)
+                )
+
+                # Resize to exact label size if needed
+                if label_texture.size != (width, height):
+                    label_texture = label_texture.resize(
+                        (width, height), Image.Resampling.LANCZOS
+                    )
+
+                return label_texture
+            except Exception as e:
+                print(f"Error capturing texture: {e}")
+                pass
+
+        # Fallback: solid color background
+        try:
+            bg_color = self.parent.cget("bg")
+        except:
+            bg_color = "#1e1e1e"
+
+        # Convert hex to RGB
+        bg_color = bg_color.lstrip("#")
+        r, g, b = tuple(int(bg_color[i : i + 2], 16) for i in (0, 2, 4))
+        return Image.new("RGBA", (width, height), (r, g, b, 255))
+
+    def _update_content(self):
+        """Render text and/or image composited over parent texture."""
+        try:
+            font_path = _get_font_path(self.font[0])
+            pil_font_size = int(self.font[1] * self.font_dpi_scale)
+            if font_path:
+                pil_font = ImageFont.truetype(font_path, pil_font_size)
+            else:
+                pil_font = ImageFont.load_default()
+        except (OSError, TypeError):
+            pil_font = ImageFont.load_default()
+
+        # Load image if provided
+        img_overlay = None
+        img_width = 0
+        img_height = 0
+        if self.image_path and self.image_path.exists():
+            img_overlay = Image.open(self.image_path).convert("RGBA")
+            img_width = img_overlay.width
+            img_height = img_overlay.height
+
+        # Measure text if provided
+        text_width = 0
+        text_height = 0
+        if self.text:
+            temp_img = Image.new("RGBA", (1, 1), (255, 255, 255, 0))
+            draw = ImageDraw.Draw(temp_img)
+            text_bbox = draw.textbbox((0, 0), self.text, font=pil_font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+
+        # Calculate total size based on compound
+        if self.compound == "left":
+            total_width = (
+                img_width + self.padding + text_width if img_overlay else text_width
+            )
+            total_height = max(img_height, text_height)
+        elif self.compound == "right":
+            total_width = (
+                text_width + self.padding + img_width if img_overlay else text_width
+            )
+            total_height = max(img_height, text_height)
+        elif self.compound == "top":
+            total_width = max(img_width, text_width)
+            total_height = (
+                img_height + self.padding + text_height if img_overlay else text_height
+            )
+        elif self.compound == "bottom":
+            total_width = max(img_width, text_width)
+            total_height = (
+                text_height + self.padding + img_height if img_overlay else text_height
+            )
+        else:  # center
+            total_width = max(img_width, text_width)
+            total_height = max(img_height, text_height)
+
+        # Use desired size if specified
+        final_width = self.desired_width or (total_width + 4)
+        final_height = self.desired_height or (total_height + 4)
+
+        # Get parent texture as background
+        base_img = self._get_parent_texture(final_width, final_height)  # type: ignore
+
+        # Calculate positions centered in final size
+        if self.compound == "left" and img_overlay:
+            img_x = (final_width - total_width) // 2
+            img_y = (final_height - img_height) // 2
+            text_x = img_x + img_width + self.padding
+            text_y = (final_height - text_height) // 2
+        elif self.compound == "right" and img_overlay:
+            text_x = (final_width - total_width) // 2
+            text_y = (final_height - text_height) // 2
+            img_x = text_x + text_width + self.padding
+            img_y = (final_height - img_height) // 2
+        elif self.compound == "top" and img_overlay:
+            img_x = (final_width - img_width) // 2
+            img_y = (final_height - total_height) // 2
+            text_x = (final_width - text_width) // 2
+            text_y = img_y + img_height + self.padding
+        elif self.compound == "bottom" and img_overlay:
+            text_x = (final_width - text_width) // 2
+            text_y = (final_height - total_height) // 2
+            img_x = (final_width - img_width) // 2
+            img_y = text_y + text_height + self.padding
+        else:  # center or no image
+            text_x = (final_width - text_width) // 2
+            text_y = (final_height - text_height) // 2
+            img_x = (final_width - img_width) // 2
+            img_y = (final_height - img_height) // 2
+
+        # Paste image over texture
+        if img_overlay:
+            base_img.paste(img_overlay, (int(img_x), int(img_y)), img_overlay)
+
+        # Draw text over texture
+        if self.text:
+            draw = ImageDraw.Draw(base_img)
+            draw.text(
+                (int(text_x), int(text_y)),
+                self.text,
+                fill=self.text_color,
+                font=pil_font,
+            )
+
+        # Convert to PhotoImage
+        photo = ImageTk.PhotoImage(base_img)
+        self._photo = photo  # Keep reference
+        self.config(image=photo, width=final_width, height=final_height)
+
+    def set_text(self, new_text: str):
+        """Change the label text and re-render."""
+        self.text = new_text
+        self._update_content()
+
+    def set_text_color(self, new_color: str):
+        """Change the text color and re-render."""
+        self.text_color = new_color
+        self._update_content()
+
+    def set_image(self, new_image_path: str | Path | None):
+        """Change the image and re-render."""
+        self.image_path = Path(new_image_path) if new_image_path else None
+        self._update_content()
+
+
 class TexturedButton(tk.Button):
     """
     A Button with a textured background, overlay image, and text all rendered in PIL.
@@ -561,12 +809,22 @@ class TopLevelWindow(tk.Toplevel):
         self.geometry(f"{width}x{height}")
 
         # Create main container
-        self.container = ttk.Frame(self)
-        self.container.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        main_container = self.master.Frame(self, bg="black", bd=1)
+        main_container.pack(fill=tk.BOTH, expand=True)
+        container = self.master.Frame(main_container)
+        container.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        self.container = tk.Frame(
+            container.content_frame,
+            bd=0,
+            highlightbackground="black",
+            highlightthickness=1,
+            bg="#1e1e1e",
+        )
+        self.container.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
 
         # Body frame (for content)
         self.body_frame = ttk.Frame(self.container)
-        self.body_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        self.body_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
 
         # Button frame (at bottom)
         self.button_frame = ttk.Frame(self.container)
@@ -574,7 +832,6 @@ class TopLevelWindow(tk.Toplevel):
 
         # Keyboard shortcuts
         self.bind("<Escape>", lambda e: self.close(None))
-        self.bind("<Return>", lambda e: self.on_validate())
 
         # Drawing the body (override in subclasses)
         self.body(**kwargs)
