@@ -42,8 +42,12 @@ class LobbyFrame(ttk.Frame):
         ):
             self.app.sound_manager.play_exclusive("background_music")
 
-        # Account info panel (top right) - using place() to not affect layout
-        self._create_account_panel()
+        # Ensure account panel is visible on this frame
+        if hasattr(self.app, "account_panel") and self.app.account_panel:
+            self.app.account_panel.lift()
+            # Setup callbacks for this frame
+            self.app.username_updated_callback = self._update_account_info  # type: ignore
+            self.app.profile_photo_updated_callback = self._update_profile_photo  # type: ignore
 
         # Title
         title = tk.Canvas(
@@ -166,41 +170,13 @@ class LobbyFrame(ttk.Frame):
 
         messagebox.showinfo("Règles du jeu", rules_text)
 
-    def _create_account_panel(self) -> None:
-        """
-        Create account info panel in top right corner using place() geometry.
-        This doesn't affect the pack() layout of other widgets.
-        """
-        # Create account panel frame
-        account_panel = ttk.Frame(self)
-        account_panel.place(relx=0.98, rely=0.04, anchor="ne")
-
-        # Account info
-        initial_photo = self.app.get_profile_photo()
-        self.account_info = ttk.Button(
-            account_panel,
-            text=(f"{self.app.name}  " if self.app.name else ""),
-            image=initial_photo,
-            command=self.app._show_account_dialog,
-            compound=tk.RIGHT,
-            takefocus=False,
-            cursor="hand2",
-            style="Account.TButton",
-            padding=0,
-        )
-        # Keep a reference to prevent garbage collection
-        self.account_info.image = initial_photo  # type: ignore
-        self.account_info.pack(side=tk.LEFT, padx=(0, 10), pady=10)
-
-        # Update account info when username or profile photo changes
-        self.app.username_updated_callback = self._update_account_info  # type: ignore
-        self.app.profile_photo_updated_callback = self._update_profile_photo  # type: ignore
-
     def _update_account_info(self) -> None:
         """
         Update the account info displayed in the account panel.
         """
-        self.account_info.config(text=(f"{self.app.name}  " if self.app.name else ""))
+        self.app.account_profile_photo.config(
+            text=(f"{self.app.name}  " if self.app.name else "")
+        )
         self._update_profile_photo()
 
     def _update_profile_photo(self) -> None:
@@ -208,6 +184,6 @@ class LobbyFrame(ttk.Frame):
         Update the profile photo displayed in the account panel.
         """
         new_photo = self.app.get_profile_photo()
-        self.account_info.config(image=new_photo)
+        self.app.account_profile_photo.config(image=new_photo)
         # Keep a reference to prevent garbage collection
-        self.account_info.image = new_photo  # type: ignore
+        self.app.account_profile_photo.image = new_photo  # type: ignore

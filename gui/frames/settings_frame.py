@@ -37,6 +37,9 @@ class SettingsFrame(ttk.Frame):
         title = ttk.Label(self, text="Paramètres", style="Title.TLabel")
         title.pack(pady=(40, 20))
 
+        # Account info panel (top right) - using place() to not affect layout
+        self.app.account_panel.place(relx=0.98, rely=0.04, anchor="ne")  # type: ignore
+
         # Sound options frame
         main_option_frame = self.app.Frame(self, bg="black", bd=1)
         main_option_frame.pack(pady=20)

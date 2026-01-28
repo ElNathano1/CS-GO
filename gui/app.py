@@ -103,6 +103,9 @@ class App(tk.Tk):
         self.username_updated_callback = None
         self.profile_photo_updated_callback = None
 
+        # Create account panel once (will be shown/hidden by frames)
+        self._create_account_panel()
+
         # Show lobby frame on startup
         self.show_frame(LobbyFrame)
 
@@ -564,15 +567,36 @@ class App(tk.Tk):
         if self.current_frame is not None:
             self.current_frame.destroy()
 
-        # Add 1s delay before showing new frame
-        self.after(1000, lambda: self._show_frame_delayed(frame_class))
-
-    def _show_frame_delayed(self, frame_class) -> None:
-        """
-        Actually show the frame after delay.
-        """
         self.current_frame = frame_class(self.container, self)
         self.current_frame.grid(row=0, column=0, sticky="nsew")
+
+        # Ensure account panel stays on top if it exists
+        if hasattr(self, "account_panel") and self.account_panel:
+            self.account_panel.lift()
+
+    def _create_account_panel(self) -> None:
+        """
+        Create account info panel in top right corner (created once, reused across frames).
+        """
+        self.account_panel = ttk.Frame(self)
+        self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+
+        # Account info button
+        initial_photo = self.get_profile_photo()
+        self.account_profile_photo = ttk.Button(
+            self.account_panel,
+            text=(f"{self.name}  " if self.name else ""),
+            image=initial_photo,
+            command=self._show_account_dialog,
+            compound=tk.RIGHT,
+            takefocus=False,
+            cursor="hand2",
+            style="Account.TButton",
+            padding=0,
+        )
+        self.account_profile_photo.pack(side=tk.RIGHT)
+        # Keep reference to prevent garbage collection
+        self.account_profile_photo.image = initial_photo  # type: ignore
 
     def apply_preferences(self) -> None:
         """

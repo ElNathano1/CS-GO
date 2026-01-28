@@ -44,6 +44,10 @@ class GameLobbyFrame(ttk.Frame):
         self.container = ttk.Frame(self)
         self.container.pack()
 
+        # Ensure account panel is visible on this frame
+        if hasattr(self.app, "account_panel") and self.app.account_panel:
+            self.app.account_panel.lift()
+
         # Number of players selection frame
         main_player_frame = self.app.Frame(self.container, bg="black", bd=1)
         main_player_frame.pack(pady=20, fill=tk.X)
