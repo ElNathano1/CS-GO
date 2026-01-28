@@ -89,9 +89,10 @@ class GameFrame(ttk.Frame):
 
         # Get available window width and height
         self.app.update_idletasks()
+        right_frame_width = 446  # Measured width of the right control panel
         available_width = (
-            self.app.winfo_width() - 710
-        )  # Leave space for controls - Found experimentally
+            self.app.winfo_width() - right_frame_width - 112
+        )  # Subtract right frame width and padding
         available_height = self.app.winfo_height() - 100  # Leave space for padding
 
         # Fixed board size: calculate based on available space
@@ -100,7 +101,7 @@ class GameFrame(ttk.Frame):
         max_board_size = min(available_width, available_height)
 
         # Use a reasonable minimum/maximum
-        board_size_px = max(300, min(900, max_board_size))
+        board_size_px = max(300, min(522, max_board_size))
 
         # Now calculate cell_size based on board_size and the grid size (1800 pixels)
         # The grid has (board_size - 1) cells
@@ -226,11 +227,21 @@ class GameFrame(ttk.Frame):
 
         # Main container
         main_frame = ttk.Frame(self)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=40)
 
         # Left side: Game board
-        board_frame = ttk.Frame(main_frame, style="Framed.TFrame", padding=20)
-        board_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        main_board = self.app.Frame(main_frame, bg="black", bd=1, width=1000)
+        main_board.pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        board = self.app.Frame(main_board)
+        board.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        board_frame = tk.Frame(
+            board.content_frame,
+            bd=0,
+            highlightbackground="black",
+            highlightthickness=1,
+            bg="#1e1e1e",
+        )
+        board_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
 
         # Create canvas for drawing the board using calculated dimensions
         board_width = int(self.image_total_size * self.scale_ratio)
@@ -250,7 +261,7 @@ class GameFrame(ttk.Frame):
             highlightthickness=0,  # Remove canvas border highlight
             bg="#1e1e1e",
         )
-        self.canvas.pack(anchor="center", expand=True)
+        self.canvas.pack(anchor="center", expand=True, padx=20, pady=20)
         self.canvas.bind("<Button-1>", self._on_board_click)
 
         # Origin for drawing the board
@@ -291,7 +302,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_pass(),
             takefocus=False,
         )
-        self.pass_button.pack(fill=tk.X, pady=(20, 10), padx=20)
+        self.pass_button.pack(fill=tk.X, pady=(20, 10), padx=30)
 
         # Resign button
         self.resign_button = self.app.Button(
@@ -302,7 +313,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_resign(),
             takefocus=False,
         )
-        self.resign_button.pack(fill=tk.X, pady=10, padx=20)
+        self.resign_button.pack(fill=tk.X, pady=10, padx=30)
 
         # New game button
         self.new_game_button = self.app.Button(
@@ -313,7 +324,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_new_game(),
             takefocus=False,
         )
-        self.new_game_button.pack(fill=tk.X, pady=10, padx=20)
+        self.new_game_button.pack(fill=tk.X, pady=10, padx=30)
 
         # Back to Lobby button
         self.back_button = self.app.Button(
@@ -324,7 +335,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_back_to_lobby(),
             takefocus=False,
         )
-        self.back_button.pack(fill=tk.X, pady=(10, 20), padx=20)
+        self.back_button.pack(fill=tk.X, pady=(10, 20), padx=30)
 
         # Draw the initial board state
         self._draw_board()

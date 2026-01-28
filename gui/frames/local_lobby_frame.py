@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from gui.app import App
 
 
-class GameLobbyFrame(ttk.Frame):
+class LocalLobbyFrame(ttk.Frame):
     """
     Frame for game lobby before starting a game.
 
@@ -39,7 +39,7 @@ class GameLobbyFrame(ttk.Frame):
 
         # Title
         title = ttk.Label(self, text="Game Lobby", style="Title.TLabel")
-        title.pack(pady=(40, 20))
+        title.pack(pady=40)
 
         self.container = ttk.Frame(self)
         self.container.pack()
@@ -56,19 +56,19 @@ class GameLobbyFrame(ttk.Frame):
 
         # Buttons for number of players
         ttk.Radiobutton(
-            player_frame,
+            player_frame.content_frame,
             text="Un joueur (contre IA)",
             variable=self.multiplayer,
             value=False,
             takefocus=False,
-        ).pack(padx=20, pady=(20, 10), fill=tk.X)
+        ).pack(padx=30, pady=(20, 10), fill=tk.X)
         ttk.Radiobutton(
-            player_frame,
+            player_frame.content_frame,
             text="Deux joueurs (local)",
             variable=self.multiplayer,
             value=True,
             takefocus=False,
-        ).pack(padx=20, pady=(10, 20), fill=tk.X)
+        ).pack(padx=30, pady=(10, 20), fill=tk.X)
 
         # Board size selection frame
         main_size_frame = self.app.Frame(self.container, bg="black", bd=1)
@@ -78,26 +78,26 @@ class GameLobbyFrame(ttk.Frame):
 
         # Buttons for different board sizes
         ttk.Radiobutton(
-            size_frame,
+            size_frame.content_frame,
             text="9x9",
             variable=self.board_size,
             value=9,
             takefocus=False,
-        ).pack(padx=20, pady=(20, 10), fill=tk.X)
+        ).pack(padx=30, pady=(20, 10), fill=tk.X)
         ttk.Radiobutton(
-            size_frame,
+            size_frame.content_frame,
             text="13x13",
             variable=self.board_size,
             value=13,
             takefocus=False,
-        ).pack(padx=20, pady=10, fill=tk.X)
+        ).pack(padx=30, pady=10, fill=tk.X)
         ttk.Radiobutton(
-            size_frame,
+            size_frame.content_frame,
             text="19x19",
             variable=self.board_size,
             value=19,
             takefocus=False,
-        ).pack(padx=20, pady=(10, 20), fill=tk.X)
+        ).pack(padx=30, pady=(10, 20), fill=tk.X)
 
         # Start Game button
         self.app.Button(

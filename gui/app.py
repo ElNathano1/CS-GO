@@ -293,6 +293,97 @@ class App(tk.Tk):
                 )
             )
 
+        # Load preferences icons
+        # Load main volume icon
+        self.sound_icon_path = images_dir / "sound.png"
+        if self.sound_icon_path.exists():
+            self.sound_icon = ImageTk.PhotoImage(
+                Image.open(self.sound_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_sound_icon_path = images_dir / "hovered_sound.png"
+        if self.hovered_sound_icon_path.exists():
+            self.hovered_sound_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_sound_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.no_sound_icon_path = images_dir / "no_sound.png"
+        if self.no_sound_icon_path.exists():
+            self.no_sound_icon = ImageTk.PhotoImage(
+                Image.open(self.no_sound_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_no_sound_icon_path = images_dir / "hovered_no_sound.png"
+        if self.hovered_no_sound_icon_path.exists():
+            self.hovered_no_sound_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_no_sound_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load music icon
+        self.music_icon_path = images_dir / "music.png"
+        if self.music_icon_path.exists():
+            self.music_icon = ImageTk.PhotoImage(
+                Image.open(self.music_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_music_icon_path = images_dir / "hovered_music.png"
+        if self.hovered_music_icon_path.exists():
+            self.hovered_music_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_music_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.no_music_icon_path = images_dir / "no_music.png"
+        if self.no_music_icon_path.exists():
+            self.no_music_icon = ImageTk.PhotoImage(
+                Image.open(self.no_music_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_no_music_icon_path = images_dir / "hovered_no_music.png"
+        if self.hovered_no_music_icon_path.exists():
+            self.hovered_no_music_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_no_music_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load effects icon
+        self.effects_icon_path = images_dir / "effects.png"
+        if self.effects_icon_path.exists():
+            self.effects_icon = ImageTk.PhotoImage(
+                Image.open(self.effects_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_effects_icon_path = images_dir / "hovered_effects.png"
+        if self.hovered_effects_icon_path.exists():
+            self.hovered_effects_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_effects_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.no_effects_icon_path = images_dir / "no_effects.png"
+        if self.no_effects_icon_path.exists():
+            self.no_effects_icon = ImageTk.PhotoImage(
+                Image.open(self.no_effects_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_no_effects_icon_path = images_dir / "hovered_no_effects.png"
+        if self.hovered_no_effects_icon_path.exists():
+            self.hovered_no_effects_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_no_effects_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
     def _load_textures(self) -> None:
         """
         Load textures for the widgets.
@@ -380,7 +471,7 @@ class App(tk.Tk):
         # Configure title label style
         style.configure(
             "Title.TLabel",
-            font=("Spell of Asia", 24, "bold"),
+            font=("Spell of Asia", 30, "bold"),
             background="#1e1e1e",
             foreground="white",
         )
@@ -535,6 +626,9 @@ class App(tk.Tk):
         font_dpi_scale: float = 96 / 72,
         compound: str = "left",
         padding: int = 6,
+        width: int | None = None,
+        height: int | None = None,
+        image_size: tuple[int, int] | None = None,
         **kwargs,
     ) -> TransparentLabel:
         """
@@ -548,11 +642,14 @@ class App(tk.Tk):
             parent=parent,
             text=text,
             image_path=image_path,
+            image_size=image_size,
             font=font,
             text_color=text_color,
             font_dpi_scale=font_dpi_scale,
             compound=compound,
             padding=padding,
+            width=width,
+            height=height,
             **kwargs,
         )
 
@@ -608,33 +705,21 @@ class App(tk.Tk):
         self.preferences.setdefault("auth_token", None)
 
         # Apply sound preference
-        if self.preferences.get("sound_enabled", True):
-            if not self.sound_manager.is_enabled():
-                self.sound_manager.toggle()
+        for event in self.sound_manager.sounds:
+            if "music" in event:
+                self.sound_manager.sounds[event].set_volume(
+                    self.preferences["master_volume"]
+                    * self.preferences["music_volume"]
+                    / 10000
+                )
 
-            for event in self.sound_manager.sounds:
-                if "music" in event:
-                    self.sound_manager.sounds[event].set_volume(
-                        self.preferences["master_volume"]
-                        * self.preferences["music_volume"]
-                        / 10000
-                    )
-
-            for event in self.sound_manager.sounds:
-                if "effect" in event:
-                    self.sound_manager.sounds[event].set_volume(
-                        self.preferences["master_volume"]
-                        * self.preferences["effects_volume"]
-                        / 10000
-                    )
-        else:
-            if self.sound_manager.is_enabled():
-                self.sound_manager.toggle()
-
-            for event in self.sound_manager.sounds:
-                self.sound_manager.sounds[event].set_volume(0)
-
-        # Token verification will be done after mainloop starts
+        for event in self.sound_manager.sounds:
+            if "effect" in event:
+                self.sound_manager.sounds[event].set_volume(
+                    self.preferences["master_volume"]
+                    * self.preferences["effects_volume"]
+                    / 10000
+                )
 
     async def _verify_token(self, token: str) -> None:
         """
@@ -743,7 +828,7 @@ class App(tk.Tk):
         Show the login dialog (called after mainloop is active).
         """
 
-        self.open_dialog(TopLevelWindow(self, width=400, height=600), LoginFrame)  # type: ignore
+        self.open_dialog(TopLevelWindow(self, width=400, height=650), LoginFrame)  # type: ignore
 
     def _show_login_dialog_if_needed(self) -> None:
         """

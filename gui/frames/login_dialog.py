@@ -43,7 +43,7 @@ class LoginFrame(ttk.Frame):
 
         # Title
         title = ttk.Label(self, text="Connexion", style="Title.TLabel")
-        title.pack(pady=(40, 20))
+        title.pack(pady=(20, 40))
 
         # Login frame
         main_login_frame = self.app.Frame(self, bg="black", bd=1)
@@ -131,7 +131,7 @@ class LoginFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=10, padx=20, anchor=tk.S)
+        self.return_button.pack(pady=(10, 20), padx=20, anchor=tk.S)
 
         # Bind Enter key to login
         self.bind("<Return>", lambda event: self._login())
@@ -298,7 +298,7 @@ class RegisterFrame(ttk.Frame):
 
         # Title
         title = ttk.Label(self, text="Inscription", style="Title.TLabel")
-        title.pack(pady=(40, 20))
+        title.pack(pady=(20, 40))
 
         # Create canvas and scrollbar for scrollable content
         canvas_frame = ttk.Frame(self)

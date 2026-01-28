@@ -88,6 +88,7 @@ class TransparentLabel(tk.Label):
         parent,
         text: str = "",
         image_path: str | Path | None = None,
+        image_size: tuple[int, int] | None = None,
         font: tuple[str, int] | None = None,
         text_color: str = "white",
         font_dpi_scale: float = 96 / 72,
@@ -102,6 +103,7 @@ class TransparentLabel(tk.Label):
             parent: Parent widget (preferably TexturedFrame)
             text: Label text
             image_path: Path to image file to display
+            image_size: Tuple (width, height) to resize image (None = original size)
             font: Tuple (font_name, font_size) for PIL
             text_color: Color of the text
             font_dpi_scale: Scale factor for font size
@@ -116,6 +118,7 @@ class TransparentLabel(tk.Label):
         self.parent = parent
         self.text = text
         self.image_path = Path(image_path) if image_path else None
+        self.image_size = image_size
         self.font = font or ("Arial", 12)
         self.text_color = text_color
         self.font_dpi_scale = font_dpi_scale
@@ -218,6 +221,11 @@ class TransparentLabel(tk.Label):
         img_height = 0
         if self.image_path and self.image_path.exists():
             img_overlay = Image.open(self.image_path).convert("RGBA")
+            # Resize image if size specified
+            if self.image_size:
+                img_overlay = img_overlay.resize(
+                    self.image_size, Image.Resampling.LANCZOS
+                )
             img_width = img_overlay.width
             img_height = img_overlay.height
 
@@ -322,6 +330,11 @@ class TransparentLabel(tk.Label):
     def set_image(self, new_image_path: str | Path | None):
         """Change the image and re-render."""
         self.image_path = Path(new_image_path) if new_image_path else None
+        self._update_content()
+
+    def set_image_size(self, new_size: tuple[int, int] | None):
+        """Change the image size and re-render."""
+        self.image_size = new_size
         self._update_content()
 
 

@@ -69,7 +69,7 @@ class LobbyFrame(ttk.Frame):
 
         # Menu frame
         main_menu_frame = self.app.Frame(self, bg="black", bd=1)
-        main_menu_frame.pack(pady=20, padx=20)
+        main_menu_frame.pack(pady=20, padx=30)
         menu_frame = self.app.Frame(main_menu_frame)
         menu_frame.pack(pady=3, padx=3)
 
@@ -80,13 +80,20 @@ class LobbyFrame(ttk.Frame):
             command=lambda: self._resume_game(game=self.app.current_game),  # type: ignore
             disabled=True if self.app.current_game is None else False,
             takefocus=False,
-        ).pack(pady=(20, 10), fill=tk.X, padx=20)
+        ).pack(pady=(20, 10), fill=tk.X, padx=30)
         self.app.Button(
             menu_frame.content_frame,
-            text="Nouvelle partie",
-            command=lambda: self._open_game(),
+            text="Partie locale",
+            command=lambda: self._open_local_game(),
+            disabled=True if self.app.current_game is None else False,
             takefocus=False,
-        ).pack(pady=10, fill=tk.X, padx=20)
+        ).pack(pady=(20, 10), fill=tk.X, padx=30)
+        self.app.Button(
+            menu_frame.content_frame,
+            text="Partie en ligne",
+            command=lambda: self._open_online_game(),
+            takefocus=False,
+        ).pack(pady=10, fill=tk.X, padx=30)
         self.app.Button(
             menu_frame.content_frame,
             overlay_path=self.app.prefs_icon_path,
@@ -94,15 +101,7 @@ class LobbyFrame(ttk.Frame):
             text="Paramètres",
             command=lambda: self._open_settings(),
             takefocus=False,
-        ).pack(pady=10, fill=tk.X, padx=20)
-        self.app.Button(
-            menu_frame.content_frame,
-            overlay_path=self.app.rules_icon_path,
-            hover_overlay_path=self.app.hovered_rules_icon_path,
-            text="Règles du jeu",
-            command=lambda: self._open_rules(),
-            takefocus=False,
-        ).pack(pady=10, fill=tk.X, padx=20)
+        ).pack(pady=10, fill=tk.X, padx=30)
 
         # Return to Desktop button
         self.app.Button(
@@ -112,18 +111,18 @@ class LobbyFrame(ttk.Frame):
             text="Retour au bureau",
             command=lambda: self.app.return_to_desktop(),
             takefocus=False,
-        ).pack(pady=(10, 20), fill=tk.X, padx=20)
+        ).pack(pady=(10, 20), fill=tk.X, padx=30)
 
-    def _open_game(self) -> None:
+    def _open_local_game(self) -> None:
         """
         Open the game starting window.
 
         Args:
             game (GoGame, optional): The game instance to resume. Defaults to None.
         """
-        from gui.frames.game_lobby_frame import GameLobbyFrame
+        from gui.frames.local_lobby_frame import LocalLobbyFrame
 
-        self.app.show_frame(lambda parent, app: GameLobbyFrame(parent, app))
+        self.app.show_frame(lambda parent, app: LocalLobbyFrame(parent, app))
 
     def _resume_game(self, game: "GoGame") -> None:
         """
@@ -144,6 +143,12 @@ class LobbyFrame(ttk.Frame):
                 lambda parent, app: SingleplayerGameFrame(parent, app, board_size, game)
             )
 
+    def _open_online_game(self) -> None:
+        """
+        Open the online game lobby.
+        """
+        pass
+
     def _open_settings(self) -> None:
         """
         Open settings window.
@@ -151,24 +156,6 @@ class LobbyFrame(ttk.Frame):
         from gui.frames.settings_frame import SettingsFrame
 
         self.app.show_frame(lambda parent, app: SettingsFrame(parent, app))
-
-    def _open_rules(self) -> None:
-        """
-        Open game rules window.
-        """
-
-        rules_text = (
-            "Règles du jeu de Go:\n\n"
-            "1. Le jeu se joue sur une grille de 9x9, 13x13 ou 19x19 intersections.\n"
-            "2. Deux joueurs (Noir et Blanc) placent alternativement des pierres sur les intersections.\n"
-            "3. L'objectif est de contrôler le plus de territoire en encerclant des zones.\n"
-            "4. Les pierres entourées sans libertés sont capturées et retirées du plateau.\n"
-            "5. Le jeu se termine lorsque les deux joueurs passent consécutivement.\n"
-            "6. Le score est calculé en fonction du territoire contrôlé et des pierres capturées.\n\n"
-            "Pour plus de détails, consultez les règles officielles du jeu de Go."
-        )
-
-        messagebox.showinfo("Règles du jeu", rules_text)
 
     def _update_account_info(self) -> None:
         """

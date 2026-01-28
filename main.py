@@ -29,7 +29,6 @@ def load_preferences() -> dict:
 
     else:
         preferences = {
-            "sound_enabled": True,
             "master_volume": 100,
             "music_volume": 100,
             "effects_volume": 100,

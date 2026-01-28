@@ -14,13 +14,13 @@ Available frames:
 
 from .lobby_frame import LobbyFrame
 from .settings_frame import SettingsFrame
-from .game_lobby_frame import GameLobbyFrame
+from .local_lobby_frame import LocalLobbyFrame
 from .game_frame import GameFrame, SingleplayerGameFrame
 
 __all__ = [
     "LobbyFrame",
     "SettingsFrame",
-    "GameLobbyFrame",
+    "LocalLobbyFrame",
     "GameFrame",
     "SingleplayerGameFrame",
 ]
