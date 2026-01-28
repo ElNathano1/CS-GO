@@ -390,6 +390,14 @@ class App(tk.Tk):
             foreground="white",
         )
 
+        # Configure error label style
+        style.configure(
+            "Error.TLabel",
+            font=("Skranji", 8),
+            background="#1e1e1e",
+            foreground="red",
+        )
+
         # Configure entry style
         style.configure(
             "TEntry",
@@ -404,8 +412,26 @@ class App(tk.Tk):
         style.map(
             "TEntry",
             lightcolor=[("focus", "white"), ("!focus", "black")],
-            lightthickness=[("focus", 2), ("!focus", 0)],
+            lightthickness=[("focus", 2), ("!focus", 2)],
             bordercolor=[("focus", "white"), ("!focus", "black")],
+        )
+
+        # Configure error entry style
+        style.configure(
+            "Error.TEntry",
+            foreground="white",
+            fieldbackground="#1e1e1e",
+            borderwidth=2,
+            relief=tk.SOLID,
+            bordercolor="red",
+            padding=2,
+            insertcolor="white",
+        )
+        style.map(
+            "Error.TEntry",
+            lightcolor=[("focus", "red"), ("!focus", "red")],
+            lightthickness=[("focus", 2), ("!focus", 2)],
+            bordercolor=[("focus", "red"), ("!focus", "red")],
         )
 
     def Button(
@@ -538,6 +564,13 @@ class App(tk.Tk):
         if self.current_frame is not None:
             self.current_frame.destroy()
 
+        # Add 1s delay before showing new frame
+        self.after(1000, lambda: self._show_frame_delayed(frame_class))
+
+    def _show_frame_delayed(self, frame_class) -> None:
+        """
+        Actually show the frame after delay.
+        """
         self.current_frame = frame_class(self.container, self)
         self.current_frame.grid(row=0, column=0, sticky="nsew")
 
@@ -776,6 +809,16 @@ class App(tk.Tk):
             "Voulez-vous retourner au bureau ?",
         )
         if result:
+            # Mark user as disconnected before closing
+            if self.username:
+                try:
+                    requests.post(
+                        f"{BASE_URL}/users/{self.username}/disconnect",
+                        timeout=5,
+                    )
+                except Exception as e:
+                    print(f"Error marking user as disconnected: {e}")
+
             save_dictionnary(self.preferences, "preferences.prefs")
             if self.current_game is not None:
                 save_game(self.current_game, "saves/autosave.csgogame")

@@ -9,7 +9,7 @@ Classes:
     TopLevelWindow: Base class for modal dialog windows with overlay effect
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 import tkinter as tk
 import tkinter.ttk as ttk
 from pathlib import Path
@@ -132,8 +132,8 @@ class TransparentLabel(tk.Label):
     def _on_map(self, event):
         """Called when widget becomes visible - render with proper position."""
         if not self._rendered and (self.text or self.image_path):
-            # Wait a bit more for layout to stabilize
-            self.after(50, self._update_content)
+            # Use after_idle to ensure layout is fully stable before rendering
+            self.after_idle(self._update_content)
             self._rendered = True
 
     def _get_parent_texture(self, width: int, height: int) -> Image.Image:
@@ -773,6 +773,9 @@ class TopLevelWindow(tk.Toplevel):
         master: "App",  # Forward reference to avoid circular import
         width: int,
         height: int,
+        position: Literal[
+            "center", "mouse", "top", "left", "bottom", "right"
+        ] = "center",
         fade_in: bool = True,
         overlay: bool = True,
         overlay_color: str = "#000000",
@@ -804,7 +807,9 @@ class TopLevelWindow(tk.Toplevel):
         self.result = None
         self.transient(master)
         self.overrideredirect(True)
-        self.withdraw()
+
+        # Start invisible with alpha instead of withdraw to allow widgets to render
+        self.attributes("-alpha", 0.0)
 
         self.geometry(f"{width}x{height}")
 
@@ -836,16 +841,47 @@ class TopLevelWindow(tk.Toplevel):
         # Drawing the body (override in subclasses)
         self.body(**kwargs)
 
-        # Center window on screen
+        # Place window
         self.update_idletasks()
-        self._center_window()
+        if position == "mouse":
+            x = self.winfo_pointerx() - (width // 2)
+            y = self.winfo_pointery() - (height // 2)
+            self.geometry(f"+{x}+{y}")
+        elif position == "center":
+            self._center_window()
+        elif position == "top":
+            x = (self.winfo_screenwidth() // 2) - (width // 2)
+            y = 0
+            self.geometry(f"+{x}+{y}")
+        elif position == "left":
+            x = 0
+            y = (self.winfo_screenheight() // 2) - (height // 2)
+            self.geometry(f"+{x}+{y}")
+        elif position == "bottom":
+            x = (self.winfo_screenwidth() // 2) - (width // 2)
+            y = self.winfo_screenheight() - height
+            self.geometry(f"+{x}+{y}")
+        elif position == "right":
+            x = self.winfo_screenwidth() - width
+            y = (self.winfo_screenheight() // 2) - (height // 2)
+            self.geometry(f"+{x}+{y}")
 
-        # Show window
+        # Show window (still invisible with alpha=0)
         self.wm_deiconify()
+
+        # Force complete rendering of all widgets
+        self.update()
+
+        # Give one more cycle for <Configure> events (TexturedFrame textures)
+        self.update_idletasks()
+
+        # Give another cycle for TransparentLabel after_idle callbacks
+        self.update()
 
         # Fade-in animation
         if fade_in:
-            self._fade_in()
+            # Add 1s safety delay before starting fade-in
+            self.after(1000, self._fade_in)
 
         # Grab/wait are deferred so callers can attach content before showing
 
