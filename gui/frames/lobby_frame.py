@@ -83,12 +83,16 @@ class LobbyFrame(ttk.Frame):
         ).pack(pady=(20, 10), fill=tk.X, padx=30)
         self.app.Button(
             menu_frame.content_frame,
+            overlay_path=self.app.local_icon_path,
+            hover_overlay_path=self.app.hovered_local_icon_path,
             text="Partie locale",
             command=lambda: self._open_local_game(),
             takefocus=False,
         ).pack(pady=(20, 10), fill=tk.X, padx=30)
         self.app.Button(
             menu_frame.content_frame,
+            overlay_path=self.app.online_icon_path,
+            hover_overlay_path=self.app.hovered_online_icon_path,
             text="Partie en ligne",
             command=lambda: self._open_online_game(),
             takefocus=False,

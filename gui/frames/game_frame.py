@@ -239,7 +239,7 @@ class GameFrame(ttk.Frame):
             bd=0,
             highlightbackground="black",
             highlightthickness=1,
-            bg="#1e1e1e",
+            bg="#224722",
         )
         board_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
 
@@ -259,7 +259,7 @@ class GameFrame(ttk.Frame):
             relief=tk.SOLID,
             bd=0,
             highlightthickness=0,  # Remove canvas border highlight
-            bg="#1e1e1e",
+            bg="#224722",
         )
         self.canvas.pack(anchor="center", expand=True, padx=20, pady=20)
         self.canvas.bind("<Button-1>", self._on_board_click)

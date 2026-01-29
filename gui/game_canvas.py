@@ -103,7 +103,7 @@ class StoneBowl:
         stone size to prevent overflow.
         """
         # Leave space for stone size at the edges
-        max_radius = self.radius - self.stone_image.height() / 2
+        max_radius = self.radius * 0.9 - self.stone_image.height() / 2
 
         for _ in range(self.count):
             # Random angle (0 to 2π radians)

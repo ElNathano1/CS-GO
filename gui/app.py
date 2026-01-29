@@ -186,16 +186,50 @@ class App(tk.Tk):
         if self.icon_path.exists():
             self.iconbitmap(self.icon_path)
 
-        # Load AI icon
-        self.ai_icon_path = images_dir / "ai.png"
-        if self.ai_icon_path.exists():
-            self.ai_icon = ImageTk.PhotoImage(
-                Image.open(self.ai_icon_path).resize((32, 32), Image.Resampling.LANCZOS)
+        # Load local icon
+        self.local_icon_path = images_dir / "local.png"
+        if self.local_icon_path.exists():
+            self.local_icon = ImageTk.PhotoImage(
+                Image.open(self.local_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
             )
-        self.hovered_ai_icon_path = images_dir / "hovered_ai.png"
-        if self.hovered_ai_icon_path.exists():
-            self.hovered_ai_icon = ImageTk.PhotoImage(
-                Image.open(self.hovered_ai_icon_path).resize(
+        self.hovered_local_icon_path = images_dir / "hovered_local.png"
+        if self.hovered_local_icon_path.exists():
+            self.hovered_local_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_local_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load multiplayer icon
+        self.multiplayer_icon_path = images_dir / "multiplayer.png"
+        if self.multiplayer_icon_path.exists():
+            self.multiplayer_icon = ImageTk.PhotoImage(
+                Image.open(self.multiplayer_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_multiplayer_icon_path = images_dir / "hovered_multiplayer.png"
+        if self.hovered_multiplayer_icon_path.exists():
+            self.hovered_multiplayer_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_multiplayer_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load online icon
+        self.online_icon_path = images_dir / "online.png"
+        if self.online_icon_path.exists():
+            self.online_icon = ImageTk.PhotoImage(
+                Image.open(self.online_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_online_icon_path = images_dir / "hovered_online.png"
+        if self.hovered_online_icon_path.exists():
+            self.hovered_online_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_online_icon_path).resize(
                     (32, 32), Image.Resampling.LANCZOS
                 )
             )
@@ -296,6 +330,22 @@ class App(tk.Tk):
                 )
             )
 
+        # Load singleplayer icon
+        self.singleplayer_icon_path = images_dir / "singleplayer.png"
+        if self.singleplayer_icon_path.exists():
+            self.singleplayer_icon = ImageTk.PhotoImage(
+                Image.open(self.singleplayer_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_singleplayer_icon_path = images_dir / "hovered_singleplayer.png"
+        if self.hovered_singleplayer_icon_path.exists():
+            self.hovered_singleplayer_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_singleplayer_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
         # Load preferences icons
         # Load main volume icon
         self.sound_icon_path = images_dir / "sound.png"
@@ -386,6 +436,18 @@ class App(tk.Tk):
                     (32, 32), Image.Resampling.LANCZOS
                 )
             )
+
+        # Load wifi signal icons
+        self.wifi_signal_icons = []
+        for i in range(4):
+            wifi_icon_path = images_dir / f"wifi_signal_{i}.png"
+            if wifi_icon_path.exists():
+                wifi_icon = ImageTk.PhotoImage(
+                    Image.open(wifi_icon_path).resize(
+                        (32, 32), Image.Resampling.LANCZOS
+                    )
+                )
+                self.wifi_signal_icons.append(wifi_icon)
 
     def _load_textures(self) -> None:
         """
@@ -680,18 +742,26 @@ class App(tk.Tk):
         """
         self.account_panel = ttk.Frame(self)
 
+        self.wifi_signal = ttk.Label(
+            self.account_panel,
+            image=self.wifi_signal_icons[3] if self.name else self.wifi_signal_icons[0],  # type: ignore
+            style="Account.TLabel",
+            takefocus=False,
+        )
+        self.wifi_signal.pack(side=tk.RIGHT, padx=(5, 0))
+
         # Account info button
         initial_photo = self.get_profile_photo()
         self.account_profile_photo = ttk.Button(
             self.account_panel,
-            text=(f"{self.name}  " if self.name else f"{random_username()}  "),
+            text=(f"{self.name} " if self.name else f"{random_username()} "),
             image=initial_photo,
             command=self._show_account_dialog,
             compound=tk.RIGHT,
             takefocus=False,
             cursor="hand2",
             style="Account.TButton",
-            padding=0,
+            padding=3,
         )
         self.account_profile_photo.pack(side=tk.RIGHT)
         # Keep reference to prevent garbage collection
@@ -810,7 +880,10 @@ class App(tk.Tk):
         self._show_login_dialog()
 
     def open_dialog(
-        self, dialog: TopLevelWindow, frame_class: type[tk.Frame] | None = None, show_account_panel: bool = True
+        self,
+        dialog: TopLevelWindow,
+        frame_class: type[tk.Frame] | None = None,
+        show_account_panel: bool = True,
     ) -> None:
         """
         Open a dialog window and optionally mount a frame inside.
@@ -824,7 +897,7 @@ class App(tk.Tk):
         if frame_class is not None:
             frame = frame_class(dialog.body_frame, self)  # type: ignore
             frame.pack(fill=tk.BOTH, expand=True)
-        
+
         # If account panel should be shown, display it
         if show_account_panel:
             self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
@@ -837,9 +910,9 @@ class App(tk.Tk):
                 else:
                     # Dialog has closed, show the panel
                     self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
-            
+
             self.after(100, show_panel_on_close)
-        
+
         dialog.show(wait=False)
 
     def _show_login_dialog(self) -> None:
