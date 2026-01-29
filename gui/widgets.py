@@ -414,7 +414,7 @@ class TexturedButton(tk.Button):
         self._original_overlay_path = overlay_path
 
         # Set_disabled
-        self.set_disabled(disabled)
+        self.config(state=tk.DISABLED if disabled else tk.NORMAL)
 
         # Load and adapt texture
         self._update_texture()
@@ -566,34 +566,6 @@ class TexturedButton(tk.Button):
         self.text = new_text
         self._update_texture()
 
-    def set_disabled(self, disabled: bool = True):
-        """
-        Set custom disabled state without changing appearance.
-
-        Args:
-            disabled (bool): True to disable, False to enable.
-        """
-        self._is_disabled = disabled
-
-        if disabled:
-            # Store the original command and replace it with a no-op
-            self._original_command = self.cget("command")
-            self.text_color = "gray"
-            self._update_texture()
-        else:
-            # Restore the original command
-            if self._original_command:
-                self.configure(
-                    command=self._original_command,
-                    text_color=self._original_text_color,
-                    texture_path=self._original_overlay_path,
-                )
-            self._original_command = None
-
-    def is_disabled(self) -> bool:
-        """Check if button is in disabled state."""
-        return self._is_disabled
-
     def configure(
         self,
         texture_path: str | Path | None = None,
@@ -656,7 +628,7 @@ class TexturedButton(tk.Button):
             border_color: Border color on hover.
         """
 
-        if not self.is_disabled():
+        if not self["state"] == tk.DISABLED:
             self.config(bg=self.hover_border_color)  # type: ignore
             self.text_color = self.hover_text_color
             self.overlay_path = self.hover_overlay_path
@@ -672,7 +644,7 @@ class TexturedButton(tk.Button):
             border_color: Border color on hover.
         """
 
-        if not self.is_disabled():
+        if not self["state"] == tk.DISABLED:
             self.config(bg=self._original_bg)
             self.text_color = self._original_text_color
             self.overlay_path = self._original_overlay_path

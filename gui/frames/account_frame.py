@@ -165,7 +165,7 @@ class LoginFrame(ttk.Frame):
         self.username_entry.configure(highlightcolor="black")
         self.password_entry.configure(highlightcolor="black")
 
-        self.login_button.set_disabled(True)
+        self.login_button.config(state=tk.DISABLED)
 
         thread = threading.Thread(
             target=lambda: asyncio.run(self._do_login(username, password))
@@ -225,7 +225,7 @@ class LoginFrame(ttk.Frame):
 
     def _on_login_error(self, error: str) -> None:
         """Appelé dans le thread principal après erreur."""
-        self.login_button.set_disabled(False)
+        self.login_button.config(state=tk.NORMAL)
         self.username_entry.configure(highlightbackground="red")
         self.password_entry.configure(highlightbackground="red")
         self._show_error(error)
@@ -239,7 +239,7 @@ class LoginFrame(ttk.Frame):
         # Reset entries and button for retry
         self.password_var.set("")
         self.username_var.set("")
-        self.login_button.set_disabled(False)
+        self.login_button.config(state=tk.NORMAL)
 
     def _show_error(self, message: str) -> None:
         """
@@ -562,7 +562,7 @@ class RegisterFrame(ttk.Frame):
         self.username_entry.configure(highlightcolor="white")
         self.password_entry.configure(highlightcolor="white")
         self.confirm_password_entry.configure(highlightcolor="white")
-        self.register_button.set_disabled(True)
+        self.register_button.config(state=tk.DISABLED)
 
         thread = threading.Thread(
             target=lambda: asyncio.run(self._do_register(username, name, password))
@@ -645,7 +645,7 @@ class RegisterFrame(ttk.Frame):
 
     def _on_register_error(self, error: str) -> None:
         """Appelé dans le thread principal après erreur."""
-        self.register_button.set_disabled(False)
+        self.register_button.config(state=tk.NORMAL)
         self.username_entry.configure(highlightbackground="red")
         self.name_entry.configure(highlightbackground="red")
         self.password_entry.configure(highlightbackground="red")
@@ -661,7 +661,7 @@ class RegisterFrame(ttk.Frame):
         # Reset entries and button for retry
         self.password_var.set("")
         self.username_var.set("")
-        self.register_button.set_disabled(False)
+        self.register_button.config(state=tk.NORMAL)
 
     def _show_error(self, message: str) -> None:
         """

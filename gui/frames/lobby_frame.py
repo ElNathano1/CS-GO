@@ -79,7 +79,7 @@ class LobbyFrame(ttk.Frame):
             menu_frame.content_frame,
             text="Continuer la partie",
             command=lambda: self._resume_game(game=self.app.current_game),  # type: ignore
-            disabled=True if self.app.current_game is None else False,
+            state=tk.DISABLED if self.app.current_game is None else tk.NORMAL,
             takefocus=False,
         ).pack(pady=(20, 10), fill=tk.X, padx=30)
         self.app.Button(
@@ -95,7 +95,7 @@ class LobbyFrame(ttk.Frame):
             overlay_path=self.app.online_icon_path,
             hover_overlay_path=self.app.hovered_online_icon_path,
             text="Partie en ligne",
-            disabled=True if self.app.name is None else False,
+            state=tk.DISABLED if self.app.name is None else tk.NORMAL,
             command=lambda: self._open_online_game(),
             takefocus=False,
         )
@@ -191,7 +191,7 @@ class LobbyFrame(ttk.Frame):
         # Disable online button if no connection (strength == 0)
         if strength == 0:
             print("Disabling online button due to no connection.")
-            self.online_button.set_disabled(True)
+            self.online_button.config(state=tk.DISABLED)
         else:
             print("Enabling online button due to connection.")
-            self.online_button.set_disabled(False)
+            self.online_button.config(state=tk.NORMAL)

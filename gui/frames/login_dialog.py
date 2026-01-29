@@ -122,6 +122,17 @@ class LoginFrame(ttk.Frame):
         )
         self.register_button.pack(pady=10)
 
+        # Reset password button
+        self.reset_password = ttk.Button(
+            self,
+            text="Mot de passe oublié ?",
+            command=self._on_reset_password,
+            takefocus=False,
+            cursor="hand2",
+            padding=0,
+        )
+        self.reset_password.pack(pady=10)
+
         # Return button
         self.return_button = self.app.Button(
             self,
@@ -165,7 +176,7 @@ class LoginFrame(ttk.Frame):
         self.username_entry.configure(highlightcolor="black")
         self.password_entry.configure(highlightcolor="black")
 
-        self.login_button.set_disabled(True)
+        self.login_button.config(state=tk.DISABLED)
 
         thread = threading.Thread(
             target=lambda: asyncio.run(self._do_login(username, password))
@@ -225,7 +236,7 @@ class LoginFrame(ttk.Frame):
 
     def _on_login_error(self, error: str) -> None:
         """Appelé dans le thread principal après erreur."""
-        self.login_button.set_disabled(False)
+        self.login_button.config(state=tk.NORMAL)
         self.username_entry.configure(highlightbackground="red")
         self.password_entry.configure(highlightbackground="red")
         self._show_error(error)
@@ -239,7 +250,7 @@ class LoginFrame(ttk.Frame):
         # Reset entries and button for retry
         self.password_var.set("")
         self.username_var.set("")
-        self.login_button.set_disabled(False)
+        self.login_button.config(state=tk.NORMAL)
 
     def _show_error(self, message: str) -> None:
         """
@@ -264,6 +275,17 @@ class LoginFrame(ttk.Frame):
         # Create and pack the RegisterFrame
         register_frame = RegisterFrame(parent, self.app)  # type: ignore
         register_frame.pack(fill=tk.BOTH, expand=True)
+
+    def _on_reset_password(self) -> None:
+        """
+        Handle reset password action.
+        """
+
+        messagebox.showinfo(
+            "Réinitialisation du mot de passe",
+            "Pour réinitialiser votre mot de passe, veuillez visiter la page suivante dans votre navigateur :\n\n"
+            f"{BASE_URL}/users/{{username}}/reset-password",
+        )
 
     def _on_return(self) -> None:
         """
@@ -562,7 +584,7 @@ class RegisterFrame(ttk.Frame):
         self.username_entry.configure(highlightcolor="white")
         self.password_entry.configure(highlightcolor="white")
         self.confirm_password_entry.configure(highlightcolor="white")
-        self.register_button.set_disabled(True)
+        self.register_button.config(state=tk.DISABLED)
 
         thread = threading.Thread(
             target=lambda: asyncio.run(self._do_register(username, name, password))
@@ -645,7 +667,7 @@ class RegisterFrame(ttk.Frame):
 
     def _on_register_error(self, error: str) -> None:
         """Appelé dans le thread principal après erreur."""
-        self.register_button.set_disabled(False)
+        self.register_button.config(state=tk.NORMAL)
         self.username_entry.configure(highlightbackground="red")
         self.name_entry.configure(highlightbackground="red")
         self.password_entry.configure(highlightbackground="red")
@@ -661,7 +683,7 @@ class RegisterFrame(ttk.Frame):
         # Reset entries and button for retry
         self.password_var.set("")
         self.username_var.set("")
-        self.register_button.set_disabled(False)
+        self.register_button.config(state=tk.NORMAL)
 
     def _show_error(self, message: str) -> None:
         """

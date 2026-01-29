@@ -161,8 +161,6 @@ class App(tk.Tk):
             widget_state = str(widget.cget("state"))
             if widget.cget("text") not in excluded_texts and widget_state != "disabled":
                 self.sound_manager.play("click_effect")
-            if widget.is_disabled():
-                self.sound_manager.play("invalid_move_effect")
 
     def _load_banners(self) -> None:
         """
@@ -850,9 +848,21 @@ class App(tk.Tk):
         # Notify listeners that username and profile photo have been updated
         self.notify_username_updated()
         self.notify_profile_photo_updated()
-        
+
         # Notify connection change (trigger callback if registered)
         self._update_wifi_signal()
+
+        # Show account panel if not already visible
+        self._show_account_panel_if_visible()
+
+    def _update_account_panel(self) -> None:
+        """Update account panel button text with current user info."""
+        if (
+            hasattr(self, "account_profile_photo")
+            and self.account_profile_photo.winfo_exists()
+        ):
+            new_text = f"{self.name} " if self.name else f"{random_username()} "
+            self.account_profile_photo.config(text=new_text)
 
     def _fetch_user_data(self) -> None:
         """Fetch user data from API to get the name."""
@@ -870,15 +880,6 @@ class App(tk.Tk):
             except Exception as e:
                 print(f"Error fetching user data: {e}")
                 self.name = None
-
-    def _update_account_panel(self) -> None:
-        """Update account panel button text with current user info."""
-        if (
-            hasattr(self, "account_profile_photo")
-            and self.account_profile_photo.winfo_exists()
-        ):
-            new_text = f"{self.name} " if self.name else f"{random_username()} "
-            self.account_profile_photo.config(text=new_text)
 
     def _mark_user_connected(self) -> None:
         """Mark user as connected in the database."""
@@ -949,6 +950,22 @@ class App(tk.Tk):
 
         if self.username is None or self.token is None:
             self._show_login_dialog()
+        else:
+            # User is logged in via auto-connection, show account panel
+            self._show_account_panel_if_visible()
+
+    def _show_account_panel_if_visible(self) -> None:
+        """
+        Show account panel if we have an authenticated user and current frame is LobbyFrame.
+        """
+        if self.username and hasattr(self, "account_panel") and self.account_panel:
+            # Check if current frame is LobbyFrame
+            if (
+                self.current_frame
+                and self.current_frame.__class__.__name__ == "LobbyFrame"
+            ):
+                self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+                self.account_panel.lift()
 
     def get_profile_photo(self, size: int = 32) -> ImageTk.PhotoImage:
         """
@@ -1082,15 +1099,12 @@ class App(tk.Tk):
                         strength = 1  # Weak (2.5s - 3.5s)
                     else:
                         strength = 0  # Poor (> 3.5s)
-                    print(f"Connection OK: {elapsed_time:.3f}s - Signal: {strength}")
                 else:
                     strength = 0  # No connection
-                    print(f"Connection FAILED")
 
             except Exception as e:
                 # Connection failed
                 strength = 0
-                print(f"Monitor error: {e}")
 
             # Update UI in main thread if strength changed
             if strength != self._connection_strength:
@@ -1109,7 +1123,7 @@ class App(tk.Tk):
                 self.wifi_signal.config(
                     image=self.wifi_signal_icons[self._connection_strength]
                 )
-        
+
         # Call connection strength callback (e.g., to disable online button)
         if self.connection_strength_callback:
             self.connection_strength_callback(self._connection_strength)
