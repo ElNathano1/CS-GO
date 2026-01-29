@@ -7,6 +7,7 @@ including API endpoints, default values, and other global settings.
 
 # API Configuration
 BASE_URL = "https://cs-go-production.up.railway.app"
+WS_URL = "wss://cs-go-production.up.railway.app/ws"
 
 # Application Settings
 APP_NAME = "CS Go"

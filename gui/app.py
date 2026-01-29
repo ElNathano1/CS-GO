@@ -39,7 +39,7 @@ from game.core import Goban, GoGame
 from game.utils import save_game
 
 # API base URL
-from config import BASE_URL, APP_NAME
+from config import BASE_URL, APP_NAME, WS_URL
 
 
 class App(tk.Tk):
@@ -105,6 +105,12 @@ class App(tk.Tk):
         # Initialize callback attributes
         self.username_updated_callback = None
         self.profile_photo_updated_callback = None
+        self.connection_strength_callback = None
+
+        # Connection monitoring
+        self._connection_monitor_running = True
+        self._connection_strength = 0  # 0-3: no signal, weak, medium, strong
+        self._start_connection_monitor()
 
         # Show lobby frame on startup
         self.show_frame(LobbyFrame)
@@ -844,6 +850,9 @@ class App(tk.Tk):
         # Notify listeners that username and profile photo have been updated
         self.notify_username_updated()
         self.notify_profile_photo_updated()
+        
+        # Notify connection change (trigger callback if registered)
+        self._update_wifi_signal()
 
     def _fetch_user_data(self) -> None:
         """Fetch user data from API to get the name."""
@@ -856,9 +865,20 @@ class App(tk.Tk):
                 if response.status_code == 200:
                     data = response.json()
                     self.name = data.get("name")
+                    # Update account panel with real name
+                    self.after(0, self._update_account_panel)
             except Exception as e:
                 print(f"Error fetching user data: {e}")
                 self.name = None
+
+    def _update_account_panel(self) -> None:
+        """Update account panel button text with current user info."""
+        if (
+            hasattr(self, "account_profile_photo")
+            and self.account_profile_photo.winfo_exists()
+        ):
+            new_text = f"{self.name} " if self.name else f"{random_username()} "
+            self.account_profile_photo.config(text=new_text)
 
     def _mark_user_connected(self) -> None:
         """Mark user as connected in the database."""
@@ -1003,6 +1023,97 @@ class App(tk.Tk):
         if self.profile_photo_updated_callback:
             self.profile_photo_updated_callback()
 
+    def _start_connection_monitor(self) -> None:
+        """
+        Start the connection monitoring thread.
+        """
+        monitor_thread = threading.Thread(
+            target=self._monitor_connection_loop, daemon=True
+        )
+        monitor_thread.start()
+
+    def _monitor_connection_loop(self) -> None:
+        """
+        Monitor connection status in background thread.
+        Checks connection every 5 seconds and updates signal strength using WebSocket health endpoint.
+        """
+        import time
+        import json
+
+        while self._connection_monitor_running:
+
+            # Only monitor if user is logged in
+            if self.name is None:
+                time.sleep(5)
+                continue
+
+            try:
+                # Test connection with timeout using WebSocket health endpoint
+                start_time = time.time()
+
+                async def test_ws_health():
+                    try:
+                        import websockets
+
+                        async with websockets.connect(
+                            f"{WS_URL}/health", ping_interval=None, ping_timeout=None
+                        ) as ws:
+                            # Send ping message
+                            await ws.send(json.dumps({"message": "ping"}))
+                            # Wait for response
+                            response = await asyncio.wait_for(ws.recv(), timeout=2.0)
+                            return True
+                    except Exception as e:
+                        print(f"WebSocket health check error: {e}")
+                        return False
+
+                # Run async function in thread
+                result = asyncio.run(test_ws_health())
+                elapsed_time = time.time() - start_time
+
+                if result:
+                    # Determine signal strength based on response time
+                    # Adjusted for realistic network latency
+                    if elapsed_time < 1.5:
+                        strength = 3  # Excellent (< 1.5s)
+                    elif elapsed_time < 2.5:
+                        strength = 2  # Good (1.5s - 2.5s)
+                    elif elapsed_time < 3.5:
+                        strength = 1  # Weak (2.5s - 3.5s)
+                    else:
+                        strength = 0  # Poor (> 3.5s)
+                    print(f"Connection OK: {elapsed_time:.3f}s - Signal: {strength}")
+                else:
+                    strength = 0  # No connection
+                    print(f"Connection FAILED")
+
+            except Exception as e:
+                # Connection failed
+                strength = 0
+                print(f"Monitor error: {e}")
+
+            # Update UI in main thread if strength changed
+            if strength != self._connection_strength:
+                self._connection_strength = strength
+                self.after(0, self._update_wifi_signal)
+
+            # Wait before next check
+            time.sleep(5)
+
+    def _update_wifi_signal(self) -> None:
+        """
+        Update the WiFi signal icon in the account panel (called in main thread).
+        """
+        if hasattr(self, "wifi_signal") and self.wifi_signal.winfo_exists():
+            if len(self.wifi_signal_icons) > self._connection_strength:
+                self.wifi_signal.config(
+                    image=self.wifi_signal_icons[self._connection_strength]
+                )
+        
+        # Call connection strength callback (e.g., to disable online button)
+        if self.connection_strength_callback:
+            self.connection_strength_callback(self._connection_strength)
+
     def return_to_desktop(self) -> None:
         """
         Return to the desktop by closing the application.
@@ -1013,6 +1124,9 @@ class App(tk.Tk):
             "Voulez-vous retourner au bureau ?",
         )
         if result:
+            # Stop connection monitor
+            self._connection_monitor_running = False
+
             # Mark user as disconnected before closing
             if self.username:
                 try:

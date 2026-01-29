@@ -3,5 +3,5 @@
   "music_volume": 100.0,
   "effects_volume": 100.0,
   "stay_logged_in": false,
-  "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImJpZ2dvIiwiZXhwIjoxNzY5NzIzOTYyLCJpYXQiOjE3Njk2Mzc1NjJ9.xWMyymzMrH1YxKOQs-ya_nnhZRX5It8pb5l-VmgPIDA"
+  "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVsbmF0aGFubyIsImV4cCI6MTc2OTczNDA1NiwiaWF0IjoxNzY5NjQ3NjU2fQ.v466kawxR6XZAOPvmCQWi8ssFcnyZQxXGgPFLD4vC2g"
 }

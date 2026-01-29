@@ -46,8 +46,9 @@ class LobbyFrame(ttk.Frame):
         if hasattr(self.app, "account_panel") and self.app.account_panel:
             self.app.account_panel.lift()
             # Setup callbacks for this frame
-            self.app.username_updated_callback = self._update_account_info  # type: ignore
+            self.app.usee_updated_callback = self._update_account_info  # type: ignore
             self.app.profile_photo_updated_callback = self._update_profile_photo  # type: ignore
+            self.app.connection_strength_callback = self._on_connection_strength_changed  # type: ignore
 
         # Title
         title = tk.Canvas(
@@ -89,14 +90,16 @@ class LobbyFrame(ttk.Frame):
             command=lambda: self._open_local_game(),
             takefocus=False,
         ).pack(pady=(20, 10), fill=tk.X, padx=30)
-        self.app.Button(
+        self.online_button = self.app.Button(
             menu_frame.content_frame,
             overlay_path=self.app.online_icon_path,
             hover_overlay_path=self.app.hovered_online_icon_path,
             text="Partie en ligne",
+            disabled=True if self.app.name is None else False,
             command=lambda: self._open_online_game(),
             takefocus=False,
-        ).pack(pady=10, fill=tk.X, padx=30)
+        )
+        self.online_button.pack(pady=10, fill=tk.X, padx=30)
         self.app.Button(
             menu_frame.content_frame,
             overlay_path=self.app.prefs_icon_path,
@@ -177,3 +180,18 @@ class LobbyFrame(ttk.Frame):
         self.app.account_profile_photo.config(image=new_photo)
         # Keep a reference to prevent garbage collection
         self.app.account_profile_photo.image = new_photo  # type: ignore
+
+    def _on_connection_strength_changed(self, strength: int) -> None:
+        """
+        Update online button state based on connection strength.
+
+        Args:
+            strength: Connection strength (0=poor/none, 1=weak, 2=good, 3=excellent)
+        """
+        # Disable online button if no connection (strength == 0)
+        if strength == 0:
+            print("Disabling online button due to no connection.")
+            self.online_button.set_disabled(True)
+        else:
+            print("Enabling online button due to connection.")
+            self.online_button.set_disabled(False)
