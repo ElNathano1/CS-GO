@@ -13,6 +13,7 @@ from tkinter import messagebox
 from gui.frames.settings_frame import SettingsFrame
 from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
 from gui.frames.local_lobby_frame import LocalLobbyFrame
+from gui.utils import random_username
 from gui.widgets import TopLevelWindow
 
 if TYPE_CHECKING:
@@ -194,9 +195,8 @@ class LobbyFrame(ttk.Frame):
         """
         Update the account info displayed in the account panel.
         """
-        self.app.account_profile_photo.config(
-            text=(f"{self.app.name}  " if self.app.name else "")
-        )
+        display_name = self.app.name if self.app.name else random_username()
+        self.app.account_profile_photo.config(text=f"{display_name}  ")
         self._update_profile_photo()
 
     def _update_profile_photo(self) -> None:

@@ -12,7 +12,7 @@ import tkinter.ttk as ttk
 from game.core import Goban
 from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
 from gui.utils import random_username
-from player.ai import Martin, Player
+from player.ai import Martin, Leo, Magnus, Player
 
 from game.core import GoGame
 
@@ -39,12 +39,14 @@ class LocalLobbyFrame(ttk.Frame):
         super().__init__(parent)
 
         self.app = app
-        loading = self.app.show_loading("Chargement du lobby local...")
+        self._loading = self.app.show_loading("Chargement du lobby local...")
 
         self.board_size = tk.IntVar(value=19)
         self.multiplayer = tk.BooleanVar(value=True)
         self.ai = None
+        self.after(0, self._build_step_1)
 
+    def _build_step_1(self) -> None:
         # Title
         title = ttk.Label(self, text="Game Lobby", style="Title.TLabel")
         title.pack(pady=40)
@@ -56,6 +58,9 @@ class LocalLobbyFrame(ttk.Frame):
         if hasattr(self.app, "account_panel") and self.app.account_panel:
             self.app.account_panel.lift()
 
+        self.after(0, self._build_step_2)
+
+    def _build_step_2(self) -> None:
         # Number of players selection frame
         main_player_frame = self.app.Frame(self.container, bg="black", bd=1)
         main_player_frame.pack(pady=20, fill=tk.X)
@@ -78,6 +83,9 @@ class LocalLobbyFrame(ttk.Frame):
             takefocus=False,
         ).pack(padx=30, pady=(10, 20), fill=tk.X)
 
+        self.after(0, self._build_step_3)
+
+    def _build_step_3(self) -> None:
         # Board size selection frame
         main_size_frame = self.app.Frame(self.container, bg="black", bd=1)
         main_size_frame.pack(pady=20, fill=tk.X)
@@ -107,6 +115,9 @@ class LocalLobbyFrame(ttk.Frame):
             takefocus=False,
         ).pack(padx=30, pady=(10, 20), fill=tk.X)
 
+        self.after(0, self._build_step_4)
+
+    def _build_step_4(self) -> None:
         self.app.Button(
             self.container,
             text="Continuer la partie",
@@ -133,7 +144,7 @@ class LocalLobbyFrame(ttk.Frame):
             takefocus=False,
         ).pack(pady=(10, 20))
 
-        self.app.hide_loading(loading)
+        self.app.hide_loading(self._loading)
 
     def _resume_game(self, game: "GoGame") -> None:
         """
@@ -154,18 +165,19 @@ class LocalLobbyFrame(ttk.Frame):
                         self.app.account_profile_photo["text"].strip(),
                         self.app.get_profile_photo(),
                         color=Goban.BLACK,
-                        level=-1,
+                        level=-3000,
                     ),
                     Player(
                         random_username(),
                         self.app._get_default_profile_photo(),
                         color=Goban.WHITE,
-                        level=-1,
+                        level=-3000,
                     ),
                     game,
                 )
             )
         else:
+            print("Resuming singleplayer game...")
             self.app.show_frame(
                 lambda parent, app: SingleplayerGameFrame(
                     parent,
@@ -176,7 +188,7 @@ class LocalLobbyFrame(ttk.Frame):
                         self.app.account_profile_photo["text"].strip(),
                         self.app.get_profile_photo(),
                         color=Goban.WHITE,
-                        level=-1,
+                        level=-3000,
                     ),
                     game,
                 )
@@ -204,13 +216,13 @@ class LocalLobbyFrame(ttk.Frame):
                         self.app.account_profile_photo["text"].strip(),
                         self.app.get_profile_photo(),
                         color=Goban.BLACK,
-                        level=-1,
+                        level=-3000,
                     ),
                     Player(
                         random_username(),
                         self.app._get_default_profile_photo(),
                         color=Goban.WHITE,
-                        level=-1,
+                        level=-3000,
                     ),
                     game,
                 )
@@ -228,7 +240,7 @@ class LocalLobbyFrame(ttk.Frame):
                         self.app.account_profile_photo["text"].strip(),
                         self.app.get_profile_photo(),
                         color=Goban.WHITE,
-                        level=-1,
+                        level=-3000,
                     ),
                     game,
                 )

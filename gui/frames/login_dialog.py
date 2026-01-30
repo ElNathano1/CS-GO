@@ -180,6 +180,7 @@ class LoginFrame(ttk.Frame):
         self.password_entry.configure(highlightcolor="black")
 
         self.login_button.config(state=tk.DISABLED)
+        self._login_loading = self.app.show_loading("Connexion...")
 
         thread = threading.Thread(
             target=lambda: asyncio.run(self._do_login(username, password))
@@ -213,6 +214,9 @@ class LoginFrame(ttk.Frame):
 
     def _on_login_success(self, data: dict) -> None:
         """Appelé dans le thread principal après succès."""
+        if getattr(self, "_login_loading", None) is not None:
+            self.app.hide_loading(self._login_loading)
+            self._login_loading = None
         self.app.token = data["token"]
         self.app.username = data["username"]
 
@@ -239,6 +243,9 @@ class LoginFrame(ttk.Frame):
 
     def _on_login_error(self, error: str) -> None:
         """Appelé dans le thread principal après erreur."""
+        if getattr(self, "_login_loading", None) is not None:
+            self.app.hide_loading(self._login_loading)
+            self._login_loading = None
         self.login_button.config(state=tk.NORMAL)
         self.username_entry.configure(highlightbackground="red")
         self.password_entry.configure(highlightbackground="red")

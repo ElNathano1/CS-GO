@@ -6,6 +6,9 @@ Includes both multiplayer and single-player game frames with full game logic,
 board rendering, stone animations, and game controls.
 """
 
+import threading
+import multiprocessing
+import queue
 from typing import TYPE_CHECKING
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -15,12 +18,20 @@ from PIL import Image, ImageTk
 
 from gui.game_canvas import StoneBowl
 from game.core import Goban, GoGame
+from game.utils import game_to_dict
 from gui.frames.settings_frame import SettingsFrame
 from gui.widgets import TopLevelWindow
 from player.ai import Martin, Leo, Magnus, Player, TrueAI
 
 if TYPE_CHECKING:
     from gui.app import App
+
+
+def _ai_move_worker(game_state: dict, ai_kind: str, color: int, out_queue) -> None:
+    from player.ai import compute_ai_move
+
+    move = compute_ai_move(game_state, ai_kind, color)
+    out_queue.put(move)
 
 
 class GameFrame(ttk.Frame):
@@ -52,7 +63,7 @@ class GameFrame(ttk.Frame):
         super().__init__(parent)
 
         self.app = app
-        loading = self.app.show_loading("Chargement de la partie...")
+        self._loading = self.app.show_loading("Chargement de la partie...")
         self.board_size = board_size
         self.sound_manager = app.sound_manager
         self.cell_size = 50
@@ -71,17 +82,155 @@ class GameFrame(ttk.Frame):
         # Load images
         self._load_images()
 
-        # Create layout
-        self._create_layout()
+        # Defer layout creation to keep loading animation responsive
+        self.after(0, self._build_layout_step_1)
+
+    def _build_layout_step_1(self) -> None:
+        """
+        Build main container and board frame.
+        """
+        self._main_frame = ttk.Frame(self)
+        self._main_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=40)
+
+        # Left side: Game board
+        main_board = self.app.Frame(self._main_frame, bg="black", bd=1, width=1000)
+        main_board.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        board = self.app.Frame(main_board)
+        board.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        self.board_frame = tk.Frame(
+            board.content_frame,
+            bd=0,
+            highlightbackground="black",
+            highlightthickness=1,
+            bg="#224722",
+        )
+        self.board_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+
+        self.board_frame.grid_columnconfigure(0, weight=1)
+        self.board_frame.grid_rowconfigure(0, weight=0)
+        self.board_frame.grid_rowconfigure(1, weight=1)
+        self.board_frame.grid_rowconfigure(2, weight=0)
+        self.board_frame.grid_anchor("center")
+
+        self.after(0, self._build_layout_step_2)
+
+    def _build_layout_step_2(self) -> None:
+        """
+        Build players panels, board canvas, and bowls.
+        """
+        # Create players panels
+        self._create_players_panels()
+
+        # Create canvas for drawing the board using calculated dimensions
+        board_width = int(self.image_total_size * self.scale_ratio)
+        board_height = int(self.image_total_size * self.scale_ratio)
+        bowl_size = int(board_width / 4)
+        margin = bowl_size + 20
+
+        canvas_width = board_width + margin * 2
+        canvas_height = board_height
+
+        self.canvas = tk.Canvas(
+            self.board_frame,
+            width=canvas_width,
+            height=canvas_height,
+            relief=tk.SOLID,
+            bd=0,
+            highlightthickness=0,  # Remove canvas border highlight
+            bg="#224722",
+        )
+        self.canvas.grid(row=1, column=0, padx=20, pady=20)
+        self.canvas.bind("<Button-1>", self._on_board_click)
+
+        # Origin for drawing the board
+        self.board_origin_x = margin
+        self.board_origin_y = 0
+
+        # Create bowls
+        self._create_bowls()
+
+        self.after(0, self._build_layout_step_3)
+
+    def _build_layout_step_3(self) -> None:
+        """
+        Build right controls, draw board, and finalize.
+        """
+        # Right side: Controls and info panel
+        right_frame = ttk.Frame(self._main_frame)
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(20, 0))
+
+        # Control buttons frame
+        main_buttons_frame = self.app.Frame(right_frame, bg="black", bd=1)
+        main_buttons_frame.pack(fill=tk.X, pady=(40, 10))
+        buttons_frame = self.app.Frame(main_buttons_frame)
+        buttons_frame.pack(pady=3, padx=3, expand=True)
+
+        # Pass button
+        self.pass_button = self.app.Button(
+            buttons_frame,
+            text="Passer",
+            overlay_path=self.app.pass_icon_path,
+            hover_overlay_path=self.app.hovered_pass_icon_path,
+            command=lambda: self._on_pass(),
+            takefocus=False,
+        )
+        self.pass_button.pack(fill=tk.X, pady=(20, 10), padx=30)
+
+        # Resign button
+        self.resign_button = self.app.Button(
+            buttons_frame,
+            text="Abandon",
+            overlay_path=self.app.resign_icon_path,
+            hover_overlay_path=self.app.hovered_resign_icon_path,
+            command=lambda: self._on_resign(),
+            takefocus=False,
+        )
+        self.resign_button.pack(fill=tk.X, pady=10, padx=30)
+
+        # New game button
+        self.new_game_button = self.app.Button(
+            buttons_frame,
+            text="Revanche",
+            overlay_path=self.app.revenge_icon_path,
+            hover_overlay_path=self.app.hovered_revenge_icon_path,
+            command=lambda: self._on_new_game(),
+            takefocus=False,
+        )
+        self.new_game_button.pack(fill=tk.X, pady=10, padx=30)
+
+        # Settings button
+        self.app.Button(
+            buttons_frame,
+            overlay_path=self.app.prefs_icon_path,
+            hover_overlay_path=self.app.hovered_prefs_icon_path,
+            text="Paramètres",
+            command=lambda: self._open_settings(),
+            takefocus=False,
+        ).pack(pady=10, fill=tk.X, padx=30)
+
+        # Back to Lobby button
+        self.back_button = self.app.Button(
+            buttons_frame,
+            text="Retour au lobby",
+            overlay_path=self.app.return_icon_path,
+            hover_overlay_path=self.app.hovered_return_icon_path,
+            command=lambda: self._on_back_to_lobby(),
+            takefocus=False,
+        )
+        self.back_button.pack(fill=tk.X, pady=(10, 20), padx=30)
+
+        # Draw the initial board state
+        self._draw_board()
+        self.app.current_game = self.game
 
         # Play game start sound
         self.sound_manager.play_exclusive("game_start_music")
 
         # Resume game if provided
-        if game is not None:
+        if self.game is not None:
             self._resume_game()
 
-        self.app.hide_loading(loading)
+        self.app.hide_loading(self._loading)
 
     def _load_images(self) -> None:
         """
@@ -264,7 +413,7 @@ class GameFrame(ttk.Frame):
         ttk.Label(
             black_player_panel,
             background="#224722",
-            text=f"{"({self.black_player.level}EGF) " if self.black_player.level != -1 else ""}{self.black_player.name}",
+            text=f"{f"({self.black_player.level}EGF) " if self.black_player.level != -3000 else ""}{self.black_player.name}",
         ).pack(side=tk.RIGHT, padx=(0, 10))
         self.black_score_label = ttk.Label(
             black_player_panel,
@@ -294,7 +443,7 @@ class GameFrame(ttk.Frame):
         ttk.Label(
             white_player_panel,
             background="#224722",
-            text=f"{self.white_player.name}{" ({self.white_player.level}EGF)" if self.white_player.level != -1 else ""}",
+            text=f"{self.white_player.name}{f" ({self.white_player.level}EGF)" if self.white_player.level != -3000 else ""}",
         ).pack(side=tk.LEFT, padx=(10, 0))
         self.white_score_label = ttk.Label(
             white_player_panel,
@@ -849,8 +998,10 @@ class GameFrame(ttk.Frame):
 
         # Lock further moves
         self.canvas.unbind("<Button-1>")
-        self.pass_button.config(state=tk.DISABLED)
-        self.resign_button.config(state=tk.DISABLED)
+        if hasattr(self, "pass_button"):
+            self.pass_button.config(state=tk.DISABLED)
+        if hasattr(self, "resign_button"):
+            self.resign_button.config(state=tk.DISABLED)
 
         # No current game to continue
         self.app.current_game = None
@@ -871,6 +1022,7 @@ class SingleplayerGameFrame(GameFrame):
         black_player: Player,
         white_player: Player,
         game: GoGame,
+        player_color: int = Goban.WHITE,
     ):
         """
         Initialize the game frame.
@@ -880,12 +1032,31 @@ class SingleplayerGameFrame(GameFrame):
             app (App): The main application instance.
             board_size (int): The size of the board (9, 13, or 19).
             game (GoGame, optional): An existing game instance to resume. Defaults to None.
+            player_color (int, optional): The color of the human player. Defaults to Goban.WHITE.
         """
         super().__init__(parent, app, board_size, black_player, white_player, game)
 
         self.game.set_singleplayer()
 
-        self.after(100, self._ai_move)
+        self.player_color = player_color
+        self.ai_color = Goban.BLACK if player_color == Goban.WHITE else Goban.WHITE
+        self._ai_thinking = False
+        self._ai_process = None
+        self._ai_result_queue = None
+        self.after(0, self._init_singleplayer_controls)
+
+    def _init_singleplayer_controls(self) -> None:
+        """
+        Apply singleplayer-specific control state once buttons exist.
+        """
+        if not hasattr(self, "pass_button") or not hasattr(self, "resign_button"):
+            self.after(50, self._init_singleplayer_controls)
+            return
+
+        if self.player_color == Goban.WHITE:
+            self.pass_button.config(state=tk.DISABLED)
+            self.resign_button.config(state=tk.DISABLED)
+            self.after(100, self._ai_choose_move_async)
 
     def _create_bowls(self) -> None:
         """
@@ -903,12 +1074,28 @@ class SingleplayerGameFrame(GameFrame):
 
         # Center of the two bowls
         black_bowl_center = (
-            bowl_size // 2,
-            bowl_size // 2,
+            (
+                bowl_size // 2
+                if self.player_color == Goban.WHITE
+                else canvas_width - bowl_size // 2
+            ),
+            (
+                bowl_size // 2
+                if self.player_color == Goban.WHITE
+                else canvas_width - bowl_size // 2
+            ),
         )
         white_bowl_center = (
-            canvas_width - bowl_size // 2,
-            canvas_height - bowl_size // 2,
+            (
+                canvas_width - bowl_size // 2
+                if self.player_color == Goban.WHITE
+                else bowl_size // 2
+            ),
+            (
+                canvas_height - bowl_size // 2
+                if self.player_color == Goban.WHITE
+                else bowl_size // 2
+            ),
         )
 
         # Bowls
@@ -934,6 +1121,71 @@ class SingleplayerGameFrame(GameFrame):
             initial_count=self.board_size**2,
         )
 
+    def _create_players_panels(self):
+        """
+        Place players panels with profile picture, name, levels, score and turn indicator.
+        """
+
+        # White player panel
+        white_player_panel = tk.Frame(
+            self.board_frame,
+            bd=0,
+            highlightthickness=0,
+            bg="#224722",
+        )
+        white_player_panel.grid(row=2, column=0, sticky="e", padx=10, pady=(0, 10))
+
+        # Account info label
+        tk.Label(
+            white_player_panel,
+            background="#224722",
+            image=self.white_player.profile_photo,
+            highlightthickness=1,
+            highlightbackground="black",
+            highlightcolor="black",
+        ).pack(side=tk.RIGHT, padx=0)
+        ttk.Label(
+            white_player_panel,
+            background="#224722",
+            text=f"{f"({self.white_player.level}EGF) " if self.white_player.level != -3000 else ""}{self.white_player.name}",
+        ).pack(side=tk.RIGHT, padx=(0, 10))
+        self.white_score_label = ttk.Label(
+            white_player_panel,
+            background="#224722",
+            text="Score: 0  -  ",
+        )
+        self.white_score_label.pack(side=tk.RIGHT)
+
+        # Black player panel
+        black_player_panel = tk.Frame(
+            self.board_frame,
+            bd=0,
+            highlightthickness=0,
+            bg="#224722",
+        )
+        black_player_panel.grid(row=0, column=0, sticky="w", padx=10, pady=(10, 0))
+
+        # Account info label
+        tk.Label(
+            black_player_panel,
+            background="#224722",
+            image=self.black_player.profile_photo,
+            highlightthickness=1,
+            highlightbackground="black",
+            highlightcolor="black",
+        ).pack(side=tk.LEFT, padx=0)
+        ttk.Label(
+            black_player_panel,
+            background="#224722",
+            text=f"{self.black_player.name}{f" ({self.black_player.level}EGF)" if self.black_player.level != -3000 else ""}",
+        ).pack(side=tk.LEFT, padx=(10, 0))
+        self.black_score_label = ttk.Label(
+            black_player_panel,
+            background="#224722",
+            text="  -  Score: 0",
+        )
+        self.black_score_label.pack(side=tk.LEFT)
+
     def _on_pass(self) -> None:
         """
         Handle the Pass button click.
@@ -941,19 +1193,7 @@ class SingleplayerGameFrame(GameFrame):
         Records a pass move and updates the display.
         """
 
-        if (
-            self.game.current_color == Goban.WHITE
-            and not (
-                isinstance(self.white_player, TrueAI)
-                or isinstance(self.white_player, Martin)
-            )
-        ) or (
-            self.game.current_color == Goban.BLACK
-            and not (
-                isinstance(self.black_player, TrueAI)
-                or isinstance(self.black_player, Martin)
-            )
-        ):
+        if self.game.current_color == self.player_color:
             super()._on_pass()
 
             if not self.game.game_over():
@@ -987,19 +1227,7 @@ class SingleplayerGameFrame(GameFrame):
         """
         Handle the Resign button click.
         """
-        if (
-            self.game.current_color == Goban.WHITE
-            and not (
-                isinstance(self.white_player, TrueAI)
-                or isinstance(self.white_player, Martin)
-            )
-        ) or (
-            self.game.current_color == Goban.BLACK
-            and not (
-                isinstance(self.black_player, TrueAI)
-                or isinstance(self.black_player, Martin)
-            )
-        ):
+        if self.game.current_color == self.player_color:
             return super()._on_resign()
 
     def _on_board_click(self, event: tk.Event) -> None:
@@ -1037,69 +1265,113 @@ class SingleplayerGameFrame(GameFrame):
         if self.animating:
             self.after(100, self._wait_and_play_ai)
         else:
-            self._ai_move()
+            self.pass_button.config(state=tk.DISABLED)
+            self.resign_button.config(state=tk.DISABLED)
+            self._ai_choose_move_async()
 
-    def _ai_move(self) -> None:
+    def _ai_choose_move_async(self) -> None:
         """
-        Let the AI take a move
+        Compute the AI move in a background thread, then apply on UI thread.
         """
+        if self._ai_thinking or self.game.current_color != self.ai_color:
+            return
 
-        if (
-            self.game.current_color == Goban.WHITE
-            and (
-                isinstance(self.white_player, TrueAI)
-                or isinstance(self.white_player, Martin)
-            )
-        ) or (
-            self.game.current_color == Goban.BLACK
-            and (
-                isinstance(self.black_player, TrueAI)
-                or isinstance(self.black_player, Martin)
-            )
-        ):
-            ai = (
-                self.black_player
-                if self.game.current_color == Goban.BLACK
-                else self.white_player
-            )
-            move = ai.choose_move()  # type: ignore
+        self._ai_thinking = True
 
-            if move != "pass" and move != "resign":
-                x, y = move
-                successfull, capture = self.game.take_move(x, y)  # type: ignore
-                if successfull:
+        ai = self.black_player if self.ai_color == Goban.BLACK else self.white_player
+        ai_kind = type(ai).__name__
+        game_state = game_to_dict(self.game)
+
+        ctx = multiprocessing.get_context("spawn")
+        self._ai_result_queue = ctx.Queue()
+        self._ai_process = ctx.Process(
+            target=_ai_move_worker,
+            args=(game_state, ai_kind, self.ai_color, self._ai_result_queue),
+            daemon=True,
+        )
+        self._ai_process.start()
+        self.after(50, self._poll_ai_result)
+
+    def _poll_ai_result(self) -> None:
+        if self._ai_result_queue is None:
+            return
+
+        try:
+            move = self._ai_result_queue.get_nowait()
+        except queue.Empty:
+            if self._ai_process is not None and self._ai_process.is_alive():
+                self.after(50, self._poll_ai_result)
+            else:
+                self._ai_thinking = False
+            return
+
+        self._ai_process = None
+        self._ai_result_queue = None
+        self._apply_ai_move(move)
+
+    def _apply_ai_move(self, move) -> None:
+        """
+        Apply the AI move on the UI thread.
+        """
+        self._ai_thinking = False
+
+        if self.game.current_color != self.ai_color:
+            if hasattr(self, "pass_button") and hasattr(self, "resign_button"):
+                self.pass_button.config(state=tk.NORMAL)
+                self.resign_button.config(state=tk.NORMAL)
+            return
+
+        if move != "pass" and move != "resign":
+            x, y = move
+            successfull, capture = self.game.take_move(x, y)  # type: ignore
+            if successfull:
+                self.last_move = (x, y)
+
+                # Get the bowl corresponding to the color that JUST played (before color switch)
+                bowl = (
+                    self.white_bowl
+                    if self.game.current_color == self.ai_color
+                    else self.black_bowl
+                )
+                item = bowl.pop_stone_item()
+
+                if item:
+                    target = self._intersection_coords(x, y)  # type: ignore
                     self.last_move = (x, y)
-
-                    # Get the bowl corresponding to the color that JUST played (before color switch)
-                    bowl = (
-                        self.white_bowl
-                        if self.game.current_color == Goban.BLACK
-                        else self.black_bowl
-                    )
-                    item = bowl.pop_stone_item()
-
-                    if item:
-                        target = self._intersection_coords(x, y)  # type: ignore
-                        self.last_move = (x, y)
-                        self._animate_stone(item, target, capture=capture)
-                    else:
-                        self._draw_stone(x, y, self.game.goban.board[x, y])  # type: ignore
-                        if capture:
-                            self._draw_board()
-                            self.sound_manager.play_exclusive("capture_effect")
-                        else:
-                            self.sound_manager.play_exclusive("stone_placed_effect")
-                        self._update_display()
-
-                    # Check if game is over
-                    if self.game.game_over():
-                        self._show_game_over_dialog()
+                    self._animate_stone(item, target, capture=capture)
                 else:
-                    # Play invalid move sound
-                    self.sound_manager.play_exclusive("invalid_move_effect")
+                    self._draw_stone(x, y, self.game.goban.board[x, y])  # type: ignore
+                    if capture:
+                        self._draw_board()
+                        self.sound_manager.play_exclusive("capture_effect")
+                    else:
+                        self.sound_manager.play_exclusive("stone_placed_effect")
+                    self._update_display()
 
-            elif move == "pass":
-                super()._on_pass()
+                # Check if game is over
+                if self.game.game_over():
+                    self._show_game_over_dialog()
+            else:
+                # Play invalid move sound
+                self.sound_manager.play_exclusive("invalid_move_effect")
 
-            elif move == "resign":
-                self._show_game_over_dialog(resigned_by=Goban.BLACK)
+            self.pass_button.config(state=tk.NORMAL)
+            self.resign_button.config(state=tk.NORMAL)
+
+        elif move == "pass":
+            super()._on_pass()
+
+            self.pass_button.config(state=tk.NORMAL)
+            self.resign_button.config(state=tk.NORMAL)
+
+        elif move == "resign":
+            self._show_game_over_dialog(resigned_by=self.ai_color)
+
+
+    def destroy(self) -> None:
+        if self._ai_process is not None and self._ai_process.is_alive():
+            try:
+                self._ai_process.terminate()
+            except Exception:
+                pass
+        super().destroy()

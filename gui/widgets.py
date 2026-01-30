@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 
 _IMAGE_CACHE: dict[Path, Image.Image] = {}
 _IMAGE_CACHE_LOCK = threading.Lock()
+_RESIZED_IMAGE_CACHE: dict[tuple[Path, int, int], Image.Image] = {}
+_RESIZED_IMAGE_CACHE_LOCK = threading.Lock()
 
 
 def _get_cached_image(image_path: Path) -> Image.Image:
@@ -32,6 +34,24 @@ def _get_cached_image(image_path: Path) -> Image.Image:
         if cached is None:
             cached = Image.open(image_path).convert("RGBA")
             _IMAGE_CACHE[image_path] = cached
+    return cached
+
+
+def _get_resized_image(image_path: Path, width: int, height: int) -> Image.Image:
+    """Get a resized/cropped image from cache."""
+    key = (image_path, width, height)
+    with _RESIZED_IMAGE_CACHE_LOCK:
+        cached = _RESIZED_IMAGE_CACHE.get(key)
+        if cached is None:
+            src = _get_cached_image(image_path)
+            src_w, src_h = src.size
+            left = max(0, (src_w - width) // 2)
+            top = max(0, (src_h - height) // 2)
+            right = min(src_w, left + width)
+            bottom = min(src_h, top + height)
+            cropped = src.crop((left, top, right, bottom))
+            cached = cropped.resize((width, height), Image.Resampling.LANCZOS)
+            _RESIZED_IMAGE_CACHE[key] = cached
     return cached
 
 
@@ -450,15 +470,7 @@ class TexturedButton(tk.Button):
     def _update_texture(self):
         """Crop texture, render text+overlay in PIL, and composite everything."""
         # Load and crop texture to button size
-        tex_img = Image.open(self.texture_path).convert("RGBA")
-        tex_w, tex_h = tex_img.size
-        left = max(0, (tex_w - self.width) // 2)
-        top = max(0, (tex_h - self.height) // 2)
-        right = min(tex_w, left + self.width)
-        bottom = min(tex_h, top + self.height)
-
-        cropped = tex_img.crop((left, top, right, bottom))
-        texture = cropped.resize((self.width, self.height), Image.Resampling.LANCZOS)
+        texture = _get_resized_image(self.texture_path, self.width, self.height)  # type: ignore
 
         # Create drawable canvas (same size as button)
         final_img = texture.convert("RGBA")
@@ -485,7 +497,7 @@ class TexturedButton(tk.Button):
         overlay_width = 0
         overlay_height = 0
         if self.overlay_path and self.overlay_path.exists():  # type: ignore
-            overlay = Image.open(self.overlay_path).convert("RGBA")
+            overlay = _get_cached_image(self.overlay_path).copy()  # type: ignore
             overlay_max_size = min(self.width, self.height) - 2 * self.overlay_padding
             overlay.thumbnail(
                 (overlay_max_size, overlay_max_size), Image.Resampling.LANCZOS
@@ -737,15 +749,7 @@ class TexturedFrame(tk.Frame):
     def _update_texture(self, width: int, height: int):
         """Load texture, crop/resize to frame size, and apply as background."""
         # Load and crop texture to frame size
-        tex_img = _get_cached_image(self.texture_path)
-        tex_w, tex_h = tex_img.size
-        left = max(0, (tex_w - width) // 2)
-        top = max(0, (tex_h - height) // 2)
-        right = min(tex_w, left + width)
-        bottom = min(tex_h, top + height)
-
-        cropped = tex_img.crop((left, top, right, bottom))
-        texture = cropped.resize((width, height), Image.Resampling.LANCZOS)
+        texture = _get_resized_image(self.texture_path, width, height)
 
         # Convert to PhotoImage
         photo = ImageTk.PhotoImage(texture)
@@ -1170,16 +1174,7 @@ class LoadingWindow(TopLevelWindow):
             return
 
         if self._texture_size != (width, height) or self._texture_image is None:
-            tex_img = _get_cached_image(self._texture_path)
-            tex_w, tex_h = tex_img.size
-            left = max(0, (tex_w - width) // 2)
-            top = max(0, (tex_h - height) // 2)
-            right = min(tex_w, left + width)
-            bottom = min(tex_h, top + height)
-            cropped = tex_img.crop((left, top, right, bottom))
-            self._texture_image = cropped.resize(
-                (width, height), Image.Resampling.LANCZOS
-            )
+            self._texture_image = _get_resized_image(self._texture_path, width, height)
             self._texture_size = (width, height)
 
         rotated = self._base_image.rotate(

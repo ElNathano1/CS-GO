@@ -20,6 +20,8 @@ from PIL import Image, ImageTk
 
 import random as rd
 
+from game.utils import game_from_dict
+
 # Add parent directory to path to import goban
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from game.core import Goban, GoGame
@@ -91,7 +93,7 @@ class Martin(Player):
             pass_probability (float): The probability for Martin to pass after the player have already passed.
         """
 
-        images_dir = Path(__file__).parent / "images/profiles"
+        images_dir = Path(__file__).parent.parent / "gui" / "images/profiles"
         default_photo_path = images_dir / "martin_profile_photo.png"
 
         if default_photo_path.exists():
@@ -106,7 +108,7 @@ class Martin(Player):
             profile_photo = ImageTk.PhotoImage(blank_image)
 
         super().__init__(
-            name="Martin", color=color, profile_photo=profile_photo, level=0
+            name="Martin", color=color, profile_photo=profile_photo, level=-2950
         )
         self.game = game
 
@@ -115,7 +117,7 @@ class Martin(Player):
         self.pass_probability = pass_probability
 
     def __str__(self) -> str:
-        return f"Player Martin (playing {"white" if self.color == Goban.WHITE else "black"})\nMartin (level 0): Enthousiastic Amateur\nA player that plays random moves with a small chance to pass or resign."
+        return f"Player Martin (playing {"white" if self.color == Goban.WHITE else "black"})\nMartin (level -2950): Enthousiastic Amateur\nA player that plays random moves with a small chance to pass or resign."
 
     def choose_move(self) -> tuple[int, int] | Literal["pass", "resign"]:
         """
@@ -189,7 +191,7 @@ class TrueAI(Player):
             color (int): The color assigned to the TrueAI (Goban.BLACK or Goban.WHITE).
         """
 
-        images_dir = Path(__file__).parent / "images/profiles"
+        images_dir = Path(__file__).parent.parent / "gui" / "images/profiles"
         default_photo_path = images_dir / f"{name.lower()}_profile_photo.png"
 
         if default_photo_path.exists():
@@ -222,129 +224,135 @@ class TrueAI(Player):
             tuple[int, int] | Literal["pass", "resign"]: The chosen move as (x, y), or "pass" if no moves are possible.
         """
 
-        def look_ahead(
-            game: GoGame, depth: int, maximizing_player: bool, alpha: float, beta: float
-        ) -> float:
-            """
-            A recursive minimax function with alpha-beta pruning to evaluate board positions.
-            Alpha-beta pruning eliminates branches that cannot affect the final decision,
-            significantly reducing computation time without changing the result.
+        return _true_ai_choose_move(self.game, self.color, nbr_moves)
 
-            Args:
-                game (GoGame): The current state of the Go board.
-                depth (int): Remaining depth to explore (0 = evaluation node).
-                maximizing_player (bool): True if the current player is the AI (maximizing), False if opponent (minimizing).
-                alpha (float): The best score the maximizing player can guarantee so far.
-                beta (float): The best score the minimizing player can guarantee so far.
 
-            Returns:
-                float: The evaluation of the board state (score difference for AI).
-            """
+def _true_ai_choose_move(
+    game: GoGame, color: int, nbr_moves: int
+) -> tuple[int, int] | Literal["pass", "resign"]:
+    opponent_color = Goban.BLACK if color == Goban.WHITE else Goban.WHITE
 
-            # BASE CASE: If depth is 0, evaluate the current board position
-            if depth == 0:
-                score = game.get_score()
-                return score[self.color] - score[self.opponent_color]
+    def look_ahead(
+        game: GoGame, depth: int, maximizing_player: bool, alpha: float, beta: float
+    ) -> float:
+        if depth == 0:
+            score = game.get_score()
+            return score[color] - score[opponent_color]
 
-            # Get all empty positions where a move can be played
-            empty_positions = np.argwhere(game.goban.board == Goban.EMPTY)
+        empty_positions = np.argwhere(game.goban.board == Goban.EMPTY)
 
-            # MAXIMIZING PLAYER (AI's turn): Try to maximize the score
-            if maximizing_player:
-                max_eval = -float("inf")
+        if maximizing_player:
+            max_eval = -float("inf")
+            for position in empty_positions:
+                x, y = position
+                temp_game = game.copy()
+                valid_move, _ = temp_game.take_move(x, y)
+                if not valid_move:
+                    continue
+                eval = look_ahead(temp_game, depth - 1, False, alpha, beta)
+                max_eval = max(max_eval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
+            return max_eval
 
-                for position in empty_positions:
-                    x, y = position
-                    temp_game = game.copy()
-                    valid_move, _ = temp_game.take_move(x, y)
-
-                    # Skip invalid moves
-                    if not valid_move:
-                        continue
-
-                    # Recursively evaluate this move (opponent's turn next)
-                    eval = look_ahead(temp_game, depth - 1, False, alpha, beta)
-                    max_eval = max(max_eval, eval)
-
-                    # ALPHA-BETA PRUNING: Update alpha and prune if possible
-                    alpha = max(alpha, eval)
-                    if beta <= alpha:
-                        # Beta cutoff: opponent won't allow this branch, so stop exploring
-                        break
-
-                return max_eval
-
-            # MINIMIZING PLAYER (Opponent's turn): Try to minimize the AI's score
-            else:
-                min_eval = float("inf")
-
-                for position in empty_positions:
-                    x, y = position
-                    temp_game = game.copy()
-                    valid_move, _ = temp_game.take_move(x, y)
-
-                    # Skip invalid moves
-                    if not valid_move:
-                        continue
-
-                    # Recursively evaluate this move (AI's turn next)
-                    eval = look_ahead(temp_game, depth - 1, True, alpha, beta)
-                    min_eval = min(min_eval, eval)
-
-                    # ALPHA-BETA PRUNING: Update beta and prune if possible
-                    beta = min(beta, eval)
-                    if beta <= alpha:
-                        # Alpha cutoff: AI won't allow this branch, so stop exploring
-                        break
-
-                return min_eval
-
-        # STEP 1: Get all empty positions on the board
-        empty_positions = np.argwhere(self.game.goban.board == Goban.EMPTY)
-
-        # If no positions are available, pass the turn
-        if len(empty_positions) == 0:
-            return "pass"
-
-        # STEP 2: Initialize variables to track the best move
-        best_move = None
-        best_score = -float("inf")
-        _score = self.game.get_score()
-        current_score = _score[self.color] - _score[self.opponent_color]
-
-        # STEP 3: Evaluate each possible move
+        min_eval = float("inf")
         for position in empty_positions:
             x, y = position
-
-            # Create a copy of the game to simulate the move
-            temp_game = self.game.copy()
+            temp_game = game.copy()
             valid_move, _ = temp_game.take_move(x, y)
-
-            # Skip invalid moves
             if not valid_move:
                 continue
+            eval = look_ahead(temp_game, depth - 1, True, alpha, beta)
+            min_eval = min(min_eval, eval)
+            beta = min(beta, eval)
+            if beta <= alpha:
+                break
+        return min_eval
 
-            # STEP 4: Use look_ahead with alpha-beta pruning to evaluate this move
-            # Start with alpha = -infinity and beta = +infinity
-            score = look_ahead(temp_game, nbr_moves, False, -float("inf"), float("inf"))
+    empty_positions = np.argwhere(game.goban.board == Goban.EMPTY)
+    if len(empty_positions) == 0:
+        return "pass"
 
-            # STEP 5: Keep track of the move with the best evaluation
-            if score > best_score:
-                best_score = score
-                best_move = [(x, y)]
-            elif score == best_score and best_move is None:
-                continue
-            elif score == best_score:
-                best_move.append((x, y))  # type: ignore
+    best_move = None
+    best_score = -float("inf")
+    _score = game.get_score()
+    current_score = _score[color] - _score[opponent_color]
 
-        # STEP 6: Return the best move found, or "pass" if no valid moves exist
-        if best_score - current_score <= 0 and current_score > 0:
-            return "pass"
+    for position in empty_positions:
+        x, y = position
+        temp_game = game.copy()
+        valid_move, _ = temp_game.take_move(x, y)
+        if not valid_move:
+            continue
+        score = look_ahead(temp_game, nbr_moves, False, -float("inf"), float("inf"))
+        if score > best_score:
+            best_score = score
+            best_move = [(x, y)]
+        elif score == best_score and best_move is not None:
+            best_move.append((x, y))
 
-        if best_move is None:
-            return "pass"
+    if best_score - current_score <= 0 and current_score > 0:
+        return "pass"
 
-        return best_move[rd.randint(0, len(best_move) - 1)]
+    if best_move is None:
+        return "pass"
+
+    return best_move[rd.randint(0, len(best_move) - 1)]
+
+
+def compute_ai_move(
+    game_state: dict,
+    ai_kind: str,
+    color: int,
+    resign_threshold: int = 50,
+    resign_probability: float = 0.0001,
+    pass_probability: float = 0.5,
+) -> tuple[int, int] | Literal["pass", "resign"]:
+    """
+    Compute an AI move in a headless context (safe for multiprocessing).
+    """
+    game = game_from_dict(game_state)
+
+    if ai_kind == "Martin":
+        # Random AI (Martin)
+        opponent_color = Goban.BLACK if color == Goban.WHITE else Goban.WHITE
+        if rd.random() < resign_probability:
+            return "resign"
+
+        score = game.get_score()
+        if score[opponent_color] - score[color] > resign_threshold:
+            return "resign"
+
+        if (game.black_passed and color == Goban.WHITE) or (
+            game.white_passed and color == Goban.BLACK
+        ):
+            if rd.random() < pass_probability:
+                return "pass"
+
+        empty_positions = np.argwhere(game.goban.board == Goban.EMPTY)
+        valid = False
+        while not valid and len(empty_positions) > 0:
+            random_position = empty_positions[np.random.choice(len(empty_positions))]
+            temp_game = game.copy()
+            valid, _ = temp_game.take_move(random_position[0], random_position[1])
+            empty_positions = np.delete(
+                empty_positions,
+                np.where((empty_positions == random_position).all(axis=1)),
+                axis=0,
+            )
+
+        if valid:
+            return (random_position[0], random_position[1])
+        return "pass"
+
+    if ai_kind == "Leo":
+        return _true_ai_choose_move(game, color, 2)
+
+    if ai_kind == "Magnus":
+        return _true_ai_choose_move(game, color, 4)
+
+    return _true_ai_choose_move(game, color, 2)
 
 
 class Leo(TrueAI):
@@ -365,10 +373,10 @@ class Leo(TrueAI):
             color (int): The color assigned to Leo (Goban.BLACK or Goban.WHITE).
         """
 
-        super().__init__(name="Leo", game=game, color=color, level=100)
+        super().__init__(name="Leo", game=game, color=color, level=-2850)
 
     def __str__(self) -> str:
-        return f"Player Leo (playing {"white" if self.color == Goban.WHITE else "black"})\nLeo (level 100): Casual Player\nA player that analyses all possible moves to pick the directly best one."
+        return f"Player Leo (playing {"white" if self.color == Goban.WHITE else "black"})\nLeo (level -2850): Casual Player\nA player that analyses all possible moves to pick the directly best one."
 
     def choose_move(self) -> tuple[int, int] | Literal["pass", "resign"]:
         """
@@ -399,10 +407,10 @@ class Magnus(TrueAI):
             color (int): The color assigned to Magnus (Goban.BLACK or Goban.WHITE).
         """
 
-        super().__init__(name="Magnus", game=game, color=color, level=200)
+        super().__init__(name="Magnus", game=game, color=color, level=-2750)
 
     def __str__(self) -> str:
-        return f"Player Magnus (playing {"white" if self.color == Goban.WHITE else "black"})\nMagnus (level 200): Strategic Player\nA player that analyses several moves ahead to pick the best one."
+        return f"Player Magnus (playing {"white" if self.color == Goban.WHITE else "black"})\nMagnus (level -2750): Strategic Player\nA player that analyses several moves ahead to pick the best one."
 
     def choose_move(self) -> tuple[int, int] | Literal["pass", "resign"]:
         """

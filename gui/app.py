@@ -930,6 +930,7 @@ class App(tk.Tk):
         """Start token verification in a background thread."""
         token = self.preferences.get("auth_token")
         if token:
+            self._autoconnect_loading = self.show_loading("Connexion automatique...")
             thread = threading.Thread(
                 target=lambda: asyncio.run(self._verify_token(token))
             )
@@ -937,6 +938,9 @@ class App(tk.Tk):
 
     def _on_token_verified(self, data: dict, token: str) -> None:
         """Called in main thread when token is verified."""
+        if getattr(self, "_autoconnect_loading", None) is not None:
+            self.hide_loading(self._autoconnect_loading)
+            self._autoconnect_loading = None
         self.username = data.get("username")
         self.token = token
 
@@ -999,6 +1003,9 @@ class App(tk.Tk):
 
     def _on_token_invalid(self) -> None:
         """Called in main thread when token is invalid."""
+        if getattr(self, "_autoconnect_loading", None) is not None:
+            self.hide_loading(self._autoconnect_loading)
+            self._autoconnect_loading = None
         self.preferences["auth_token"] = None
         # Show login dialog since token is invalid
         self._show_login_dialog()
