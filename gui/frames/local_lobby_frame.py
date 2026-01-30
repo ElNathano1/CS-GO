@@ -9,6 +9,13 @@ from typing import TYPE_CHECKING
 import tkinter as tk
 import tkinter.ttk as ttk
 
+from game.core import Goban
+from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
+from gui.utils import random_username
+from player.ai import Martin, Player
+
+from game.core import GoGame
+
 if TYPE_CHECKING:
     from gui.app import App
 
@@ -32,6 +39,7 @@ class LocalLobbyFrame(ttk.Frame):
         super().__init__(parent)
 
         self.app = app
+        loading = self.app.show_loading("Chargement du lobby local...")
 
         self.board_size = tk.IntVar(value=19)
         self.multiplayer = tk.BooleanVar(value=True)
@@ -99,13 +107,21 @@ class LocalLobbyFrame(ttk.Frame):
             takefocus=False,
         ).pack(padx=30, pady=(10, 20), fill=tk.X)
 
+        self.app.Button(
+            self.container,
+            text="Continuer la partie",
+            command=lambda: self._resume_game(game=self.app.current_game),  # type: ignore
+            state=tk.DISABLED if self.app.current_game is None else tk.NORMAL,
+            takefocus=False,
+        ).pack(pady=(20, 10))
+
         # Start Game button
         self.app.Button(
             self.container,
             text="Démarrer la partie",
             command=self._start_game,
             takefocus=False,
-        ).pack(pady=(20, 10), fill=tk.X)
+        ).pack(pady=10)
 
         # Return to Lobby button
         self.app.Button(
@@ -115,7 +131,56 @@ class LocalLobbyFrame(ttk.Frame):
             hover_overlay_path=self.app.hovered_return_icon_path,
             command=self._return_to_lobby,
             takefocus=False,
-        ).pack(pady=(10, 20), fill=tk.X)
+        ).pack(pady=(10, 20))
+
+        self.app.hide_loading(loading)
+
+    def _resume_game(self, game: "GoGame") -> None:
+        """
+        Resume an existing game.
+
+        Args:
+            game (GoGame): The game instance to resume.
+        """
+
+        board_size = game.goban.size
+        if not game.singleplayer:
+            self.app.show_frame(
+                lambda parent, app: GameFrame(
+                    parent,
+                    app,
+                    board_size,
+                    Player(
+                        self.app.account_profile_photo["text"].strip(),
+                        self.app.get_profile_photo(),
+                        color=Goban.BLACK,
+                        level=-1,
+                    ),
+                    Player(
+                        random_username(),
+                        self.app._get_default_profile_photo(),
+                        color=Goban.WHITE,
+                        level=-1,
+                    ),
+                    game,
+                )
+            )
+        else:
+            self.app.show_frame(
+                lambda parent, app: SingleplayerGameFrame(
+                    parent,
+                    app,
+                    board_size,
+                    Martin(game, Goban.BLACK),
+                    Player(
+                        self.app.account_profile_photo["text"].strip(),
+                        self.app.get_profile_photo(),
+                        color=Goban.WHITE,
+                        level=-1,
+                    ),
+                    game,
+                )
+            )
 
     def _start_game(self) -> None:
         """
@@ -129,14 +194,43 @@ class LocalLobbyFrame(ttk.Frame):
         from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
 
         if self.multiplayer.get():
+            game = GoGame(self.board_size.get())
             self.app.show_frame(
-                lambda parent, app: GameFrame(parent, app, self.board_size.get())
+                lambda parent, app: GameFrame(
+                    parent,
+                    app,
+                    self.board_size.get(),
+                    Player(
+                        self.app.account_profile_photo["text"].strip(),
+                        self.app.get_profile_photo(),
+                        color=Goban.BLACK,
+                        level=-1,
+                    ),
+                    Player(
+                        random_username(),
+                        self.app._get_default_profile_photo(),
+                        color=Goban.WHITE,
+                        level=-1,
+                    ),
+                    game,
+                )
             )
 
         if not self.multiplayer.get():
+            game = GoGame(self.board_size.get())
             self.app.show_frame(
                 lambda parent, app: SingleplayerGameFrame(
-                    parent, app, self.board_size.get()
+                    parent,
+                    app,
+                    self.board_size.get(),
+                    Martin(game, Goban.BLACK),
+                    Player(
+                        self.app.account_profile_photo["text"].strip(),
+                        self.app.get_profile_photo(),
+                        color=Goban.WHITE,
+                        level=-1,
+                    ),
+                    game,
                 )
             )
 

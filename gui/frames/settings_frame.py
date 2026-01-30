@@ -10,6 +10,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
 
+from gui.widgets import TopLevelWindow
+
 if TYPE_CHECKING:
     from gui.app import App
 
@@ -33,10 +35,11 @@ class SettingsFrame(ttk.Frame):
         super().__init__(parent)
 
         self.app = app
+        loading = self.app.show_loading("Chargement des paramètres...")
 
         # Title
         title = ttk.Label(self, text="Paramètres", style="Title.TLabel")
-        title.pack(pady=40)
+        title.pack(pady=(20, 40))
 
         self.container = ttk.Frame(self)
         self.container.pack()
@@ -124,6 +127,8 @@ class SettingsFrame(ttk.Frame):
         self._old_music_volume = self.app.preferences["music_volume"]
         self._old_effects_volume = self.app.preferences["effects_volume"]
 
+        self.app.hide_loading(loading)
+
         # Rules button
         self.app.Button(
             self.container,
@@ -137,10 +142,10 @@ class SettingsFrame(ttk.Frame):
         # Return to Lobby button
         self.app.Button(
             self.container,
-            text="Retour au Lobby",
+            text="Retour",
             overlay_path=self.app.return_icon_path,
             hover_overlay_path=self.app.hovered_return_icon_path,
-            command=self._return_to_lobby,
+            command=self._on_return,
             takefocus=False,
         ).pack(pady=(20, 20), padx=20)
 
@@ -229,10 +234,12 @@ class SettingsFrame(ttk.Frame):
 
         messagebox.showinfo("Règles du jeu", rules_text)
 
-    def _return_to_lobby(self) -> None:
+    def _on_return(self) -> None:
         """
-        Return to the lobby frame.
+        Handle return action to go back to the previous frame.
         """
-        from gui.frames.lobby_frame import LobbyFrame
 
-        self.app.show_frame(LobbyFrame)
+        # Close dialog
+        dialog = self.winfo_toplevel()
+        if isinstance(dialog, TopLevelWindow):
+            dialog.close()

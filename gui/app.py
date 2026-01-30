@@ -23,7 +23,13 @@ import threading
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import from reorganized modules
-from gui.widgets import TexturedButton, TexturedFrame, TopLevelWindow, TransparentLabel
+from gui.widgets import (
+    LoadingWindow,
+    TexturedButton,
+    TexturedFrame,
+    TopLevelWindow,
+    TransparentLabel,
+)
 from gui.sound_manager import SoundManager
 from gui.game_canvas import StoneBowl
 from gui.utils import (
@@ -112,6 +118,9 @@ class App(tk.Tk):
         self._connection_strength = 0  # 0-3: no signal, weak, medium, strong
         self._start_connection_monitor()
 
+        # Loading window holder
+        self._loading_window = None
+
         # Show lobby frame on startup
         self.show_frame(LobbyFrame)
 
@@ -136,6 +145,37 @@ class App(tk.Tk):
 
         # Create account panel once (will be shown/hidden by frames)
         self._create_account_panel()
+
+    def show_loading(self, message: str = "Chargement...") -> LoadingWindow:
+        """
+        Show a lightweight loading dialog.
+        """
+        if self._loading_window is not None:
+            try:
+                if self._loading_window.winfo_exists():
+                    self._loading_window.close()
+            except tk.TclError:
+                pass
+
+        loading = LoadingWindow(self, message=message)
+        loading.show(wait=False)
+        self.update_idletasks()
+        self._loading_window = loading
+        return loading
+
+    def hide_loading(self, loading: LoadingWindow | None = None) -> None:
+        """
+        Hide a loading dialog.
+        """
+        target = loading or self._loading_window
+        if target is not None:
+            try:
+                if target.winfo_exists():
+                    target.close()
+            except tk.TclError:
+                pass
+        if loading is None:
+            self._loading_window = None
 
     def _on_global_click(self, event: tk.Event) -> None:
         """
@@ -617,7 +657,6 @@ class App(tk.Tk):
         bg: str = "black",
         relief=tk.FLAT,
         cursor: str = "hand2",
-        disabled: bool = False,
         **kwargs,
     ) -> TexturedButton:
         """
@@ -645,7 +684,6 @@ class App(tk.Tk):
             bg=bg,
             relief=relief,
             cursor=cursor,
-            disabled=disabled,
             **kwargs,
         )
 
@@ -822,7 +860,6 @@ class App(tk.Tk):
 
         except Exception as e:
             # Network error or invalid token
-            print(f"Token verification error: {e}")
             self.after(0, self._on_token_invalid)
 
     def _start_token_verification(self) -> None:
@@ -862,6 +899,9 @@ class App(tk.Tk):
             and self.account_profile_photo.winfo_exists()
         ):
             new_text = f"{self.name} " if self.name else f"{random_username()} "
+            new_image = self.get_profile_photo()
+            self.account_profile_photo.config(image=new_image)
+            self.account_profile_photo.image = new_image  # type: ignore
             self.account_profile_photo.config(text=new_text)
 
     def _fetch_user_data(self) -> None:
@@ -875,11 +915,12 @@ class App(tk.Tk):
                 if response.status_code == 200:
                     data = response.json()
                     self.name = data.get("name")
+                    self.level = data.get("level")
                     # Update account panel with real name
                     self.after(0, self._update_account_panel)
             except Exception as e:
-                print(f"Error fetching user data: {e}")
                 self.name = None
+                self.level = -1
 
     def _mark_user_connected(self) -> None:
         """Mark user as connected in the database."""
@@ -889,10 +930,8 @@ class App(tk.Tk):
                     f"{BASE_URL}/users/{self.username}/connect",
                     timeout=5,
                 )
-                if response.status_code == 200:
-                    print(f"User {self.username} marked as connected")
             except Exception as e:
-                print(f"Error marking user as connected: {e}")
+                pass
 
     def _on_token_invalid(self) -> None:
         """Called in main thread when token is invalid."""
@@ -941,7 +980,7 @@ class App(tk.Tk):
         Show the login dialog (called after mainloop is active).
         """
 
-        self.open_dialog(TopLevelWindow(self, width=400, height=650), LoginFrame, show_account_panel=False)  # type: ignore
+        self.open_dialog(TopLevelWindow(self, width=400, height=700), LoginFrame, show_account_panel=False)  # type: ignore
 
     def _show_login_dialog_if_needed(self) -> None:
         """
@@ -980,7 +1019,7 @@ class App(tk.Tk):
             try:
                 response = requests.get(
                     f"{BASE_URL}/users/{self.username}/profile-picture/thumb",
-                    timeout=5,
+                    timeout=10,
                 )
                 if response.status_code == 200:
                     image_data = response.content
@@ -1023,8 +1062,7 @@ class App(tk.Tk):
         """
         Show the account dialog (called when clicking on profile photo).
         """
-
-        print("Account dialog opened")
+        pass
 
     def notify_username_updated(self) -> None:
         """
@@ -1081,7 +1119,6 @@ class App(tk.Tk):
                             response = await asyncio.wait_for(ws.recv(), timeout=2.0)
                             return True
                     except Exception as e:
-                        print(f"WebSocket health check error: {e}")
                         return False
 
                 # Run async function in thread
@@ -1149,7 +1186,7 @@ class App(tk.Tk):
                         timeout=5,
                     )
                 except Exception as e:
-                    print(f"Error marking user as disconnected: {e}")
+                    pass
 
             save_dictionnary(self.preferences, "preferences.prefs")
             if self.current_game is not None:

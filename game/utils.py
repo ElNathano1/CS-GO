@@ -29,8 +29,6 @@ def save_game(game: GoGame, filename: str) -> None:
         "nbr_moves": game.nbr_moves,
         "states": [state.tolist() for state in game.goban.states],
         "singleplayer": game.singleplayer,
-        "ai_color": game.ai_color,
-        "ai_id": game.ai_id,
     }
 
     with open(filename, "w") as f:
@@ -60,8 +58,6 @@ def load_game(filename: str) -> GoGame:
     game.nbr_moves = data["nbr_moves"]
     game.goban.states = [np.array(state) for state in data["states"]]
     game.singleplayer = data["singleplayer"]
-    game.ai_color = data["ai_color"]
-    game.ai_id = data["ai_id"]
 
     return game
 
@@ -74,27 +70,6 @@ if __name__ == "__main__":
 
     save_game(game, "saved_game.csgogame")
     loaded_game = load_game("saved_game.csgogame")
-
-    print("Original Game:")
-    print(game.goban.__str__())
-    print("size:", game.goban.size)
-    print("current_color:", game.current_color)
-    print("black_passed:", game.black_passed)
-    print("white_passed:", game.white_passed)
-    print("nbr_moves:", game.nbr_moves)
-    print(
-        "states:",
-        len(game.goban.states),
-    )
-
-    print("Loaded Game:")
-    print(loaded_game.goban.__str__())
-    print("size:", loaded_game.goban.size)
-    print("current_color:", loaded_game.current_color)
-    print("black_passed:", loaded_game.black_passed)
-    print("white_passed:", loaded_game.white_passed)
-    print("nbr_moves:", loaded_game.nbr_moves)
-    print("states:", len(loaded_game.goban.states))
     assert np.array_equal(game.goban.board, loaded_game.goban.board)
     assert game.current_color == loaded_game.current_color
     assert game.black_passed == loaded_game.black_passed

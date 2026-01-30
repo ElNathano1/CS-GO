@@ -7,7 +7,6 @@ This module contains various AI implementations for playing Go:
 - TrueAI: Base class for lookahead AI players
 - Leo: Intermediate AI with basic strategy (medium difficulty)
 - Magnus: Advanced AI with deeper lookahead (hard difficulty)
-- TruePlayer: Human player class
 
 AI players use different strategies and search depths to provide
 varying levels of challenge for human players.
@@ -17,6 +16,7 @@ import numpy as np
 import sys
 from pathlib import Path
 from typing import Literal
+from PIL import Image, ImageTk
 
 import random as rd
 
@@ -38,7 +38,9 @@ class Player:
         color (str): The color assigned to the player (Goban.BLACK or Goban.WHITE).
     """
 
-    def __init__(self, id: int | str, name: str, level: int, game: GoGame, color: int):
+    def __init__(
+        self, name: str, profile_photo: ImageTk.PhotoImage, level: int, color: int
+    ):
         """
         Initializes the player.
 
@@ -47,17 +49,15 @@ class Player:
             color (int): The color assigned to the player (Goban.BLACK or Goban.WHITE).
         """
 
-        self.id = id
         self.name = name
         self.level = level
-
-        self.game = game
         self.color = color
+        self.profile_photo = profile_photo
 
         self.opponent_color = Goban.BLACK if color == Goban.WHITE else Goban.WHITE
 
     def __str__(self) -> str:
-        return f"Player {self.id} - {self.name} (Level {self.level})"
+        return f"Player {self.name} (playing {"white" if self.color == Goban.WHITE else "black"})"
 
 
 class Martin(Player):
@@ -91,13 +91,31 @@ class Martin(Player):
             pass_probability (float): The probability for Martin to pass after the player have already passed.
         """
 
-        super().__init__(id=-1, name="Martin", level=0, game=game, color=color)
+        images_dir = Path(__file__).parent / "images/profiles"
+        default_photo_path = images_dir / "martin_profile_photo.png"
+
+        if default_photo_path.exists():
+            profile_photo = ImageTk.PhotoImage(
+                Image.open(default_photo_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        else:
+            # Create a blank image if default not found
+            blank_image = Image.new("RGBA", (32, 32), (255, 255, 255, 0))
+            profile_photo = ImageTk.PhotoImage(blank_image)
+
+        super().__init__(
+            name="Martin", color=color, profile_photo=profile_photo, level=0
+        )
+        self.game = game
+
         self.resign_threshold = resign_threshold
         self.resign_probability = resign_probability
         self.pass_probability = pass_probability
 
     def __str__(self) -> str:
-        return "-- LEVEL 0 --\nMartin: Enthousiastic Amateur\nA player that plays random moves with a small chance to pass or resign."
+        return f"Player Martin (playing {"white" if self.color == Goban.WHITE else "black"})\nMartin (level 0): Enthousiastic Amateur\nA player that plays random moves with a small chance to pass or resign."
 
     def choose_move(self) -> tuple[int, int] | Literal["pass", "resign"]:
         """
@@ -159,7 +177,7 @@ class TrueAI(Player):
         color (int): The color assigned to the TrueAI (Goban.BLACK or Goban.WHITE).
     """
 
-    def __init__(self, id: int, name: str, level: int, game: GoGame, color: int):
+    def __init__(self, name: str, game: GoGame, color: int, level: int):
         """
         Initializes the advanced AI opponent.
 
@@ -171,10 +189,25 @@ class TrueAI(Player):
             color (int): The color assigned to the TrueAI (Goban.BLACK or Goban.WHITE).
         """
 
-        super().__init__(id=id, name=name, level=level, game=game, color=color)
+        images_dir = Path(__file__).parent / "images/profiles"
+        default_photo_path = images_dir / f"{name.lower()}_profile_photo.png"
 
-    def __str__(self) -> str:
-        return f"-- LEVEL {self.level} --\nTrueAI: {self.name}\nA player that uses advanced strategies to play Go."
+        if default_photo_path.exists():
+            profile_photo = ImageTk.PhotoImage(
+                Image.open(default_photo_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        else:
+            # Create a blank image if default not found
+            blank_image = Image.new("RGBA", (32, 32), (255, 255, 255, 0))
+            profile_photo = ImageTk.PhotoImage(blank_image)
+
+        super().__init__(
+            name=name, color=color, profile_photo=profile_photo, level=level
+        )
+        self.game = game
+        self.profile_photo = profile_photo
 
     def choose_move(
         self, nbr_moves: int
@@ -332,10 +365,10 @@ class Leo(TrueAI):
             color (int): The color assigned to Leo (Goban.BLACK or Goban.WHITE).
         """
 
-        super().__init__(id=-2, name="Leo", level=1, game=game, color=color)
+        super().__init__(name="Leo", game=game, color=color, level=100)
 
     def __str__(self) -> str:
-        return "-- LEVEL 1 --\nLeo: Casual Player\nA player that analyses all possible moves to pick the directly best one."
+        return f"Player Leo (playing {"white" if self.color == Goban.WHITE else "black"})\nLeo (level 100): Casual Player\nA player that analyses all possible moves to pick the directly best one."
 
     def choose_move(self) -> tuple[int, int] | Literal["pass", "resign"]:
         """
@@ -366,10 +399,10 @@ class Magnus(TrueAI):
             color (int): The color assigned to Magnus (Goban.BLACK or Goban.WHITE).
         """
 
-        super().__init__(id=-3, name="Magnus", level=2, game=game, color=color)
+        super().__init__(name="Magnus", game=game, color=color, level=200)
 
     def __str__(self) -> str:
-        return "-- LEVEL 2 --\nMagnus: Strategic Player\nA player that analyses several moves ahead to pick the best one."
+        return f"Player Magnus (playing {"white" if self.color == Goban.WHITE else "black"})\nMagnus (level 200): Strategic Player\nA player that analyses several moves ahead to pick the best one."
 
     def choose_move(self) -> tuple[int, int] | Literal["pass", "resign"]:
         """
@@ -380,27 +413,3 @@ class Magnus(TrueAI):
         """
 
         return super().choose_move(nbr_moves=4)
-
-
-class TruePlayer(Player):
-    """
-    A class representing a human player.
-
-    Attributes:
-        game (GoGame): The current state of the Go board.
-        color (int): The color assigned to the TruePlayer (Goban.BLACK or Goban.WHITE).
-    """
-
-    def __init__(self, id: int | str, name: str, level: int, game: GoGame, color: int):
-        """
-        Initializes the human player.
-
-        Args:
-            game (GoGame): The current state of the Go board.
-            color (int): The color assigned to the TruePlayer (Goban.BLACK or Goban.WHITE).
-        """
-
-        super().__init__(id=id, name=name, level=level, game=game, color=color)
-
-    def __str__(self) -> str:
-        return f"-- HUMAN PLAYER --\n{self.name}: Human Player\nA human player playing against the AI."

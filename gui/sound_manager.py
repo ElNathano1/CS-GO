@@ -39,7 +39,6 @@ class SoundManager:
                 pygame.mixer.init()
                 self._load_sounds()
             except Exception as e:
-                print(f"Warning: Could not initialize audio: {e}")
                 self.enabled = False
 
     def _load_sounds(self) -> None:
@@ -72,7 +71,7 @@ class SoundManager:
                     self.sounds[event_name] = pygame.mixer.Sound(str(sound_path))
                     self.sounds[event_name].set_volume(self.volume)
             except Exception as e:
-                print(f"Warning: Could not load {filename}: {e}")
+                pass
 
     def play(self, event: str) -> None:
         """
@@ -87,7 +86,7 @@ class SoundManager:
         try:
             self.sounds[event].play()
         except Exception as e:
-            print(f"Warning: Could not play sound for {event}: {e}")
+            return
 
     def play_exclusive(self, event: str) -> None:
         """
@@ -103,7 +102,7 @@ class SoundManager:
             pygame.mixer.stop()  # Stop all currently playing sounds
             self.sounds[event].play()
         except Exception as e:
-            print(f"Warning: Could not play exclusive sound for {event}: {e}")
+            return
 
     def stop(self, event: str) -> None:
         """
@@ -118,7 +117,7 @@ class SoundManager:
         try:
             self.sounds[event].stop()
         except Exception as e:
-            print(f"Warning: Could not stop sound for {event}: {e}")
+            return
 
     def stop_all(self) -> None:
         """
@@ -131,7 +130,7 @@ class SoundManager:
             for sound in self.sounds.values():
                 sound.stop()
         except Exception as e:
-            print(f"Warning: Could not stop sounds: {e}")
+            return
 
     def set_volume(self, volume: float) -> None:
         """
@@ -175,5 +174,4 @@ class SoundManager:
         try:
             return self.sounds[event].get_volume() > 0 and pygame.mixer.get_busy()
         except Exception as e:
-            print(f"Warning: Could not check if sound is playing for {event}: {e}")
             return False

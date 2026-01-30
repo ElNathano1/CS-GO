@@ -15,7 +15,9 @@ from PIL import Image, ImageTk
 
 from gui.game_canvas import StoneBowl
 from game.core import Goban, GoGame
-from player.ai import Martin, Leo, Magnus
+from gui.frames.settings_frame import SettingsFrame
+from gui.widgets import TopLevelWindow
+from player.ai import Martin, Leo, Magnus, Player, TrueAI
 
 if TYPE_CHECKING:
     from gui.app import App
@@ -29,7 +31,13 @@ class GameFrame(ttk.Frame):
     """
 
     def __init__(
-        self, parent: ttk.Frame, app: "App", board_size: int, game: GoGame | None = None
+        self,
+        parent: ttk.Frame,
+        app: "App",
+        board_size: int,
+        black_player: Player,
+        white_player: Player,
+        game: GoGame,
     ):
         """
         Initialize the game frame.
@@ -40,9 +48,11 @@ class GameFrame(ttk.Frame):
             board_size (int): The size of the board (9, 13, or 19).
             game (GoGame, optional): An existing game instance to resume. Defaults to None.
         """
+
         super().__init__(parent)
 
         self.app = app
+        loading = self.app.show_loading("Chargement de la partie...")
         self.board_size = board_size
         self.sound_manager = app.sound_manager
         self.cell_size = 50
@@ -54,7 +64,9 @@ class GameFrame(ttk.Frame):
         self.animating = False
 
         # Initialize the game
-        self.game = GoGame(board_size) if game is None else game
+        self.game = game
+        self.black_player = black_player
+        self.white_player = white_player
 
         # Load images
         self._load_images()
@@ -68,6 +80,8 @@ class GameFrame(ttk.Frame):
         # Resume game if provided
         if game is not None:
             self._resume_game()
+
+        self.app.hide_loading(loading)
 
     def _load_images(self) -> None:
         """
@@ -93,7 +107,7 @@ class GameFrame(ttk.Frame):
         available_width = (
             self.app.winfo_width() - right_frame_width - 112
         )  # Subtract right frame width and padding
-        available_height = self.app.winfo_height() - 100  # Leave space for padding
+        available_height = self.app.winfo_height() - 238  # Leave space for padding
 
         # Fixed board size: calculate based on available space
         # The full image is 2010x2010 pixels (105 border + 1800 grid + 105 border)
@@ -220,6 +234,71 @@ class GameFrame(ttk.Frame):
             initial_count=self.board_size**2,
         )
 
+    def _create_players_panels(self):
+        """
+        Place players panels with profile picture, name, levels, score and turn indicator.
+        """
+
+        # Black player panel
+        black_player_panel = tk.Frame(
+            self.board_frame,
+            bd=0,
+            highlightthickness=0,
+            bg="#224722",
+        )
+        black_player_panel.grid(row=2, column=0, sticky="e", padx=10, pady=(0, 10))
+
+        # Account info label
+        tk.Label(
+            black_player_panel,
+            background="#224722",
+            image=self.black_player.profile_photo,
+            highlightthickness=1,
+            highlightbackground="black",
+            highlightcolor="black",
+        ).pack(side=tk.RIGHT, padx=0)
+        ttk.Label(
+            black_player_panel,
+            background="#224722",
+            text=f"{"({self.black_player.level}EGF) " if self.black_player.level != -1 else ""}{self.black_player.name}",
+        ).pack(side=tk.RIGHT, padx=(0, 10))
+        self.black_score_label = ttk.Label(
+            black_player_panel,
+            background="#224722",
+            text="Score: 0  -  ",
+        )
+        self.black_score_label.pack(side=tk.RIGHT)
+
+        # White player panel
+        white_player_panel = tk.Frame(
+            self.board_frame,
+            bd=0,
+            highlightthickness=0,
+            bg="#224722",
+        )
+        white_player_panel.grid(row=0, column=0, sticky="w", padx=10, pady=(10, 0))
+
+        # Account info label
+        tk.Label(
+            white_player_panel,
+            background="#224722",
+            image=self.white_player.profile_photo,
+            highlightthickness=1,
+            highlightbackground="black",
+            highlightcolor="black",
+        ).pack(side=tk.LEFT, padx=0)
+        ttk.Label(
+            white_player_panel,
+            background="#224722",
+            text=f"{self.white_player.name}{" ({self.white_player.level}EGF)" if self.white_player.level != -1 else ""}",
+        ).pack(side=tk.LEFT, padx=(10, 0))
+        self.white_score_label = ttk.Label(
+            white_player_panel,
+            background="#224722",
+            text="  -  Score: 0",
+        )
+        self.white_score_label.pack(side=tk.LEFT)
+
     def _create_layout(self) -> None:
         """
         Create the layout for the game frame.
@@ -231,17 +310,26 @@ class GameFrame(ttk.Frame):
 
         # Left side: Game board
         main_board = self.app.Frame(main_frame, bg="black", bd=1, width=1000)
-        main_board.pack(side=tk.LEFT, fill=tk.Y, expand=True)
+        main_board.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         board = self.app.Frame(main_board)
         board.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
-        board_frame = tk.Frame(
+        self.board_frame = tk.Frame(
             board.content_frame,
             bd=0,
             highlightbackground="black",
             highlightthickness=1,
             bg="#224722",
         )
-        board_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        self.board_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+
+        self.board_frame.grid_columnconfigure(0, weight=1)
+        self.board_frame.grid_rowconfigure(0, weight=0)
+        self.board_frame.grid_rowconfigure(1, weight=1)
+        self.board_frame.grid_rowconfigure(2, weight=0)
+        self.board_frame.grid_anchor("center")
+
+        # Create players panels
+        self._create_players_panels()
 
         # Create canvas for drawing the board using calculated dimensions
         board_width = int(self.image_total_size * self.scale_ratio)
@@ -253,7 +341,7 @@ class GameFrame(ttk.Frame):
         canvas_height = board_height
 
         self.canvas = tk.Canvas(
-            board_frame,
+            self.board_frame,
             width=canvas_width,
             height=canvas_height,
             relief=tk.SOLID,
@@ -261,7 +349,7 @@ class GameFrame(ttk.Frame):
             highlightthickness=0,  # Remove canvas border highlight
             bg="#224722",
         )
-        self.canvas.pack(anchor="center", expand=True, padx=20, pady=20)
+        self.canvas.grid(row=1, column=0, padx=20, pady=20)
         self.canvas.bind("<Button-1>", self._on_board_click)
 
         # Origin for drawing the board
@@ -273,23 +361,23 @@ class GameFrame(ttk.Frame):
 
         # Right side: Controls and info panel
         right_frame = ttk.Frame(main_frame)
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(10, 0))
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(20, 0))
 
-        # Game status frame
-        status_frame = ttk.Frame(right_frame, style="Framed.TFrame", padding=20)
-        status_frame.pack(fill=tk.X, pady=(0, 10))
+        # # Game status frame
+        # status_frame = ttk.Frame(right_frame, style="Framed.TFrame", padding=20)
+        # status_frame.pack(fill=tk.X, pady=(0, 10))
 
-        # Current player display
-        self.player_label = ttk.Label(status_frame, text=self._get_player_text())
-        self.player_label.pack(pady=5)
+        # # Current player display
+        # self.player_label = ttk.Label(status_frame, text=self._get_player_text())
+        # self.player_label.pack(pady=5)
 
-        # Move count display
-        self.moves_label = ttk.Label(status_frame, text="Aucun coup joué")
-        self.moves_label.pack(pady=5)
+        # # Move count display
+        # self.moves_label = ttk.Label(status_frame, text="Aucun coup joué")
+        # self.moves_label.pack(pady=5)
 
         # Control buttons frame
         main_buttons_frame = self.app.Frame(right_frame, bg="black", bd=1)
-        main_buttons_frame.pack(fill=tk.X, pady=(0, 10))
+        main_buttons_frame.pack(fill=tk.X, pady=(40, 10))
         buttons_frame = self.app.Frame(main_buttons_frame)
         buttons_frame.pack(pady=3, padx=3, expand=True)
 
@@ -325,6 +413,16 @@ class GameFrame(ttk.Frame):
             takefocus=False,
         )
         self.new_game_button.pack(fill=tk.X, pady=10, padx=30)
+
+        # Settings button
+        self.app.Button(
+            buttons_frame,
+            overlay_path=self.app.prefs_icon_path,
+            hover_overlay_path=self.app.hovered_prefs_icon_path,
+            text="Paramètres",
+            command=lambda: self._open_settings(),
+            takefocus=False,
+        ).pack(pady=10, fill=tk.X, padx=30)
 
         # Back to Lobby button
         self.back_button = self.app.Button(
@@ -608,8 +706,16 @@ class GameFrame(ttk.Frame):
             "Voulez-vous commencer une nouvelle partie avec la même taille de plateau ?",
         )
         if result:
+            game = GoGame(self.board_size)
             self.app.show_frame(
-                lambda parent, app: GameFrame(parent, app, self.board_size)
+                lambda parent, app: GameFrame(
+                    parent,
+                    app,
+                    self.board_size,
+                    self.white_player,
+                    self.black_player,
+                    game,
+                )
             )
 
     def _on_resign(self) -> None:
@@ -634,6 +740,17 @@ class GameFrame(ttk.Frame):
             self.sound_manager.play_exclusive("resign_music")
             self._show_game_over_dialog(resigned_by=self.game.current_color)
 
+    def _open_settings(self) -> None:
+        """
+        Open settings window.
+        """
+
+        self.app.open_dialog(
+            dialog=TopLevelWindow(self.app, width=400, height=600),
+            frame_class=SettingsFrame,  # type: ignore
+            show_account_panel=False,
+        )
+
     def _on_back_to_lobby(self) -> None:
         """
         Handle the Back to Lobby button click.
@@ -655,14 +772,14 @@ class GameFrame(ttk.Frame):
         Redraws the board and updates labels for player, moves, and scores.
         """
         self._highlight_last_move()
-        self.player_label.config(text=self._get_player_text())
-        self.moves_label.config(
-            text=(
-                f"{self.game.nbr_moves} coup joué"
-                if self.game.nbr_moves == 1
-                else f"{self.game.nbr_moves} coups joués"
-            )
-        )
+        # self.player_label.config(text=self._get_player_text())
+        # self.moves_label.config(
+        #     text=(
+        #         f"{self.game.nbr_moves} coup joué"
+        #         if self.game.nbr_moves == 1
+        #         else f"{self.game.nbr_moves} coups joués"
+        #     )
+        # )
 
         # Save current game state to app for resuming later
         self.app.current_game = self.game  # type: ignore
@@ -672,14 +789,14 @@ class GameFrame(ttk.Frame):
         Resume the game by redrawing the board and updating the display.
         """
         self._draw_board()
-        self.player_label.config(text=self._get_player_text())
-        self.moves_label.config(
-            text=(
-                f"{self.game.nbr_moves} coup joué"
-                if self.game.nbr_moves == 1
-                else f"{self.game.nbr_moves} coups joués"
-            )
-        )
+        # self.player_label.config(text=self._get_player_text())
+        # self.moves_label.config(
+        #     text=(
+        #         f"{self.game.nbr_moves} coup joué"
+        #         if self.game.nbr_moves == 1
+        #         else f"{self.game.nbr_moves} coups joués"
+        #     )
+        # )
 
     def _get_player_text(self) -> str:
         """
@@ -743,7 +860,13 @@ class SingleplayerGameFrame(GameFrame):
     """
 
     def __init__(
-        self, parent: ttk.Frame, app: "App", board_size: int, game: GoGame | None = None
+        self,
+        parent: ttk.Frame,
+        app: "App",
+        board_size: int,
+        black_player: Player,
+        white_player: Player,
+        game: GoGame,
     ):
         """
         Initialize the game frame.
@@ -754,18 +877,9 @@ class SingleplayerGameFrame(GameFrame):
             board_size (int): The size of the board (9, 13, or 19).
             game (GoGame, optional): An existing game instance to resume. Defaults to None.
         """
-        super().__init__(parent, app, board_size, game)
+        super().__init__(parent, app, board_size, black_player, white_player, game)
 
-        self.game.set_singleplayer(Goban.BLACK, -2)
-        match self.game.ai_id:
-            case -1:
-                self.ai = Martin(self.game, Goban.BLACK)
-            case -2:
-                self.ai = Leo(self.game, Goban.BLACK)
-            case -3:
-                self.ai = Magnus(self.game, Goban.BLACK)
-            case _:
-                self.ai = Martin(self.game, Goban.BLACK)
+        self.game.set_singleplayer()
 
         self.after(100, self._ai_move)
 
@@ -823,7 +937,19 @@ class SingleplayerGameFrame(GameFrame):
         Records a pass move and updates the display.
         """
 
-        if self.game.current_color == Goban.WHITE:
+        if (
+            self.game.current_color == Goban.WHITE
+            and not (
+                isinstance(self.white_player, TrueAI)
+                or isinstance(self.white_player, Martin)
+            )
+        ) or (
+            self.game.current_color == Goban.BLACK
+            and not (
+                isinstance(self.black_player, TrueAI)
+                or isinstance(self.black_player, Martin)
+            )
+        ):
             super()._on_pass()
 
             if not self.game.game_over():
@@ -841,15 +967,35 @@ class SingleplayerGameFrame(GameFrame):
             "Voulez-vous commencer une nouvelle partie avec la même taille de plateau ?",
         )
         if result:
+            game = GoGame(self.board_size)
             self.app.show_frame(
-                lambda parent, app: SingleplayerGameFrame(parent, app, self.board_size)
+                lambda parent, app: SingleplayerGameFrame(
+                    parent,
+                    app,
+                    self.board_size,
+                    self.black_player,
+                    self.white_player,
+                    game,
+                )
             )
 
     def _on_resign(self) -> None:
         """
         Handle the Resign button click.
         """
-        if self.game.current_color == Goban.WHITE:
+        if (
+            self.game.current_color == Goban.WHITE
+            and not (
+                isinstance(self.white_player, TrueAI)
+                or isinstance(self.white_player, Martin)
+            )
+        ) or (
+            self.game.current_color == Goban.BLACK
+            and not (
+                isinstance(self.black_player, TrueAI)
+                or isinstance(self.black_player, Martin)
+            )
+        ):
             return super()._on_resign()
 
     def _on_board_click(self, event: tk.Event) -> None:
@@ -860,7 +1006,19 @@ class SingleplayerGameFrame(GameFrame):
             event (tk.Event): The click event containing mouse coordinates.
         """
 
-        if self.game.current_color == Goban.WHITE:
+        if (
+            self.game.current_color == Goban.WHITE
+            and not (
+                isinstance(self.white_player, TrueAI)
+                or isinstance(self.white_player, Martin)
+            )
+        ) or (
+            self.game.current_color == Goban.BLACK
+            and not (
+                isinstance(self.black_player, TrueAI)
+                or isinstance(self.black_player, Martin)
+            )
+        ):
             super()._on_board_click(event)
 
             if not self.game.game_over():
@@ -882,8 +1040,25 @@ class SingleplayerGameFrame(GameFrame):
         Let the AI take a move
         """
 
-        if self.game.current_color == Goban.BLACK:
-            move = self.ai.choose_move()
+        if (
+            self.game.current_color == Goban.WHITE
+            and (
+                isinstance(self.white_player, TrueAI)
+                or isinstance(self.white_player, Martin)
+            )
+        ) or (
+            self.game.current_color == Goban.BLACK
+            and (
+                isinstance(self.black_player, TrueAI)
+                or isinstance(self.black_player, Martin)
+            )
+        ):
+            ai = (
+                self.black_player
+                if self.game.current_color == Goban.BLACK
+                else self.white_player
+            )
+            move = ai.choose_move()  # type: ignore
 
             if move != "pass" and move != "resign":
                 x, y = move

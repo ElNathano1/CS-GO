@@ -189,7 +189,6 @@ class TransparentLabel(tk.Label):
 
                 return label_texture
             except Exception as e:
-                print(f"Error capturing texture: {e}")
                 pass
 
         # Fallback: solid color background
@@ -364,7 +363,6 @@ class TexturedButton(tk.Button):
         bd: int = 0,
         bg: str = "black",
         highlightthickness: int = 0,
-        disabled: bool = False,
         **kwargs,
     ):
         """
@@ -412,9 +410,6 @@ class TexturedButton(tk.Button):
         self._original_command = None
         self._original_text_color = text_color
         self._original_overlay_path = overlay_path
-
-        # Set_disabled
-        self.config(state=tk.DISABLED if disabled else tk.NORMAL)
 
         # Load and adapt texture
         self._update_texture()
@@ -867,6 +862,8 @@ class TopLevelWindow(tk.Toplevel):
         if fade_in:
             # Add 1s safety delay before starting fade-in
             self.after(1000, self._fade_in)
+        else:
+            self.attributes("-alpha", 1.0)
 
         # Grab/wait are deferred so callers can attach content before showing
 
@@ -1027,3 +1024,47 @@ class TopLevelWindow(tk.Toplevel):
         Use self._create_button_area() to add buttons.
         """
         pass
+
+
+class LoadingWindow(TopLevelWindow):
+    """
+    Lightweight loading dialog to keep the UI responsive during heavy setup.
+    """
+
+    def __init__(
+        self,
+        master: "App",
+        message: str = "Chargement...",
+        width: int = 280,
+        height: int = 120,
+        **kwargs,
+    ):
+        self._message = message
+        self._progress = None
+        super().__init__(
+            master=master,
+            width=width,
+            height=height,
+            position="center",
+            fade_in=False,
+            overlay=False,
+            **kwargs,
+        )
+
+    def body(self, **kwargs) -> None:
+        label = ttk.Label(self.body_frame, text=self._message)
+        label.pack(pady=(20, 10))
+
+        self._progress = ttk.Progressbar(
+            self.body_frame, mode="indeterminate", length=200
+        )
+        self._progress.pack(pady=(0, 10))
+        self._progress.start(10)
+
+    def close(self, result=None) -> None:
+        if self._progress is not None:
+            try:
+                self._progress.stop()
+            except tk.TclError:
+                pass
+        super().close(result=result)

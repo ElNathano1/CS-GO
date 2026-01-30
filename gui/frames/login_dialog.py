@@ -40,6 +40,7 @@ class LoginFrame(ttk.Frame):
 
         super().__init__(parent)
         self.app = app
+        loading = self.app.show_loading("Chargement...")
 
         # Title
         title = ttk.Label(self, text="Connexion", style="Title.TLabel")
@@ -142,7 +143,7 @@ class LoginFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=(10, 20), padx=20, anchor=tk.S)
+        self.return_button.pack(pady=(10, 20), padx=20, side=tk.BOTTOM)
 
         # Bind Enter key to login
         self.bind("<Return>", lambda event: self._login())
@@ -156,6 +157,8 @@ class LoginFrame(ttk.Frame):
         self.password_entry.bind(
             "<Tab>", lambda e: (self.username_entry.focus_set(), "break")[1]
         )
+
+        self.app.hide_loading(loading)
 
     def _login(self) -> None:
         """
@@ -316,6 +319,7 @@ class RegisterFrame(ttk.Frame):
 
         super().__init__(parent)
         self.app = app
+        loading = self.app.show_loading("Chargement...")
         self._mousewheel_binding = None  # Store binding ID for cleanup
 
         # Title
@@ -483,7 +487,7 @@ class RegisterFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=10, padx=20, anchor=tk.S)
+        self.return_button.pack(pady=10, padx=20, side=tk.BOTTOM)
 
         # Bind Enter key to register
         self.bind("<Return>", lambda event: self._handle_register())
@@ -507,6 +511,8 @@ class RegisterFrame(ttk.Frame):
         self.confirm_password_entry.bind(
             "<Tab>", lambda e: (self.username_entry.focus_set(), "break")[1]
         )
+
+        self.app.hide_loading(loading)
 
     def _handle_register(self) -> None:
         """

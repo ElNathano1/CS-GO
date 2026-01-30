@@ -20,7 +20,7 @@ ECHO_URLS = [
 
 
 def on_event(evt: Event) -> None:
-    print("EVENT:", evt.type, evt.payload)
+    pass
 
 
 if __name__ == "__main__":
@@ -34,7 +34,6 @@ if __name__ == "__main__":
                 on_event=on_event,
             )
             client.ws_url_lobby = url
-            print(f"Connecting to: {url}")
             client.start()
 
             # Send a few messages
@@ -42,10 +41,8 @@ if __name__ == "__main__":
             client._send({"type": "queue.join", "payload": {"level": 1200}})
             time.sleep(3)
             client.stop()
-            print("Success with:", url)
             break
         except Exception as e:
-            print("Failed:", url, "->", e)
             last_error = e
             try:
                 client.stop()

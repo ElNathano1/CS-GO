@@ -357,8 +357,6 @@ class GoGame:
         self.nbr_moves: int = 0
 
         self.singleplayer: bool = False
-        self.ai_color: int | None = None
-        self.ai_id: int | None = None
 
     def copy(self) -> "GoGame":
         """
@@ -378,7 +376,7 @@ class GoGame:
 
         return new_game
 
-    def set_singleplayer(self, ai_color: int, ai_id: int) -> None:
+    def set_singleplayer(self) -> None:
         """
         Check if the game is in singleplayer mode against an AI.
 
@@ -388,8 +386,6 @@ class GoGame:
         """
 
         self.singleplayer = True
-        self.ai_color = ai_color
-        self.ai_id = ai_id
 
     def switch_player(self) -> None:
         """Switch the active player."""

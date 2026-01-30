@@ -40,6 +40,7 @@ class LoginFrame(ttk.Frame):
 
         super().__init__(parent)
         self.app = app
+        loading = self.app.show_loading("Chargement...")
 
         # Title
         title = ttk.Label(self, text="Connexion", style="Title.TLabel")
@@ -146,6 +147,8 @@ class LoginFrame(ttk.Frame):
             "<Tab>", lambda e: (self.username_entry.focus_set(), "break")[1]
         )
 
+        self.app.hide_loading(loading)
+
     def _login(self) -> None:
         """
         Handle user login action.
@@ -180,6 +183,8 @@ class LoginFrame(ttk.Frame):
             username (str): The username of the user.
             password (str): The password of the user.
         """
+
+        self.app.show_loading("Connexion en cours...")
 
         try:
             async with httpx.AsyncClient(verify=False) as client:
@@ -216,6 +221,7 @@ class LoginFrame(ttk.Frame):
         from gui.frames import LobbyFrame
 
         # Close dialog and show lobby
+        self.app.hide_loading()
         dialog = self.winfo_toplevel()
         if isinstance(dialog, TopLevelWindow):
             dialog.close()
@@ -224,7 +230,10 @@ class LoginFrame(ttk.Frame):
         self.app.show_frame(LobbyFrame)
 
     def _on_login_error(self, error: str) -> None:
-        """Appelé dans le thread principal après erreur."""
+        """
+        Appelé dans le thread principal après erreur.
+        """
+        self.app.hide_loading()
         self.login_button.config(state=tk.NORMAL)
         self.username_entry.configure(highlightbackground="red")
         self.password_entry.configure(highlightbackground="red")
@@ -294,6 +303,7 @@ class RegisterFrame(ttk.Frame):
 
         super().__init__(parent)
         self.app = app
+        loading = self.app.show_loading("Chargement...")
         self._mousewheel_binding = None  # Store binding ID for cleanup
 
         # Title
@@ -485,6 +495,8 @@ class RegisterFrame(ttk.Frame):
         self.confirm_password_entry.bind(
             "<Tab>", lambda e: (self.username_entry.focus_set(), "break")[1]
         )
+
+        self.app.hide_loading(loading)
 
     def _handle_register(self) -> None:
         """

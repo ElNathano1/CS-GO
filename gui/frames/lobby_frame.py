@@ -10,6 +10,11 @@ import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
 
+from gui.frames.settings_frame import SettingsFrame
+from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
+from gui.frames.local_lobby_frame import LocalLobbyFrame
+from gui.widgets import TopLevelWindow
+
 if TYPE_CHECKING:
     from gui.app import App
     from game.core import GoGame
@@ -30,10 +35,10 @@ class LobbyFrame(ttk.Frame):
             parent (ttk.Frame): The parent frame.
             app (App): The main application instance.
         """
-
         super().__init__(parent)
 
         self.app = app
+        loading = self.app.show_loading("Chargement du lobby...")
 
         # Play background music if sound is not already playing
         if (
@@ -49,6 +54,8 @@ class LobbyFrame(ttk.Frame):
             self.app.usee_updated_callback = self._update_account_info  # type: ignore
             self.app.profile_photo_updated_callback = self._update_profile_photo  # type: ignore
             self.app.connection_strength_callback = self._on_connection_strength_changed  # type: ignore
+            # Ensure current account info/photo are applied on entry
+            self._update_account_info()
 
         # Title
         title = tk.Canvas(
@@ -75,13 +82,6 @@ class LobbyFrame(ttk.Frame):
         menu_frame.pack(pady=3, padx=3)
 
         # Buttons for menu options
-        self.app.Button(
-            menu_frame.content_frame,
-            text="Continuer la partie",
-            command=lambda: self._resume_game(game=self.app.current_game),  # type: ignore
-            state=tk.DISABLED if self.app.current_game is None else tk.NORMAL,
-            takefocus=False,
-        ).pack(pady=(20, 10), fill=tk.X, padx=30)
         self.app.Button(
             menu_frame.content_frame,
             overlay_path=self.app.local_icon_path,
@@ -118,6 +118,7 @@ class LobbyFrame(ttk.Frame):
             command=lambda: self.app.return_to_desktop(),
             takefocus=False,
         ).pack(pady=(10, 20), fill=tk.X, padx=30)
+        self.app.hide_loading(loading)
 
     def _open_local_game(self) -> None:
         """
@@ -126,28 +127,8 @@ class LobbyFrame(ttk.Frame):
         Args:
             game (GoGame, optional): The game instance to resume. Defaults to None.
         """
-        from gui.frames.local_lobby_frame import LocalLobbyFrame
 
         self.app.show_frame(lambda parent, app: LocalLobbyFrame(parent, app))
-
-    def _resume_game(self, game: "GoGame") -> None:
-        """
-        Resume an existing game.
-
-        Args:
-            game (GoGame): The game instance to resume.
-        """
-        from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
-
-        board_size = game.goban.size
-        if not game.singleplayer:
-            self.app.show_frame(
-                lambda parent, app: GameFrame(parent, app, board_size, game)
-            )
-        else:
-            self.app.show_frame(
-                lambda parent, app: SingleplayerGameFrame(parent, app, board_size, game)
-            )
 
     def _open_online_game(self) -> None:
         """
@@ -159,9 +140,12 @@ class LobbyFrame(ttk.Frame):
         """
         Open settings window.
         """
-        from gui.frames.settings_frame import SettingsFrame
 
-        self.app.show_frame(lambda parent, app: SettingsFrame(parent, app))
+        self.app.open_dialog(
+            dialog=TopLevelWindow(self.app, width=400, height=600),
+            frame_class=SettingsFrame,  # type: ignore
+            show_account_panel=False,
+        )
 
     def _update_account_info(self) -> None:
         """
@@ -188,10 +172,12 @@ class LobbyFrame(ttk.Frame):
         Args:
             strength: Connection strength (0=poor/none, 1=weak, 2=good, 3=excellent)
         """
+        if not self.winfo_exists() or not hasattr(self, "online_button"):
+            return
+        if not self.online_button.winfo_exists():
+            return
         # Disable online button if no connection (strength == 0)
         if strength == 0:
-            print("Disabling online button due to no connection.")
             self.online_button.config(state=tk.DISABLED)
         else:
-            print("Enabling online button due to connection.")
             self.online_button.config(state=tk.NORMAL)
