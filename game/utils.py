@@ -45,6 +45,7 @@ def game_from_dict(data: dict) -> GoGame:
     game.singleplayer = data["singleplayer"]
     return game
 
+
 from config import EFG_K_FACTOR, EFG_EPSILON
 
 
