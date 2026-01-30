@@ -15,9 +15,37 @@ import tkinter.ttk as ttk
 from pathlib import Path
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 import platform
+import threading
 
 if TYPE_CHECKING:
     from gui.app import App
+
+
+_IMAGE_CACHE: dict[Path, Image.Image] = {}
+_IMAGE_CACHE_LOCK = threading.Lock()
+
+
+def _get_cached_image(image_path: Path) -> Image.Image:
+    """Load an image once and reuse it."""
+    with _IMAGE_CACHE_LOCK:
+        cached = _IMAGE_CACHE.get(image_path)
+        if cached is None:
+            cached = Image.open(image_path).convert("RGBA")
+            _IMAGE_CACHE[image_path] = cached
+    return cached
+
+
+def preload_images_async(paths: list[Path]) -> None:
+    """Preload images on a background thread to avoid UI stalls."""
+
+    def _worker():
+        for path in paths:
+            try:
+                _get_cached_image(path)
+            except Exception:
+                pass
+
+    threading.Thread(target=_worker, daemon=True).start()
 
 
 def _get_font_path(font_name: str) -> str | None:
@@ -709,7 +737,7 @@ class TexturedFrame(tk.Frame):
     def _update_texture(self, width: int, height: int):
         """Load texture, crop/resize to frame size, and apply as background."""
         # Load and crop texture to frame size
-        tex_img = Image.open(self.texture_path).convert("RGBA")
+        tex_img = _get_cached_image(self.texture_path)
         tex_w, tex_h = tex_img.size
         left = max(0, (tex_w - width) // 2)
         top = max(0, (tex_h - height) // 2)
@@ -809,7 +837,7 @@ class TopLevelWindow(tk.Toplevel):
 
         # Body frame (for content)
         self.body_frame = ttk.Frame(self.container)
-        self.body_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        self.body_frame.pack(fill=tk.BOTH, expand=True)
 
         # Button frame (at bottom)
         self.button_frame = ttk.Frame(self.container)
@@ -1034,13 +1062,24 @@ class LoadingWindow(TopLevelWindow):
     def __init__(
         self,
         master: "App",
-        message: str = "Chargement...",
-        width: int = 280,
+        message: str = "",
+        width: int = 160,
         height: int = 120,
+        size: int = 64,
+        rotation_step: int = 80,
+        rotation_delay: int = 30,
         **kwargs,
     ):
         self._message = message
-        self._progress = None
+        self._size = size
+        self._rotation_step = rotation_step
+        self._rotation_delay = rotation_delay
+        self._angle = 0
+        self._image_label = None
+        self._rotation_job = None
+        self._texture_image = None
+        self._texture_size = None
+        self._base_image = self._create_yin_yang_image(size)
         super().__init__(
             master=master,
             width=width,
@@ -1050,21 +1089,117 @@ class LoadingWindow(TopLevelWindow):
             overlay=False,
             **kwargs,
         )
+        self.container.config(highlightthickness=0)
+        self.body_frame.pack_forget()
+        self.body_frame = self.master.Frame(self.container, bd=0)  # type: ignore
+        self.body_frame.pack(fill=tk.BOTH, expand=True)
+        self.button_frame.pack_forget()
+
+        self.body(**kwargs)
 
     def body(self, **kwargs) -> None:
-        label = ttk.Label(self.body_frame, text=self._message)
-        label.pack(pady=(20, 10))
+        texture_path = Path(__file__).parent / "images/textures/dark_wood_texture.png"
+        self._texture_path = texture_path
 
-        self._progress = ttk.Progressbar(
-            self.body_frame, mode="indeterminate", length=200
+        self._image_label = ttk.Label(self.body_frame)
+        self._image_label.pack(fill=tk.BOTH, expand=True)
+        self.after(0, self._update_rotation)
+
+    def _create_yin_yang_image(self, size: int) -> Image.Image:
+        """Create a simple yin-yang icon using PIL."""
+        img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+
+        # Base circle (white)
+        draw.ellipse((0, 0, size - 1, size - 1), fill="white")
+        # Left half (black)
+        draw.pieslice((0, 0, size - 1, size - 1), 90, 270, fill="black")
+
+        # Two inner circles
+        big_r = size // 4
+        draw.ellipse(
+            (
+                (size // 2) - big_r,
+                (size // 4) - big_r,
+                (size // 2) + big_r,
+                (size // 4) + big_r,
+            ),
+            fill="black",
         )
-        self._progress.pack(pady=(0, 10))
-        self._progress.start(10)
+        draw.ellipse(
+            (
+                (size // 2) - big_r,
+                (3 * size // 4) - big_r,
+                (size // 2) + big_r,
+                (3 * size // 4) + big_r,
+            ),
+            fill="white",
+        )
+
+        # Small dots
+        small_r = max(2, size // 12)
+        draw.ellipse(
+            (
+                (size // 2) - small_r,
+                (size // 4) - small_r,
+                (size // 2) + small_r,
+                (size // 4) + small_r,
+            ),
+            fill="white",
+        )
+        draw.ellipse(
+            (
+                (size // 2) - small_r,
+                (3 * size // 4) - small_r,
+                (size // 2) + small_r,
+                (3 * size // 4) + small_r,
+            ),
+            fill="black",
+        )
+
+        return img
+
+    def _update_rotation(self) -> None:
+        if not self._image_label or not self.winfo_exists():
+            return
+
+        width = self._image_label.winfo_width()
+        height = self._image_label.winfo_height()
+        if width <= 1 or height <= 1:
+            self._rotation_job = self.after(self._rotation_delay, self._update_rotation)
+            return
+
+        if self._texture_size != (width, height) or self._texture_image is None:
+            tex_img = _get_cached_image(self._texture_path)
+            tex_w, tex_h = tex_img.size
+            left = max(0, (tex_w - width) // 2)
+            top = max(0, (tex_h - height) // 2)
+            right = min(tex_w, left + width)
+            bottom = min(tex_h, top + height)
+            cropped = tex_img.crop((left, top, right, bottom))
+            self._texture_image = cropped.resize(
+                (width, height), Image.Resampling.LANCZOS
+            )
+            self._texture_size = (width, height)
+
+        rotated = self._base_image.rotate(
+            self._angle, resample=Image.Resampling.BICUBIC
+        )
+        composed = self._texture_image.copy()
+        x = (width - rotated.width) // 2
+        y = (height - rotated.height) // 2
+        composed.alpha_composite(rotated, dest=(x, y))
+        photo = ImageTk.PhotoImage(composed)
+        self._image_label._photo = photo  # type: ignore
+        self._image_label.config(image=photo)
+
+        self._angle = (self._angle + self._rotation_step) % 360
+        self._rotation_job = self.after(self._rotation_delay, self._update_rotation)
 
     def close(self, result=None) -> None:
-        if self._progress is not None:
+        if self._rotation_job is not None:
             try:
-                self._progress.stop()
+                self.after_cancel(self._rotation_job)
             except tk.TclError:
                 pass
         super().close(result=result)

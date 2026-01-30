@@ -29,6 +29,7 @@ from gui.widgets import (
     TexturedFrame,
     TopLevelWindow,
     TransparentLabel,
+    preload_images_async,
 )
 from gui.sound_manager import SoundManager
 from gui.game_canvas import StoneBowl
@@ -146,6 +147,28 @@ class App(tk.Tk):
         # Create account panel once (will be shown/hidden by frames)
         self._create_account_panel()
 
+        # Preload UI images in the background
+        images_dir = Path(__file__).parent / "images"
+        image_dirs = [
+            images_dir / "textures",
+            images_dir / "banners",
+            images_dir / "icons",
+            images_dir / "profiles",
+            images_dir / "board",
+        ]
+        image_paths: list[Path] = []
+        for folder in image_dirs:
+            if folder.exists():
+                image_paths.extend(
+                    [
+                        path
+                        for path in folder.rglob("*")
+                        if path.suffix.lower() in {".png", ".jpg", ".jpeg"}
+                    ]
+                )
+        if image_paths:
+            preload_images_async(image_paths)
+
     def show_loading(self, message: str = "Chargement...") -> LoadingWindow:
         """
         Show a lightweight loading dialog.
@@ -160,8 +183,34 @@ class App(tk.Tk):
         loading = LoadingWindow(self, message=message)
         loading.show(wait=False)
         self.update_idletasks()
+        self.update()
         self._loading_window = loading
         return loading
+
+    def has_loading(self) -> bool:
+        """
+        Check if a loading dialog is currently visible.
+        """
+        try:
+            return (
+                self._loading_window is not None and self._loading_window.winfo_exists()
+            )
+        except tk.TclError:
+            return False
+
+    def show_frame_with_loading(
+        self, frame_class, message: str = "Chargement..."
+    ) -> None:
+        """
+        Show a loading dialog and switch frames on the next UI tick.
+        """
+        loading = self.show_loading(message)
+
+        def _build():
+            self.show_frame(frame_class)
+            self.hide_loading(loading)
+
+        self.after(0, _build)
 
     def hide_loading(self, loading: LoadingWindow | None = None) -> None:
         """
@@ -169,13 +218,28 @@ class App(tk.Tk):
         """
         target = loading or self._loading_window
         if target is not None:
-            try:
-                if target.winfo_exists():
-                    target.close()
-            except tk.TclError:
-                pass
+
+            def _close_target():
+                try:
+                    if target.winfo_exists():
+                        target.close()
+                except tk.TclError:
+                    pass
+
+            # Delay slightly so the animation has time to display
+            self.after(150, _close_target)
         if loading is None:
             self._loading_window = None
+
+    def pulse_loading(self) -> None:
+        """
+        Allow the loading animation to update during heavy work.
+        """
+        try:
+            if self._loading_window is not None and self._loading_window.winfo_exists():
+                self.update()
+        except tk.TclError:
+            pass
 
     def _on_global_click(self, event: tk.Event) -> None:
         """

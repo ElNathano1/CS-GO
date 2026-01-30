@@ -227,7 +227,7 @@ class LoginFrame(ttk.Frame):
             dialog.close()
 
         self.app.preferences["auth_token"] = self.app.token
-        self.app.show_frame(LobbyFrame)
+        self.app.show_frame_with_loading(LobbyFrame, "Chargement du lobby...")
 
     def _on_login_error(self, error: str) -> None:
         """
@@ -653,7 +653,7 @@ class RegisterFrame(ttk.Frame):
             dialog.close()
 
         self.app.preferences["auth_token"] = self.app.token
-        self.app.show_frame(LobbyFrame)
+        self.app.show_frame_with_loading(LobbyFrame, "Chargement du lobby...")
 
     def _on_register_error(self, error: str) -> None:
         """Appelé dans le thread principal après erreur."""

@@ -147,6 +147,7 @@ class GameFrame(ttk.Frame):
                 (board_width, board_height), Image.Resampling.LANCZOS
             )
             self.goban_photo = ImageTk.PhotoImage(goban_img)
+        self.app.pulse_loading()
 
         # Load black stone image
         black_stone_path = images_dir / "black_stone.png"
@@ -159,6 +160,7 @@ class GameFrame(ttk.Frame):
             )
             self.black_stone_photo = ImageTk.PhotoImage(black_stone_img)
             self.stone_size = stone_size
+        self.app.pulse_loading()
 
         # Load white stone image
         white_stone_path = images_dir / "white_stone.png"
@@ -170,6 +172,7 @@ class GameFrame(ttk.Frame):
                 (stone_size, stone_size), Image.Resampling.LANCZOS
             )
             self.white_stone_photo = ImageTk.PhotoImage(white_stone_img)
+        self.app.pulse_loading()
 
         # Load bowl images
         bowl_back_path = images_dir / "bowl.png"
@@ -186,6 +189,7 @@ class GameFrame(ttk.Frame):
             )
             self.bowl_back_photo = ImageTk.PhotoImage(bowl_back_img)
             self.bowl_front_photo = ImageTk.PhotoImage(bowl_front_img)
+        self.app.pulse_loading()
 
     def _create_bowls(self) -> None:
         """
@@ -763,7 +767,7 @@ class GameFrame(ttk.Frame):
             "Retour au lobby", "Êtes-vous sûr de vouloir retourner au lobby ?"
         )
         if result:
-            self.app.show_frame(LobbyFrame)
+            self.app.show_frame_with_loading(LobbyFrame, "Chargement du lobby...")
 
     def _update_display(self) -> None:
         """

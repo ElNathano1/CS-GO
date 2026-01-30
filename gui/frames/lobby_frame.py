@@ -38,7 +38,16 @@ class LobbyFrame(ttk.Frame):
         super().__init__(parent)
 
         self.app = app
-        loading = self.app.show_loading("Chargement du lobby...")
+        self._loading = None
+        if not self.app.has_loading():
+            self._loading = self.app.show_loading("Chargement du lobby...")
+
+        self.after(0, self._build_step_1)
+
+    def _build_step_1(self) -> None:
+        """
+        First step: background music + account panel wiring.
+        """
 
         # Play background music if sound is not already playing
         if (
@@ -57,6 +66,13 @@ class LobbyFrame(ttk.Frame):
             # Ensure current account info/photo are applied on entry
             self._update_account_info()
 
+        self.after(0, self._build_step_2)
+
+    def _build_step_2(self) -> None:
+        """
+        Second step: title.
+        """
+
         # Title
         title = tk.Canvas(
             self,
@@ -70,28 +86,54 @@ class LobbyFrame(ttk.Frame):
         title.create_image(
             0,
             0,
-            image=app.cs_go_banner,
+            image=self.app.cs_go_banner,
             anchor="nw",
         )
         title.pack(pady=40)
 
+        self.after(0, self._build_step_3)
+
+    def _build_step_3(self) -> None:
+        """
+        Third step: menu and buttons.
+        """
+
         # Menu frame
         main_menu_frame = self.app.Frame(self, bg="black", bd=1)
         main_menu_frame.pack(pady=20, padx=30)
-        menu_frame = self.app.Frame(main_menu_frame)
-        menu_frame.pack(pady=3, padx=3)
+        self._menu_frame = self.app.Frame(main_menu_frame)
+        self._menu_frame.pack(pady=3, padx=3)
 
-        # Buttons for menu options
+        self._menu_build_steps = [
+            self._build_local_button,
+            self._build_online_button,
+            self._build_settings_button,
+            self._build_return_button,
+        ]
+        self._build_menu_step(0)
+
+    def _build_menu_step(self, index: int) -> None:
+        if index >= len(self._menu_build_steps):
+            if self._loading is not None:
+                self.app.hide_loading(self._loading)
+            return
+
+        self._menu_build_steps[index]()
+        self.after(0, lambda: self._build_menu_step(index + 1))
+
+    def _build_local_button(self) -> None:
         self.app.Button(
-            menu_frame.content_frame,
+            self._menu_frame.content_frame,
             overlay_path=self.app.local_icon_path,
             hover_overlay_path=self.app.hovered_local_icon_path,
             text="Partie locale",
             command=lambda: self._open_local_game(),
             takefocus=False,
         ).pack(pady=(20, 10), fill=tk.X, padx=30)
+
+    def _build_online_button(self) -> None:
         self.online_button = self.app.Button(
-            menu_frame.content_frame,
+            self._menu_frame.content_frame,
             overlay_path=self.app.online_icon_path,
             hover_overlay_path=self.app.hovered_online_icon_path,
             text="Partie en ligne",
@@ -100,8 +142,10 @@ class LobbyFrame(ttk.Frame):
             takefocus=False,
         )
         self.online_button.pack(pady=10, fill=tk.X, padx=30)
+
+    def _build_settings_button(self) -> None:
         self.app.Button(
-            menu_frame.content_frame,
+            self._menu_frame.content_frame,
             overlay_path=self.app.prefs_icon_path,
             hover_overlay_path=self.app.hovered_prefs_icon_path,
             text="Paramètres",
@@ -109,16 +153,15 @@ class LobbyFrame(ttk.Frame):
             takefocus=False,
         ).pack(pady=10, fill=tk.X, padx=30)
 
-        # Return to Desktop button
+    def _build_return_button(self) -> None:
         self.app.Button(
-            menu_frame.content_frame,
+            self._menu_frame.content_frame,
             overlay_path=self.app.return_icon_path,
             hover_overlay_path=self.app.hovered_return_icon_path,
             text="Retour au bureau",
             command=lambda: self.app.return_to_desktop(),
             takefocus=False,
         ).pack(pady=(10, 20), fill=tk.X, padx=30)
-        self.app.hide_loading(loading)
 
     def _open_local_game(self) -> None:
         """

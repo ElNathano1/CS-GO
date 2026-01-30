@@ -240,4 +240,4 @@ class LocalLobbyFrame(ttk.Frame):
         """
         from gui.frames.lobby_frame import LobbyFrame
 
-        self.app.show_frame(LobbyFrame)
+        self.app.show_frame_with_loading(LobbyFrame, "Chargement du lobby...")
