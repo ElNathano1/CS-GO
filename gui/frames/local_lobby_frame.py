@@ -12,7 +12,7 @@ import tkinter.ttk as ttk
 from game.core import Goban
 from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
 from gui.utils import random_username
-from player.ai import Martin, Leo, Magnus, Player
+from player.ai import KatagoAI, Martin, Leo, Magnus, Player
 
 from game.core import GoGame
 
@@ -183,7 +183,7 @@ class LocalLobbyFrame(ttk.Frame):
                     parent,
                     app,
                     board_size,
-                    Martin(game, Goban.BLACK),
+                    KatagoAI("Test", game, Goban.BLACK, -1750),
                     Player(
                         self.app.account_profile_photo["text"].strip(),
                         self.app.get_profile_photo(),
@@ -235,7 +235,7 @@ class LocalLobbyFrame(ttk.Frame):
                     parent,
                     app,
                     self.board_size.get(),
-                    Martin(game, Goban.BLACK),
+                    KatagoAI("Test", game, Goban.BLACK, -1750),
                     Player(
                         self.app.account_profile_photo["text"].strip(),
                         self.app.get_profile_photo(),

@@ -125,6 +125,64 @@ def new_level(level_a: int, level_b: int, winner: Literal["A", "B", "NULL"]) -> 
     )
 
 
+def ffg_points_to_katago(points_ffg: int) -> str:
+    """
+    Convert FFG Elo points into Katago level rank type ("kyu" or "dan") and rank number.
+
+    Args:
+        points_ffg (int): FFG Elo points
+
+    Returns:
+        str: Katago rank as a string (e.g., "5k" for 5 kyu or "3d" for 3 dan)
+    """
+
+    rank = round((points_ffg + 2950) / 100)
+    katago = rank - 2  # FFG compensation
+
+    if katago < 29:
+        kyu = 30 - katago
+        return f"{kyu}k"
+    else:
+        dan = katago - 29
+        return f"{dan}d"
+
+
+def transform_coordinates(coordinates: str | tuple[int, int]) -> tuple[int, int] | str:
+    """
+    Transform (x, y) coordinates to "CR" coordinates
+
+    Args:
+        coordinates (str | tuple[int, int]): "CR" coordinates (with C being the column represented by a letter
+        and R the row represented by a int) or (x, y) coordinates (with x and y being int)
+
+    Returns:
+        tuple[int, int] | str: Conversion of coordinates if the other system.
+    """
+
+    if isinstance(coordinates, str):
+        coord = coordinates.strip()
+        if coord.lower() in {"pass", "resign"}:
+            return coord.lower()
+
+        C = coord[0].upper()
+        R = coord[1:]
+        letters = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
+        if C not in letters:
+            raise ValueError(f"Invalid GTP column: {C}")
+        x = letters.index(C)
+        y = int(R) - 1
+        return x, y
+
+    else:
+        x, y = coordinates
+        letters = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
+        if x < 0 or x >= len(letters):
+            raise ValueError(f"Invalid board x coordinate: {x}")
+        C = letters[x]
+        R = str(y + 1)
+        return C + R
+
+
 if __name__ == "__main__":
 
     game = GoGame(9)

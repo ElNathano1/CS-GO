@@ -862,7 +862,11 @@ class App(tk.Tk):
             self.account_panel,
             text=(f"{self.name} " if self.name else f"{random_username()} "),
             image=initial_photo,
-            command=self._show_account_dialog,
+            command=lambda: (
+                self._show_account_dialog()
+                if self.username
+                else self._show_login_dialog()
+            ),
             compound=tk.RIGHT,
             takefocus=False,
             cursor="hand2",

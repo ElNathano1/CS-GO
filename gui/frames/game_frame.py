@@ -21,7 +21,7 @@ from game.core import Goban, GoGame
 from game.utils import game_to_dict
 from gui.frames.settings_frame import SettingsFrame
 from gui.widgets import TopLevelWindow
-from player.ai import Martin, Leo, Magnus, Player, TrueAI
+from player.ai import Martin, Leo, Magnus, KatagoAI, Player
 
 if TYPE_CHECKING:
     from gui.app import App
@@ -410,11 +410,12 @@ class GameFrame(ttk.Frame):
             highlightbackground="black",
             highlightcolor="black",
         ).pack(side=tk.RIGHT, padx=0)
-        ttk.Label(
+        self.black_name = ttk.Label(
             black_player_panel,
             background="#224722",
             text=f"{f"({self.black_player.level}EGF) " if self.black_player.level != -3000 else ""}{self.black_player.name}",
-        ).pack(side=tk.RIGHT, padx=(0, 10))
+        )
+        self.black_name.pack(side=tk.RIGHT, padx=(0, 10))
         self.black_score_label = ttk.Label(
             black_player_panel,
             background="#224722",
@@ -440,14 +441,17 @@ class GameFrame(ttk.Frame):
             highlightbackground="black",
             highlightcolor="black",
         ).pack(side=tk.LEFT, padx=0)
-        ttk.Label(
+        self.white_name = ttk.Label(
             white_player_panel,
             background="#224722",
+            foreground="grey",
             text=f"{self.white_player.name}{f" ({self.white_player.level}EGF)" if self.white_player.level != -3000 else ""}",
-        ).pack(side=tk.LEFT, padx=(10, 0))
+        )
+        self.white_name.pack(side=tk.LEFT, padx=(10, 0))
         self.white_score_label = ttk.Label(
             white_player_panel,
             background="#224722",
+            foreground="grey",
             text="  -  Score: 0",
         )
         self.white_score_label.pack(side=tk.LEFT)
@@ -925,6 +929,24 @@ class GameFrame(ttk.Frame):
         Redraws the board and updates labels for player, moves, and scores.
         """
         self._highlight_last_move()
+
+        # Update player turn
+        self.black_name.config(
+            foreground=("#ffffff" if self.game.current_color == Goban.BLACK else "grey")
+        )
+        self.black_score_label.config(
+            foreground=("#ffffff" if self.game.current_color == Goban.BLACK else "grey")
+        )
+        self.white_name.config(
+            foreground=("#ffffff" if self.game.current_color == Goban.WHITE else "grey")
+        )
+        self.white_score_label.config(
+            foreground=("#ffffff" if self.game.current_color == Goban.WHITE else "grey")
+        )
+
+        # Update scores
+        self.black_score_label.config(text=str(self.game.get_score()[Goban.BLACK]))
+        self.white_score_label.config(text=str(self.game.get_score()[Goban.WHITE]))
         # self.player_label.config(text=self._get_player_text())
         # self.moves_label.config(
         #     text=(
@@ -1043,6 +1065,7 @@ class SingleplayerGameFrame(GameFrame):
         self._ai_thinking = False
         self._ai_process = None
         self._ai_result_queue = None
+        self._ai_thread = None
         self.after(0, self._init_singleplayer_controls)
 
     def _init_singleplayer_controls(self) -> None:
@@ -1144,14 +1167,17 @@ class SingleplayerGameFrame(GameFrame):
             highlightbackground="black",
             highlightcolor="black",
         ).pack(side=tk.RIGHT, padx=0)
-        ttk.Label(
+        self.white_name = ttk.Label(
             white_player_panel,
             background="#224722",
+            foreground="grey",
             text=f"{f"({self.white_player.level}EGF) " if self.white_player.level != -3000 else ""}{self.white_player.name}",
-        ).pack(side=tk.RIGHT, padx=(0, 10))
+        )
+        self.white_name.pack(side=tk.RIGHT, padx=(0, 10))
         self.white_score_label = ttk.Label(
             white_player_panel,
             background="#224722",
+            foreground="grey",
             text="Score: 0  -  ",
         )
         self.white_score_label.pack(side=tk.RIGHT)
@@ -1174,11 +1200,12 @@ class SingleplayerGameFrame(GameFrame):
             highlightbackground="black",
             highlightcolor="black",
         ).pack(side=tk.LEFT, padx=0)
-        ttk.Label(
+        self.black_name = ttk.Label(
             black_player_panel,
             background="#224722",
             text=f"{self.black_player.name}{f" ({self.black_player.level}EGF)" if self.black_player.level != -3000 else ""}",
-        ).pack(side=tk.LEFT, padx=(10, 0))
+        )
+        self.black_name.pack(side=tk.LEFT, padx=(10, 0))
         self.black_score_label = ttk.Label(
             black_player_panel,
             background="#224722",
@@ -1241,14 +1268,14 @@ class SingleplayerGameFrame(GameFrame):
         if (
             self.game.current_color == Goban.WHITE
             and not (
-                isinstance(self.white_player, TrueAI)
-                or isinstance(self.white_player, Martin)
+                isinstance(self.white_player, Martin)
+                or isinstance(self.white_player, KatagoAI)
             )
         ) or (
             self.game.current_color == Goban.BLACK
             and not (
-                isinstance(self.black_player, TrueAI)
-                or isinstance(self.black_player, Martin)
+                isinstance(self.black_player, Martin)
+                or isinstance(self.black_player, KatagoAI)
             )
         ):
             super()._on_board_click(event)
@@ -1265,8 +1292,6 @@ class SingleplayerGameFrame(GameFrame):
         if self.animating:
             self.after(100, self._wait_and_play_ai)
         else:
-            self.pass_button.config(state=tk.DISABLED)
-            self.resign_button.config(state=tk.DISABLED)
             self._ai_choose_move_async()
 
     def _ai_choose_move_async(self) -> None:
@@ -1276,10 +1301,29 @@ class SingleplayerGameFrame(GameFrame):
         if self._ai_thinking or self.game.current_color != self.ai_color:
             return
 
+        self.pass_button.config(state=tk.DISABLED)
+        self.resign_button.config(state=tk.DISABLED)
         self._ai_thinking = True
 
         ai = self.black_player if self.ai_color == Goban.BLACK else self.white_player
         ai_kind = type(ai).__name__
+
+        if isinstance(ai, KatagoAI):
+            result_queue = queue.Queue()
+            self._ai_result_queue = result_queue
+
+            def _katago_worker() -> None:
+                try:
+                    move = ai.choose_move()
+                except Exception:
+                    move = "pass"
+                result_queue.put(move)
+
+            self._ai_thread = threading.Thread(target=_katago_worker, daemon=True)
+            self._ai_thread.start()
+            self.after(50, self._poll_ai_result)
+            return
+
         game_state = game_to_dict(self.game)
 
         ctx = multiprocessing.get_context("spawn")
@@ -1301,11 +1345,15 @@ class SingleplayerGameFrame(GameFrame):
         except queue.Empty:
             if self._ai_process is not None and self._ai_process.is_alive():
                 self.after(50, self._poll_ai_result)
-            else:
-                self._ai_thinking = False
+                return
+            if self._ai_thread is not None and self._ai_thread.is_alive():
+                self.after(50, self._poll_ai_result)
+                return
+            self._ai_thinking = False
             return
 
         self._ai_process = None
+        self._ai_thread = None
         self._ai_result_queue = None
         self._apply_ai_move(move)
 
@@ -1366,7 +1414,6 @@ class SingleplayerGameFrame(GameFrame):
 
         elif move == "resign":
             self._show_game_over_dialog(resigned_by=self.ai_color)
-
 
     def destroy(self) -> None:
         if self._ai_process is not None and self._ai_process.is_alive():

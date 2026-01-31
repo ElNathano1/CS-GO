@@ -11,11 +11,7 @@ from pathlib import Path
 
 import requests
 
-# Add parent directory to path to import goban
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-
-from config import BASE_URL, DEFAULT_VOLUME
+from config import BASE_URL, DEFAULT_VOLUME, BASE_FOLDER_PATH
 
 
 def load_preferences() -> dict:
@@ -24,8 +20,8 @@ def load_preferences() -> dict:
     For demonstration purposes, we return a hardcoded dictionary.
     """
 
-    if os.path.exists("preferences.prefs"):
-        return load_dictionnary("preferences.prefs")
+    if os.path.exists(Path(BASE_FOLDER_PATH) / "preferences.prefs"):
+        return load_dictionnary(Path(BASE_FOLDER_PATH) / "preferences.prefs")
 
     else:
         preferences = {
@@ -35,7 +31,7 @@ def load_preferences() -> dict:
             "stay_logged_in": True,
             "auth_token": None,
         }
-        save_dictionnary(preferences, "preferences.prefs")
+        save_dictionnary(preferences, Path(BASE_FOLDER_PATH) / "preferences.prefs")
         return preferences
 
 
@@ -49,8 +45,8 @@ def load_current_game() -> GoGame | None:
 
     from game.utils import load_game
 
-    if os.path.exists("saves/autosave.csgogame"):
-        return load_game("saves/autosave.csgogame")
+    if os.path.exists(Path(BASE_FOLDER_PATH) / "saves/autosave.csgogame"):
+        return load_game(BASE_FOLDER_PATH + "saves/autosave.csgogame")
     return None
 
 

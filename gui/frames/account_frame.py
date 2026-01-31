@@ -22,16 +22,18 @@ from gui.widgets import TopLevelWindow
 from config import BASE_URL
 
 
-class LoginFrame(ttk.Frame):
+class AccountFrame(ttk.Frame):
     """
-    Dialog toplevel for login and register actions.
+    Dialog toplevel for managing account.
 
-    Allows users to log in or create a new account.
+    Allows users to:
+    - Change account details (e.g., name, password, profile_photo).
+    - Log out.
     """
 
     def __init__(self, parent: tk.Widget, app: "App"):
         """
-        Initializes the login dialog.
+        Initializes the account management dialog.
 
         Args:
             parent: The container in which this frame is placed (e.g., dialog body)
@@ -40,27 +42,22 @@ class LoginFrame(ttk.Frame):
 
         super().__init__(parent)
         self.app = app
-        loading = self.app.show_loading("Chargement...")
 
-        # Title
-        title = ttk.Label(self, text="Connexion", style="Title.TLabel")
-        title.pack(pady=(20, 40))
+        # Account management frame
+        main_account_frame = self.app.Frame(self, bg="black", bd=1)
+        main_account_frame.pack(pady=20, fill=tk.X, padx=20)
+        account_frame = self.app.Frame(main_account_frame)
+        account_frame.pack(pady=3, padx=3, fill=tk.X)
 
-        # Login frame
-        main_login_frame = self.app.Frame(self, bg="black", bd=1)
-        main_login_frame.pack(pady=20, fill=tk.X, padx=20)
-        login_frame = self.app.Frame(main_login_frame)
-        login_frame.pack(pady=3, padx=3, fill=tk.X)
-
-        # Username entry
-        self.username_var = tk.StringVar()
+        # Change name entry
+        self.name_var = tk.StringVar()
         self.app.Label(
-            login_frame,
-            text="Nom d'utilisateur",
+            account_frame,
+            text="Changer le nom d'affichage",
         ).pack(pady=(20, 5), padx=20)
-        self.username_entry = tk.Entry(
-            login_frame,
-            textvariable=self.username_var,
+        self.name_entry = tk.Entry(
+            account_frame,
+            textvariable=self.name_var,
             takefocus=True,
             font=("Skranji", 14),
             bg="#1e1e1e",
@@ -71,16 +68,16 @@ class LoginFrame(ttk.Frame):
             highlightcolor="white",
             highlightbackground="black",
         )
-        self.username_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.name_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
         # Password entry
         self.password_var = tk.StringVar()
         self.app.Label(
-            login_frame,
+            account_frame,
             text="Mot de passe",
         ).pack(pady=(10, 5), padx=20)
         self.password_entry = tk.Entry(
-            login_frame,
+            account_frame,
             textvariable=self.password_var,
             takefocus=True,
             font=("Skranji", 14),

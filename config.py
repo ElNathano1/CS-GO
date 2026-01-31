@@ -5,6 +5,18 @@ This module centralizes all configuration constants used across the application,
 including API endpoints, default values, and other global settings.
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Base folder for ressources
+if getattr(sys, "frozen", False):
+    BASE_FOLDER_PATH = os.path.dirname(sys.executable)
+elif __file__:
+    BASE_FOLDER_PATH = os.path.dirname(__file__)
+    BASE_FOLDER_PATH = BASE_FOLDER_PATH.replace("\\", "/").split("/code")[0]
+BASE_FOLDER_PATH = BASE_FOLDER_PATH.replace("\\", "/") + "/"
+
 # API Configuration
 BASE_URL = "https://cs-go-production.up.railway.app"
 WS_URL = "wss://cs-go-production.up.railway.app/ws"
@@ -265,3 +277,18 @@ EFG_EPSILON = {
     -2000: 0.10,
     -2950: 0.15,
 }
+
+# Katago AI configuration
+KATAGO_EXECUTABLE_PATH = Path(BASE_FOLDER_PATH) / "player" / "katago" / "katago.exe"
+KATAGO_MODEL_PATH = (
+    Path(BASE_FOLDER_PATH)
+    / "player"
+    / "katago"
+    / "g170e-b20c256x2-s5303129600-d1228401921.bin.gz"
+)
+KATAGO_HUMAN_MODEL_PATH = (
+    Path(BASE_FOLDER_PATH) / "player" / "katago" / "b18c384nbt-humanv0.bin.gz"
+)
+KATAGO_HUMAN_CONFIG_PATH = (
+    Path(BASE_FOLDER_PATH) / "player" / "katago" / "gtp_human_k.cfg"
+)

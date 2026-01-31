@@ -1,0 +1,280 @@
+2026-01-30 16:24:09+0100: Running with following config:
+allowResignation = true
+analysisIgnorePreRootHistory = false
+chosenMovePrune = 0
+chosenMoveSubtract = 0
+chosenMoveTemperature = 0.70
+chosenMoveTemperatureEarly = 0.85
+chosenMoveTemperatureHalflife = 80
+chosenMoveTemperatureOnlyBelowProb = 0.01
+delayMoveMax = 10.0
+delayMoveScale = 2.0
+dynamicScoreUtilityFactor = 0.00
+humanSLChosenMoveIgnorePass = true
+humanSLChosenMovePiklLambda = 100000000
+humanSLChosenMoveProp = 1.0
+humanSLCpuctExploration = 0.50
+humanSLCpuctPermanent = 0.2
+humanSLOppExploreProbWeightful = 0.0
+humanSLOppExploreProbWeightless = 0.0
+humanSLPlaExploreProbWeightful = 0.0
+humanSLPlaExploreProbWeightless = 0.0
+humanSLProfile = preaz_5k
+humanSLRootExploreProbWeightful = 0.0
+humanSLRootExploreProbWeightless = 0.0
+ignorePreRootHistory = false
+lagBuffer = 1.0
+logAllGTPCommunication = true
+logDir = gtp_logs
+logSearchInfo = true
+logSearchInfoForChosenMove = false
+logToStderr = false
+maxVisits = 40
+nnCacheSizePowerOfTwo = 17
+nnMutexPoolSizePowerOfTwo = 14
+numSearchThreads = 1
+resignConsecTurns = 20
+resignMinMovesPerBoardArea = 0.4
+resignMinScoreDifference = 40
+resignThreshold = -0.99
+rootNumSymmetriesToSample = 2
+rules = japanese
+staticScoreUtilityFactor = 0.30
+subtreeValueBiasFactor = 0.0
+useLcbForSelection = false
+useNoisePruning = false
+useUncertainty = false
+winLossUtilityFactor = 1.0
+
+2026-01-30 16:24:09+0100: GTP Engine starting...
+2026-01-30 16:24:09+0100: KataGo v1.16.4
+2026-01-30 16:24:09+0100: Using Japanese rules initially, unless GTP/GUI overrides this
+2026-01-30 16:24:09+0100: Using 1 CPU thread(s) for search
+2026-01-30 16:24:09+0100: nnRandSeed0 = 16768241479507217726
+2026-01-30 16:24:09+0100: After dedups: nnModelFile0 = g170e-b20c256x2-s5303129600-d1228401921.bin.gz useFP16 auto useNHWC auto
+2026-01-30 16:24:09+0100: Initializing neural net buffer to be size 19 * 19 exactly
+2026-01-30 16:24:10+0100: Eigen (CPU) backend thread 0: Model version 8
+2026-01-30 16:24:10+0100: Eigen (CPU) backend thread 0: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-30 16:24:14+0100: Loaded neural net with nnXLen 19 nnYLen 19
+2026-01-30 16:24:14+0100: nnRandSeed0 = 8392693610844035130
+2026-01-30 16:24:14+0100: After dedups: nnModelFile0 = b18c384nbt-humanv0.bin.gz useFP16 auto useNHWC auto
+2026-01-30 16:24:14+0100: Initializing neural net buffer to be size 19 * 19 exactly
+2026-01-30 16:24:16+0100: Eigen (CPU) backend thread 0: Model version 15
+2026-01-30 16:24:16+0100: Eigen (CPU) backend thread 0: Model name: b18c384nbt-humanv0
+2026-01-30 16:24:17+0100: Loaded human SL net with nnXLen 19 nnYLen 19
+2026-01-30 16:24:17+0100: Initializing board with boardXSize 19 boardYSize 19
+2026-01-30 16:24:17+0100: Loaded config gtp_human5k_example.cfg
+2026-01-30 16:24:17+0100: Loaded model g170e-b20c256x2-s5303129600-d1228401921.bin.gz
+2026-01-30 16:24:17+0100: Loaded human SL model b18c384nbt-humanv0.bin.gz
+2026-01-30 16:24:17+0100: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-30 16:24:17+0100: Human SL model name: b18c384nbt-humanv0
+2026-01-30 16:24:17+0100: GTP ready, beginning main protocol loop
+2026-01-30 16:25:37+0100: Controller: boardsize 19
+2026-01-30 16:25:37+0100: = 
+2026-01-30 16:25:43+0100: Controller: clean_board
+2026-01-30 16:25:43+0100: ? unknown command
+2026-01-30 16:25:56+0100: Controller: clear_board
+2026-01-30 16:25:56+0100: = 
+2026-01-30 16:26:00+0100: Controller: genmove b
+2026-01-30 16:26:16+0100: MoveNum: 0 HASH: CDCBC1F514D7E680FACD226074256633
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . . . . . . . . . . . . . . .
+16 . . . . . . . . . . . . . . . @ . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . . . . . . . . . . . . . . . . .
+ 3 . . . . . . . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 16.157
+Root visits: 40
+New playouts: 40
+NN rows: 38
+NN batches: 38
+NN avg batch size: 1
+PV: Q16 D4 Q4 D16 C17 C16
+Tree:
+: T  -4.37c W  -4.23c S  -0.14c ( -0.3 L  -0.3) N      40  --  Q16 D4 Q4 D16 C17 C16
+---Black(^)---
+Q16 : T  -4.15c W  -4.02c S  -0.13c ( -0.3 L  -0.3) LCB   -5.60c P  9.56% WF  34.0 PSV      34 N      34  --  Q16 D4 Q4 D16 C17 C16
+R16 : T  -5.88c W  -5.70c S  -0.18c ( -0.4 L  -0.3) LCB  -31.98c P  5.74% WF   5.0 PSV       5 N       5  --  R16 D16 Q4
+
+2026-01-30 16:26:16+0100: = Q16
+2026-01-30 16:26:29+0100: Controller: genmove w
+2026-01-30 16:26:45+0100: MoveNum: 1 HASH: D787FAD66281F76731DCD9C1B3387463
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . @ . . . . . . . . . . . . . . .
+16 . . . . . . . . . . . . . . . X1. . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . . . . . . . . . . . . . . . . .
+ 3 . . . . . . . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 15.719
+Root visits: 40
+New playouts: 17
+NN rows: 19
+NN batches: 19
+NN avg batch size: 1
+PV: D4 Q4 D16 C17 C16 D17
+Tree:
+: T   3.98c W   3.85c S   0.13c ( +0.3 L  +0.3) N      40  --  D4 Q4 D16 C17 C16 D17
+---White(^)---
+D4  : T   4.19c W   4.05c S   0.14c ( +0.3 L  +0.3) LCB    1.88c P 35.61% WF  24.0 PSV      30 N      24  --  D4 Q4 D16 C17 C16 D17
+D16 : T   3.66c W   3.56c S   0.10c ( +0.2 L  +0.2) LCB    0.08c P 26.12% WF  15.0 PSV       9 N      15  --  D16 D4 Q4 R3 R4 Q3
+
+2026-01-30 16:26:45+0100: = D17
+2026-01-30 16:28:54+0100: Controller: genmove b
+2026-01-30 16:29:13+0100: MoveNum: 2 HASH: F765517D79C12CE29E0485206F070DFC
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . O2. . . . . . . . . . . . . . .
+16 . . . . . . . . . . . . . . . X1. . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . . . . . . . . . . . . . @ . . .
+ 3 . . . . . . . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 19.047
+Root visits: 40
+New playouts: 40
+NN rows: 41
+NN batches: 41
+NN avg batch size: 1
+PV: Q4 D4 C3 C4 D3 E4 F3
+Tree:
+: T  -1.28c W  -1.26c S  -0.02c ( -0.1 L  -0.1) N      40  --  Q4 D4 C3 C4 D3 E4 F3
+---Black(^)---
+Q4  : T  -1.88c W  -1.84c S  -0.05c ( -0.1 L  -0.1) LCB   -6.00c P 27.23% WF  13.0 PSV      27 N      13  --  Q4 D4 C3 C4 D3 E4 F3
+D4  : T  -0.67c W  -0.67c S   0.01c ( +0.0 L  -0.0) LCB   -2.58c P 32.13% WF  21.1 PSV      12 N      21  --  D4 Q4 R3 R4 Q3 O3
+C15 : T  -2.42c W  -2.34c S  -0.08c ( -0.2 L  -0.2) LCB  -21.20c P 12.86% WF   5.0 PSV       0 N       5  --  C15 D4 Q4
+
+2026-01-30 16:29:13+0100: = Q4
+2026-01-30 16:29:25+0100: Controller: genmove w
+2026-01-30 16:29:38+0100: MoveNum: 3 HASH: B7D6D1EF1DD3F4A86613774338049B64
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . O2. . . . . . . . . . . . . . .
+16 . . . . . . . . . . . . . . . X1. . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . @ . . . . . . . . . . . X3. . .
+ 3 . . . . . . . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 12.75
+Root visits: 40
+New playouts: 27
+NN rows: 28
+NN batches: 28
+NN avg batch size: 1
+PV: C4 E3 D6
+Tree:
+: T   1.55c W   1.52c S   0.03c ( +0.1 L  +0.1) N      40  --  C4 E3 D6
+---White(^)---
+C4  : T   0.67c W   0.67c S  -0.00c ( -0.0 L  -0.0) LCB  -67.91c P  9.06% WF   3.0 PSV      16 N       3  --  C4 E3 D6
+D4  : T   1.66c W   1.62c S   0.04c ( +0.1 L  +0.1) LCB   -0.34c P 65.02% WF  28.0 PSV      13 N      28  --  D4 C3 C4 D3 E4 F3 F4 G3
+D3  : T   1.24c W   1.22c S   0.02c ( +0.0 L  +0.1) LCB   -9.01c P 21.12% WF   8.0 PSV      11 N       8  --  D3 C15 C6 F16
+
+2026-01-30 16:29:38+0100: = D4
+2026-01-30 16:29:47+0100: Controller: genmove w
+2026-01-30 16:30:09+0100: MoveNum: 0 HASH: D219C1B085ED10EC1AC30712995F9CB9
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . O . . . . . . . . . . . . . . .
+16 . . . . . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . @ . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . O . . . . . . . . . . . X . . .
+ 3 . . . . . . . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 21.625
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: O17
+Tree:
+: T 100.99c W  94.43c S   6.56c (+15.9 L +12.2) N      40  --  O17
+---White(^)---
+C15 : T 100.50c W  94.05c S   6.45c (+15.6 L +11.9) LCB   60.78c P  6.78% WF   4.0 PSV      25 N       4  --  C15 C3 D3
+C14 : T 101.37c W  94.74c S   6.63c (+16.1 L +12.4) LCB   94.70c P 15.07% WF  10.0 PSV       5 N      10  --  C14 C3 C4 D3 E4
+D14 : T 101.06c W  94.45c S   6.61c (+16.1 L +12.3) LCB   87.83c P 11.38% WF   7.0 PSV       4 N       7  --  D14 C3 D3 C4
+D15 : T 101.04c W  94.42c S   6.61c (+16.1 L +12.3) LCB   87.79c P 10.76% WF   7.0 PSV       4 N       7  --  D15 C3 C4 D3
+F3  : T 101.05c W  94.45c S   6.60c (+16.0 L +12.3) LCB  -37.25c P  4.36% WF   2.0 PSV       2 N       2  --  F3 C15
+R17 : T 101.00c W  94.56c S   6.44c (+15.5 L +11.8) LCB   61.21c P  7.65% WF   4.0 PSV       0 N       4  --  R17 Q17 R16
+R3  : T 100.62c W  94.13c S   6.49c (+15.6 L +12.0) LCB   74.91c P  8.89% WF   5.0 PSV       0 N       5  --  R3 R4 Q3
+
+2026-01-30 16:30:09+0100: = D14
+2026-01-30 16:30:23+0100: Controller: quit
+2026-01-30 16:30:23+0100: Quit requested by controller
+2026-01-30 16:30:23+0100: = 
+2026-01-30 16:30:23+0100: GPU -1 finishing, processed 168 rows 168 batches
+2026-01-30 16:30:23+0100: GPU -1 finishing, processed 10 rows 10 batches
+2026-01-30 16:30:24+0100: All cleaned up, quitting

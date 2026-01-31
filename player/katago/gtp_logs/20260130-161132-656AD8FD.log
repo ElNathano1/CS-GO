@@ -1,0 +1,109 @@
+2026-01-30 16:11:32+0100: Running with following config:
+allowResignation = true
+lagBuffer = 1.0
+logAllGTPCommunication = true
+logDir = gtp_logs
+logSearchInfo = true
+logSearchInfoForChosenMove = false
+logToStderr = false
+maxTimePondering = 60.0
+maxVisits = 500
+numSearchThreads = 6
+ponderingEnabled = false
+resignConsecTurns = 3
+resignThreshold = -0.90
+rules = tromp-taylor
+searchFactorAfterOnePass = 0.50
+searchFactorAfterTwoPass = 0.25
+searchFactorWhenWinning = 0.40
+searchFactorWhenWinningThreshold = 0.95
+
+2026-01-30 16:11:32+0100: GTP Engine starting...
+2026-01-30 16:11:32+0100: KataGo v1.16.4
+2026-01-30 16:11:32+0100: Using TrompTaylor rules initially, unless GTP/GUI overrides this
+2026-01-30 16:11:32+0100: Using 6 CPU thread(s) for search
+2026-01-30 16:11:32+0100: nnRandSeed0 = 1726370907747684491
+2026-01-30 16:11:32+0100: After dedups: nnModelFile0 = .\g170e-b20c256x2-s5303129600-d1228401921.bin.gz useFP16 auto useNHWC auto
+2026-01-30 16:11:32+0100: Initializing neural net buffer to be size 19 * 19 exactly
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 1: Model version 8
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 1: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 0: Model version 8
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 0: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 5: Model version 8
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 5: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 3: Model version 8
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 3: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 4: Model version 8
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 4: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 2: Model version 8
+2026-01-30 16:11:34+0100: Eigen (CPU) backend thread 2: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-30 16:11:37+0100: Loaded neural net with nnXLen 19 nnYLen 19
+2026-01-30 16:11:37+0100: Initializing board with boardXSize 19 boardYSize 19
+2026-01-30 16:11:37+0100: Loaded config C:\Users\natha\Dropbox\Mon PC (LAPTOP-FKVLKG8G)\Downloads\katago-v1.16.4-eigen-windows-x64/default_gtp.cfg
+2026-01-30 16:11:37+0100: Loaded model .\g170e-b20c256x2-s5303129600-d1228401921.bin.gz
+2026-01-30 16:11:37+0100: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-30 16:11:37+0100: GTP ready, beginning main protocol loop
+2026-01-30 16:12:10+0100: Controller: boardsize 19
+2026-01-30 16:12:10+0100: = 
+2026-01-30 16:12:28+0100: Controller: clear_board
+2026-01-30 16:12:28+0100: = 
+2026-01-30 16:12:33+0100: Controller: genmove b
+2026-01-30 16:13:08+0100: MoveNum: 0 HASH: CDCBC1F514D7E680FACD226074256633
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . . . . . . . . . . . . . . .
+16 . . . . . . . . . . . . . . . @ . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . . . . . . . . . . . . . . . . .
+ 3 . . . . . . . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koPOSITIONALscoreAREAtaxNONEsui1komi7.5
+Time taken: 34.75
+Root visits: 505
+New playouts: 505
+NN rows: 441
+NN batches: 441
+NN avg batch size: 1
+PV: Q16 D4 D16 Q4 R3 R4 Q3 P4 O2 C17 D17
+Tree:
+: T -19.28c W -19.30c S  -0.27c ( -1.4 L  -0.8) N     505  --  Q16 D4 D16 Q4 R3 R4 Q3
+---Black(^)---
+Q16 : T -17.39c W -17.64c S  -0.10c ( -1.2 L  -0.7) LCB  -18.13c P 10.36% WF 297.8 PSV     294 N     295  --  Q16 D4 D16 Q4 R3 R4 Q3 P4
+R16 : T -19.66c W -19.76c S  -0.30c ( -1.4 L  -0.8) LCB  -20.70c P  6.40% WF 110.1 PSV      19 N     111  --  R16 D16 D4 Q4 R3 Q3 R4 R6
+Q15 : T -22.52c W -21.96c S  -0.55c ( -1.7 L  -1.0) LCB  -24.04c P  1.38% WF  36.1 PSV       1 N      37  --  Q15 D16 Q4 D4 Q17 R3 R4 Q3
+R15 : T -23.99c W -23.06c S  -0.66c ( -1.8 L  -1.1) LCB  -25.65c P  0.20% WF  19.0 PSV       0 N      24  --  R15 Q4 D16 C4 Q17
+R17 : T -25.52c W -24.19c S  -0.73c ( -1.9 L  -1.1) LCB  -34.48c P  0.39% WF   8.7 PSV       0 N       9  --  R17 Q4 D16
+R14 : T -30.46c W -29.31c S  -1.15c ( -2.4 L  -1.6) LCB -380.46c P  0.05% WF   1.0 PSV       0 N       1  --  R14
+Q14 : T -30.10c W -28.99c S  -1.11c ( -2.3 L  -1.6) LCB -380.10c P  0.04% WF   1.0 PSV       0 N       1  --  Q14
+R10 : T -32.07c W -30.55c S  -1.52c ( -2.8 L  -1.9) LCB -382.07c P  0.03% WF   1.0 PSV       0 N       1  --  R10
+Q10 : T -29.44c W -28.20c S  -1.24c ( -2.5 L  -1.8) LCB -379.44c P  0.03% WF   1.0 PSV       0 N       1  --  Q10
+R13 : T -30.55c W -29.39c S  -1.16c ( -2.4 L  -1.7) LCB -380.55c P  0.03% WF   1.0 PSV       0 N       1  --  R13
+
+2026-01-30 16:13:08+0100: = Q16
+2026-01-30 16:22:59+0100: Controller: quit()
+2026-01-30 16:22:59+0100: ? unknown command
+2026-01-30 16:23:00+0100: Controller: q
+2026-01-30 16:23:00+0100: ? unknown command
+2026-01-30 16:23:03+0100: Controller: quit
+2026-01-30 16:23:03+0100: Quit requested by controller
+2026-01-30 16:23:03+0100: = 
+2026-01-30 16:23:03+0100: GPU -1 finishing, processed 63 rows 63 batches
+2026-01-30 16:23:03+0100: GPU -1 finishing, processed 61 rows 61 batches
+2026-01-30 16:23:03+0100: GPU -1 finishing, processed 62 rows 62 batches
+2026-01-30 16:23:03+0100: GPU -1 finishing, processed 85 rows 85 batches
+2026-01-30 16:23:03+0100: GPU -1 finishing, processed 85 rows 85 batches
+2026-01-30 16:23:03+0100: GPU -1 finishing, processed 85 rows 85 batches
+2026-01-30 16:23:03+0100: All cleaned up, quitting
