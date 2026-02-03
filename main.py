@@ -45,8 +45,8 @@ def load_current_game() -> GoGame | None:
 
     from game.utils import load_game
 
-    if os.path.exists(Path(BASE_FOLDER_PATH) / "saves/autosave.csgogame"):
-        return load_game(BASE_FOLDER_PATH + "saves/autosave.csgogame")
+    if os.path.exists(Path(BASE_FOLDER_PATH) / "saves" / "autosave.csgogame"):
+        return load_game(Path(BASE_FOLDER_PATH) / "saves" / "autosave.csgogame")  # type: ignore
     return None
 
 

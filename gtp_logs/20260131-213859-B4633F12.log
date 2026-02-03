@@ -1,0 +1,1021 @@
+2026-01-31 21:38:59+0100: Running with following config:
+allowResignation = true
+analysisIgnorePreRootHistory = false
+chosenMovePrune = 0
+chosenMoveSubtract = 0
+chosenMoveTemperature = 0.70
+chosenMoveTemperatureEarly = 0.85
+chosenMoveTemperatureHalflife = 80
+chosenMoveTemperatureOnlyBelowProb = 0.01
+delayMoveMax = 10.0
+delayMoveScale = 2.0
+dynamicScoreUtilityFactor = 0.00
+humanSLChosenMoveIgnorePass = true
+humanSLChosenMovePiklLambda = 100000000
+humanSLChosenMoveProp = 1.0
+humanSLCpuctExploration = 0.50
+humanSLCpuctPermanent = 0.2
+humanSLOppExploreProbWeightful = 0.0
+humanSLOppExploreProbWeightless = 0.0
+humanSLPlaExploreProbWeightful = 0.0
+humanSLPlaExploreProbWeightless = 0.0
+humanSLProfile = preaz_20k
+humanSLRootExploreProbWeightful = 0.0
+humanSLRootExploreProbWeightless = 0.0
+ignorePreRootHistory = false
+lagBuffer = 1.0
+logAllGTPCommunication = true
+logDir = gtp_logs
+logSearchInfo = true
+logSearchInfoForChosenMove = false
+logToStderr = false
+maxVisits = 40
+nnCacheSizePowerOfTwo = 17
+nnMutexPoolSizePowerOfTwo = 14
+numSearchThreads = 1
+resignConsecTurns = 20
+resignMinMovesPerBoardArea = 0.4
+resignMinScoreDifference = 40
+resignThreshold = -0.99
+rootNumSymmetriesToSample = 2
+rules = japanese
+staticScoreUtilityFactor = 0.30
+subtreeValueBiasFactor = 0.0
+useLcbForSelection = false
+useNoisePruning = false
+useUncertainty = false
+winLossUtilityFactor = 1.0
+
+2026-01-31 21:38:59+0100: GTP Engine starting...
+2026-01-31 21:38:59+0100: KataGo v1.16.4
+2026-01-31 21:38:59+0100: Using Japanese rules initially, unless GTP/GUI overrides this
+2026-01-31 21:38:59+0100: Using 1 CPU thread(s) for search
+2026-01-31 21:38:59+0100: nnRandSeed0 = 13879943131729039034
+2026-01-31 21:38:59+0100: After dedups: nnModelFile0 = c:\Users\natha\Documents\CS GO\player\katago\g170e-b20c256x2-s5303129600-d1228401921.bin.gz useFP16 auto useNHWC auto
+2026-01-31 21:38:59+0100: Initializing neural net buffer to be size 19 * 19 exactly
+2026-01-31 21:39:00+0100: Eigen (CPU) backend thread 0: Model version 8
+2026-01-31 21:39:00+0100: Eigen (CPU) backend thread 0: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-31 21:39:04+0100: Loaded neural net with nnXLen 19 nnYLen 19
+2026-01-31 21:39:04+0100: nnRandSeed0 = 18335861069426743325
+2026-01-31 21:39:04+0100: After dedups: nnModelFile0 = c:\Users\natha\Documents\CS GO\player\katago\b18c384nbt-humanv0.bin.gz useFP16 auto useNHWC auto
+2026-01-31 21:39:04+0100: Initializing neural net buffer to be size 19 * 19 exactly
+2026-01-31 21:39:05+0100: Eigen (CPU) backend thread 0: Model version 15
+2026-01-31 21:39:05+0100: Eigen (CPU) backend thread 0: Model name: b18c384nbt-humanv0
+2026-01-31 21:39:06+0100: Loaded human SL net with nnXLen 19 nnYLen 19
+2026-01-31 21:39:06+0100: Initializing board with boardXSize 19 boardYSize 19
+2026-01-31 21:39:06+0100: Loaded config c:\Users\natha\Documents\CS GO\player\katago\gtp_human_k.cfg
+2026-01-31 21:39:06+0100: Loaded model c:\Users\natha\Documents\CS GO\player\katago\g170e-b20c256x2-s5303129600-d1228401921.bin.gz
+2026-01-31 21:39:06+0100: Loaded human SL model c:\Users\natha\Documents\CS GO\player\katago\b18c384nbt-humanv0.bin.gz
+2026-01-31 21:39:06+0100: Model name: g170-b20c256x2-s5303129600-d1228401921
+2026-01-31 21:39:06+0100: Human SL model name: b18c384nbt-humanv0
+2026-01-31 21:39:06+0100: GTP ready, beginning main protocol loop
+2026-01-31 21:39:06+0100: Controller: name
+2026-01-31 21:39:06+0100: = KataGo
+2026-01-31 21:39:06+0100: Controller: boardsize 19
+2026-01-31 21:39:06+0100: = 
+2026-01-31 21:39:06+0100: Controller: clear_board
+2026-01-31 21:39:06+0100: = 
+2026-01-31 21:39:06+0100: Controller: genmove black
+2026-01-31 21:39:23+0100: MoveNum: 0 HASH: CDCBC1F514D7E680FACD226074256633
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . . . . . . . . . . . . . . .
+16 . . . . . . . . . . . . . . . @ . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . . . . . . . . . . . . . . . . .
+ 3 . . . . . . . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 16.219
+Root visits: 40
+New playouts: 40
+NN rows: 40
+NN batches: 40
+NN avg batch size: 1
+PV: Q16 D4 C3 D3 C4
+Tree:
+: T  -4.21c W  -4.08c S  -0.13c ( -0.3 L  -0.3) N      40  --  Q16 D4 C3 D3 C4
+---Black(^)---
+Q16 : T  -4.00c W  -3.88c S  -0.12c ( -0.3 L  -0.3) LCB   -5.45c P  9.56% WF  31.0 PSV      34 N      31  --  Q16 D4 C3 D3 C4
+R16 : T  -5.03c W  -4.87c S  -0.15c ( -0.4 L  -0.2) LCB  -15.48c P  5.74% WF   8.0 PSV       4 N       8  --  R16 D16 Q4 D4
+
+2026-01-31 21:39:23+0100: = Q16
+2026-01-31 21:39:32+0100: Controller: play white D4
+2026-01-31 21:39:32+0100: = 
+2026-01-31 21:39:32+0100: Controller: genmove black
+2026-01-31 21:39:44+0100: MoveNum: 2 HASH: B248EA89FABF13234D0CA990126373BE
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . . . . . . . . . . . . . . .
+16 . . . . . . . . . . . . . . . X1. . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . O2. . . . . . . . . . . @ . . .
+ 3 . . . . . . . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 12.531
+Root visits: 40
+New playouts: 31
+NN rows: 33
+NN batches: 33
+NN avg batch size: 1
+PV: Q4 D16 C3 C4 D3 E4
+Tree:
+: T  -3.27c W  -3.16c S  -0.10c ( -0.2 L  -0.2) N      40  --  Q4 D16 C3 C4 D3 E4
+---Black(^)---
+Q4  : T  -3.06c W  -2.96c S  -0.10c ( -0.2 L  -0.2) LCB   -5.80c P 17.18% WF  17.0 PSV      26 N      17  --  Q4 D16 C3 C4 D3 E4
+Q3  : T  -5.60c W  -5.42c S  -0.18c ( -0.4 L  -0.4) LCB -330.60c P  4.10% WF   1.0 PSV       8 N       1  --  Q3
+R4  : T  -5.89c W  -5.70c S  -0.19c ( -0.4 L  -0.5) LCB -330.89c P  4.29% WF   1.0 PSV       5 N       1  --  R4
+C3  : T  -3.19c W  -3.09c S  -0.11c ( -0.3 L  -0.2) LCB   -6.88c P 21.68% WF  20.0 PSV       0 N      20  --  C3 D3 C4 D5 B6 Q4 D16 R17
+
+2026-01-31 21:39:44+0100: = Q4
+2026-01-31 21:39:48+0100: Controller: play white D16
+2026-01-31 21:39:48+0100: = 
+2026-01-31 21:39:48+0100: Controller: genmove black
+2026-01-31 21:40:08+0100: MoveNum: 4 HASH: 4EC1C1D04B1A05D40A6606F557089ADF
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . . . . . . . . . @ . . . . .
+16 . . . O3. . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . O1. . . . . . . . . . . X2. . .
+ 3 . . . . . . . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 20.25
+Root visits: 40
+New playouts: 33
+NN rows: 34
+NN batches: 34
+NN avg batch size: 1
+PV: Q10
+Tree:
+: T  -2.88c W  -2.79c S  -0.09c ( -0.2 L  -0.2) N      40  --  Q10
+---Black(^)---
+C17 : T  -2.87c W  -2.78c S  -0.09c ( -0.2 L  -0.2) LCB   -4.56c P 41.19% WF  39.0 PSV      39 N      39  --  C17 C16 D17 E16 F17 F16 G18
+
+2026-01-31 21:40:08+0100: = O17
+2026-01-31 21:40:14+0100: Controller: play white F17
+2026-01-31 21:40:14+0100: = 
+2026-01-31 21:40:14+0100: Controller: genmove black
+2026-01-31 21:40:36+0100: MoveNum: 6 HASH: 6589F1278D92132A3220FBE06D0A55A8
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O3. . . . . . . X2. . . . .
+16 . . . O1. . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . O . . . . . . . . . . . X . . .
+ 3 . . . . . @ . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 21.562
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: O3 F3 G16
+Tree:
+: T  -2.47c W  -2.39c S  -0.08c ( -0.2 L  -0.2) N      40  --  O3 F3 G16
+---Black(^)---
+O3  : T  -4.85c W  -4.67c S  -0.18c ( -0.4 L  -0.4) LCB  -44.79c P 15.88% WF   4.0 PSV      20 N       4  --  O3 F3 G16
+F3  : T  -6.21c W  -5.98c S  -0.24c ( -0.6 L  -0.4) LCB  -74.90c P 10.61% WF   3.0 PSV      16 N       3  --  F3 R3 Q3
+C3  : T  -1.76c W  -1.71c S  -0.05c ( -0.1 L  -0.1) LCB   -3.77c P 61.32% WF  32.1 PSV       2 N      32  --  C3 C4 D3 E4 F3 R3 Q3 R4
+
+2026-01-31 21:40:36+0100: = F3
+2026-01-31 21:40:43+0100: Controller: play white G4
+2026-01-31 21:40:43+0100: = 
+2026-01-31 21:40:43+0100: Controller: genmove black
+2026-01-31 21:40:59+0100: MoveNum: 8 HASH: 5FB6882D9B2E86866DD7A275B46C214F
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O1. . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . . . . . . . . . . . . . . . .
+ 4 . . . O . @ O3. . . . . . . . X . . .
+ 3 . . . . . X2. . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 15.875
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: F4 C6 G5 R3 Q3 R4 R6
+Tree:
+: T  11.64c W  11.11c S   0.53c ( +1.3 L  +0.6) N      40  --  F4 C6 G5 R3 Q3 R4 R6
+---Black(^)---
+F4  : T  12.17c W  11.62c S   0.56c ( +1.3 L  +0.7) LCB    7.99c P 89.29% WF  38.0 PSV      24 N      38  --  F4 C6 G5 R3 Q3 R4 R6
+C3  : T  -1.85c W  -1.76c S  -0.09c ( -0.2 L  -0.2) LCB -326.85c P  8.59% WF   1.0 PSV      15 N       1  --  C3
+
+2026-01-31 21:40:59+0100: = F4
+2026-01-31 21:41:02+0100: Controller: play white F5
+2026-01-31 21:41:02+0100: = 
+2026-01-31 21:41:02+0100: Controller: genmove black
+2026-01-31 21:41:19+0100: MoveNum: 10 HASH: 71B3E9E988770DBACDF9ED874D9918AE
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . . . . . . . . . . . . . . .
+ 5 . . . . @ O3. . . . . . . . . . . . .
+ 4 . . . O . X2O1. . . . . . . . X . . .
+ 3 . . . . . X . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 17.109
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: G3
+Tree:
+: T  23.37c W  22.33c S   1.04c ( +2.5 L  +1.4) N      40  --  G3
+---Black(^)---
+G5  : T  23.80c W  22.75c S   1.06c ( +2.5 L  +1.4) LCB   16.91c P 87.44% WF  39.0 PSV      39 N      39  --  G5 E5 H4 G6 H5 O3 H6 G7
+
+2026-01-31 21:41:19+0100: = E5
+2026-01-31 21:41:34+0100: Controller: play white G6
+2026-01-31 21:41:34+0100: = 
+2026-01-31 21:41:34+0100: Controller: genmove black
+2026-01-31 21:41:48+0100: MoveNum: 12 HASH: F37D58F314864E0A9F6D3D30D9A0DC06
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . . @ O3. . . . . . . . . . . .
+ 5 . . . . X2O1. . . . . . . . . . . . .
+ 4 . . . O . X O . . . . . . . . X . . .
+ 3 . . . . . X . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 14.016
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: F6
+Tree:
+: T  40.03c W  38.27c S   1.76c ( +4.2 L  +2.6) N      40  --  F6
+---Black(^)---
+E4  : T  42.70c W  40.84c S   1.87c ( +4.4 L  +2.7) LCB   34.51c P 38.96% WF  27.3 PSV      20 N      27  --  E4 C5 D3 C3 D5 C4 D7 B7
+D5  : T  33.42c W  31.89c S   1.53c ( +3.6 L  +2.2) LCB   12.17c P 32.11% WF   6.8 PSV      15 N       7  --  D5 C4 C5 E4 G3 B5 B6
+G3  : T  32.91c W  31.44c S   1.46c ( +3.4 L  +2.0) LCB    3.57c P 26.60% WF   4.9 PSV       4 N       5  --  G3 E4 H4 E6 G5
+
+2026-01-31 21:41:48+0100: = F6
+2026-01-31 21:41:52+0100: Controller: play white G5
+2026-01-31 21:41:52+0100: = 
+2026-01-31 21:41:52+0100: Controller: genmove black
+2026-01-31 21:42:06+0100: MoveNum: 14 HASH: 2812B42D63822A0686EE80393DA4013A
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . @ X2O1. . . . . . . . . . . .
+ 5 . . . . X O O3. . . . . . . . . . . .
+ 4 . . . O . X O . . . . . . . . X . . .
+ 3 . . . . . X . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 14.031
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: E4 C5 D5 C4 D7 B7 F7 O3 M3
+Tree:
+: T  19.17c W  18.35c S   0.82c ( +1.9 L  +1.1) N      40  --  E4 C5 D5 C4 D7 B7 F7
+---Black(^)---
+E4  : T  18.70c W  17.90c S   0.80c ( +1.9 L  +1.0) LCB   12.97c P 93.98% WF  38.0 PSV      31 N      38  --  E4 C5 D5 C4 D7 B7 F7 O3
+D5  : T  14.38c W  13.69c S   0.69c ( +1.6 L  +0.8) LCB -310.62c P  5.79% WF   1.0 PSV       8 N       1  --  D5
+
+2026-01-31 21:42:06+0100: = E6
+2026-01-31 21:42:19+0100: Controller: play white E4
+2026-01-31 21:42:19+0100: = 
+2026-01-31 21:42:19+0100: Controller: genmove black
+2026-01-31 21:42:35+0100: MoveNum: 16 HASH: FC988841ED27C6948266A1F7F9931010
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . X2X O . . . . . . . . . . . .
+ 5 . . . . X O O1. . . . . . . . . . . .
+ 4 . . . O O3X O . . . . . . . . X . . .
+ 3 . . . . @ X . . . . . . . . . . . . .
+ 2 . . . . . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 15.484
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: G3 H3 H2 J2 D2 J4 C5 C4
+Tree:
+: T -29.94c W -28.57c S  -1.37c ( -3.3 L  -2.0) N      40  --  G3 H3 H2 J2 D2 J4 C5
+---Black(^)---
+G3  : T -34.81c W -33.18c S  -1.62c ( -3.9 L  -2.4) LCB  -54.54c P 67.72% WF  15.7 PSV      38 N      16  --  G3 H3 H2 J2 D2 J4 C5 C4
+E2  : T -27.28c W -26.05c S  -1.22c ( -2.9 L  -1.8) LCB  -40.65c P 27.99% WF  23.3 PSV       1 N      23  --  E2 G2 C3 C4 B3 G3 D3 C6
+
+2026-01-31 21:42:35+0100: = E3
+2026-01-31 21:42:38+0100: Controller: play white D3
+2026-01-31 21:42:38+0100: = 
+2026-01-31 21:42:38+0100: Controller: genmove black
+2026-01-31 21:42:52+0100: MoveNum: 18 HASH: EEDC98DD1D1BCA7C60B9C7CE1FDF3066
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . X X O . . . . . . . . . . . .
+ 5 . . . . X O O . . . . . . . . . . . .
+ 4 . . . O O1X O . . . . . . . . X . . .
+ 3 . . . O3X2X . . . . . . . . . . . . .
+ 2 . . . @ . . . . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 14.312
+Root visits: 40
+New playouts: 40
+NN rows: 41
+NN batches: 41
+NN avg batch size: 1
+PV: G3 H3 H2 J2 D2 C2 J3 H4
+Tree:
+: T -89.89c W -84.63c S  -5.26c (-12.6 L  -9.3) N      40  --  G3 H3 H2 J2 D2 C2 J3
+---Black(^)---
+G3  : T -89.17c W -84.02c S  -5.15c (-12.3 L  -9.0) LCB  -96.41c P 39.29% WF  21.1 PSV      22 N      21  --  G3 H3 H2 J2 D2 C2 J3 H4
+D2  : T -91.64c W -86.19c S  -5.45c (-13.1 L  -9.8) LCB  -99.35c P 44.86% WF  15.9 PSV      16 N      16  --  D2 C2 H3 G3 G2 H2 F2 J3
+H3  : T -94.50c W -88.63c S  -5.87c (-14.1 L -11.1) LCB -419.50c P  4.82% WF   1.0 PSV       1 N       1  --  H3
+H2  : T -93.37c W -87.76c S  -5.61c (-13.5 L -10.0) LCB -418.37c P  4.48% WF   1.0 PSV       0 N       1  --  H2
+
+2026-01-31 21:42:52+0100: = D2
+2026-01-31 21:42:58+0100: Controller: play white G2
+2026-01-31 21:42:58+0100: = 
+2026-01-31 21:42:58+0100: Controller: genmove black
+2026-01-31 21:43:20+0100: MoveNum: 20 HASH: 0E6CC3FAAF083B5BD0E5F78B11AE4D0C
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . . X X O . . . . . . . . . . . .
+ 5 . . . . X O O . . . . . . . . . . . .
+ 4 . . . O O X O . . . . . . . . X . . .
+ 3 . . @ O1X X . . . . . . . . . . . . .
+ 2 . . . X2. . O3. . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 21.547
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: G3
+Tree:
+: T -30.75c W -29.21c S  -1.54c ( -3.7 L  -2.5) N      40  --  G3
+---Black(^)---
+G3  : T -52.75c W -50.13c S  -2.62c ( -6.3 L  -4.2) LCB -377.75c P  9.76% WF   0.9 PSV      14 N       1  --  G3
+C3  : T -25.17c W -23.95c S  -1.21c ( -2.9 L  -1.9) LCB  -40.83c P 30.69% WF  26.6 PSV       9 N      26  --  C3 C4 B3 B4 F2 F1 G3 H3
+E2  : T -93.88c W -87.60c S  -6.28c (-15.4 L -12.4) LCB -418.88c P  4.87% WF   0.8 PSV       6 N       1  --  E2
+F2  : T -46.52c W -44.33c S  -2.19c ( -5.3 L  -3.6) LCB -371.52c P 10.04% WF   1.0 PSV       5 N       1  --  F2
+C2  : T -35.19c W -33.42c S  -1.77c ( -4.2 L  -2.8) LCB  -58.67c P 35.91% WF   8.8 PSV       4 N       9  --  C2 G3 E2 C5
+B3  : T -59.99c W -57.10c S  -2.88c ( -6.9 L  -4.5) LCB -384.99c P  6.20% WF   0.9 PSV       0 N       1  --  B3
+
+2026-01-31 21:43:20+0100: = C3
+2026-01-31 21:43:32+0100: Controller: play white D5
+2026-01-31 21:43:32+0100: = 
+2026-01-31 21:43:32+0100: Controller: genmove black
+2026-01-31 21:43:45+0100: MoveNum: 22 HASH: 8D084865D81CA524006686E033440B48
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . @ X X O . . . . . . . . . . . .
+ 5 . . . O3X O O . . . . . . . . . . . .
+ 4 . . . O O X O . . . . . . . . X . . .
+ 3 . . X2O X X . . . . . . . . . . . . .
+ 2 . . . X . . O1. . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 13.86
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: D6 C5 C6 B5 B2 B7 C8 C7
+Tree:
+: T  74.83c W  70.08c S   4.73c (+11.6 L  +8.8) N      40  --  D6 C5 C6 B5 B2 B7 C8
+---Black(^)---
+D6  : T  81.88c W  76.70c S   5.17c (+12.6 L  +9.6) LCB   65.39c P 42.84% WF  36.7 PSV      33 N      36  --  D6 C5 C6 B5 B2 B7 C8 C7
+E2  : T -28.54c W -27.29c S  -1.25c ( -3.0 L  -1.7) LCB -353.54c P  9.22% WF   0.7 PSV       2 N       1  --  E2
+G3  : T -17.12c W -16.50c S  -0.63c ( -1.5 L  -0.9) LCB -342.12c P 12.12% WF   0.8 PSV       1 N       1  --  G3
+F2  : T   3.63c W   3.46c S   0.17c ( +0.4 L  +0.0) LCB -321.37c P 18.60% WF   0.8 PSV       1 N       1  --  F2
+
+2026-01-31 21:43:45+0100: = D6
+2026-01-31 21:44:15+0100: Controller: play white B4
+2026-01-31 21:44:15+0100: = 
+2026-01-31 21:44:15+0100: Controller: genmove black
+2026-01-31 21:44:34+0100: MoveNum: 24 HASH: 12B8669489EA31AC5EC9E7B52DFCC31B
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . . . X2X X O . . . . . . . . . . . .
+ 5 . . . O1X O O . . . . . . . . . . . .
+ 4 . O3. O O X O . . . . . . . . X . . .
+ 3 . @ X O X X . . . . . . . . . . . . .
+ 2 . . . X . . O . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 19.204
+Root visits: 40
+New playouts: 28
+NN rows: 30
+NN batches: 30
+NN avg batch size: 1
+PV: C4
+Tree:
+: T  97.94c W  90.27c S   7.65c (+18.8 L +16.1) N      40  --  C4
+---Black(^)---
+B3  : T  34.55c W  32.64c S   1.90c ( +4.6 L  +3.0) LCB -105.33c P 42.01% WF   1.6 PSV      27 N       2  --  B3 B5
+B5  : T 103.31c W  95.13c S   8.17c (+20.1 L +17.2) LCB   96.89c P 18.32% WF  36.6 PSV       5 N      36  --  B5 C4 B3 A4 C5 O3 R6 O5
+C6  : T  24.32c W  22.68c S   1.64c ( +4.1 L  +2.6) LCB -300.68c P  9.15% WF   0.8 PSV       5 N       1  --  C6
+
+2026-01-31 21:44:34+0100: = B3
+2026-01-31 21:44:47+0100: Controller: play white B5
+2026-01-31 21:44:47+0100: = 
+2026-01-31 21:44:47+0100: Controller: genmove black
+2026-01-31 21:45:00+0100: MoveNum: 26 HASH: 6186F07F1E1C982A2B75B2E885638B84
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . @ . X X X O . . . . . . . . . . . .
+ 5 . O3. O X O O . . . . . . . . . . . .
+ 4 . O1. O O X O . . . . . . . . X . . .
+ 3 . X2X O X X . . . . . . . . . . . . .
+ 2 . . . X . . O . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 13.406
+Root visits: 40
+New playouts: 39
+NN rows: 41
+NN batches: 41
+NN avg batch size: 1
+PV: B6 C6 C7 C5 B8 A6 B7 C2 E2
+Tree:
+: T  57.40c W  53.16c S   4.25c (+10.6 L  +9.1) N      40  --  B6 C6 C7 C5 B8 A6 B7
+---Black(^)---
+B6  : T  64.51c W  59.71c S   4.80c (+12.0 L +10.3) LCB   37.16c P 45.92% WF  34.8 PSV      20 N      34  --  B6 C6 C7 C5 B8 A6 B7 C2
+C6  : T -23.80c W -22.58c S  -1.21c ( -2.9 L  -1.9) LCB -348.80c P  8.47% WF   0.8 PSV      12 N       1  --  C6
+G3  : T  11.18c W  10.52c S   0.66c ( +1.6 L  +0.8) LCB -313.82c P 13.99% WF   0.9 PSV       1 N       1  --  G3
+E2  : T  -3.10c W  -2.95c S  -0.14c ( -0.3 L  -0.3) LCB -328.10c P  6.17% WF   0.8 PSV       1 N       1  --  E2
+F2  : T   9.56c W   9.11c S   0.46c ( +1.1 L  +0.5) LCB -131.08c P 18.76% WF   1.7 PSV       1 N       2  --  F2 C7
+
+2026-01-31 21:45:00+0100: = B6
+2026-01-31 21:45:07+0100: Controller: play white E2
+2026-01-31 21:45:07+0100: = 
+2026-01-31 21:45:07+0100: Controller: genmove black
+2026-01-31 21:45:19+0100: MoveNum: 28 HASH: 176ACC3E2CD9955C572DDA48C4573352
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . X2. X X X O . . . . . . . . . . . .
+ 5 . O1@ O X O O . . . . . . . . . . . .
+ 4 . O . O O X O . . . . . . . . X . . .
+ 3 . X X O X X . . . . . . . . . . . . .
+ 2 . . . X O3. O . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 12.687
+Root visits: 40
+New playouts: 39
+NN rows: 39
+NN batches: 39
+NN avg batch size: 1
+PV: F2
+Tree:
+: T 107.71c W  97.98c S   9.73c (+24.3 L +21.6) N      40  --  F2
+---Black(^)---
+C5  : T 107.84c W  98.08c S   9.76c (+24.3 L +21.7) LCB  105.48c P 91.10% WF  39.0 PSV      39 N      39  --  C5 O3 C4 R6 Q6 Q7 P6 R5
+
+2026-01-31 21:45:19+0100: = C5
+2026-01-31 21:45:22+0100: Controller: play white C4
+2026-01-31 21:45:22+0100: = 
+2026-01-31 21:45:22+0100: Controller: genmove black
+2026-01-31 21:45:36+0100: MoveNum: 30 HASH: 558F5E22ADD1FBAFD152577A72BBF706
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . . . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . X @ X X X O . . . . . . . . . . . .
+ 5 . O X2O X O O . . . . . . . . . . . .
+ 4 . O O3O O X O . . . . . . . . X . . .
+ 3 . X X O X X . . . . . . . . . . . . .
+ 2 . . . X O1. O . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 13.562
+Root visits: 40
+New playouts: 25
+NN rows: 20
+NN batches: 20
+NN avg batch size: 1
+PV: C6
+Tree:
+: T 108.69c W  98.56c S  10.13c (+25.4 L +22.6) N      40  --  C6
+---Black(^)---
+A4  : T 108.65c W  98.56c S  10.09c (+25.3 L +22.6) LCB  106.97c P 52.80% WF  21.0 PSV      21 N      21  --  A4 O3 R6 O5 Q2
+A5  : T 108.87c W  98.68c S  10.19c (+25.5 L +22.8) LCB  106.68c P 47.13% WF  18.0 PSV      18 N      18  --  A5 C6 A4 O3 R6 O5 Q2
+
+2026-01-31 21:45:36+0100: = C6
+2026-01-31 21:45:40+0100: Controller: play white F2
+2026-01-31 21:45:40+0100: = 
+2026-01-31 21:45:40+0100: Controller: genmove black
+2026-01-31 21:46:02+0100: MoveNum: 32 HASH: 70DAD1ED100A56244138E80700D76F31
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . . . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . . . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . @ . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . X X2X X X O . . . . . . . . . . . .
+ 5 . O X O X O O . . . . . . . . . . . .
+ 4 . O O1O O X O . . . . . . . . X . . .
+ 3 . X X O X X . . . . . . . . . . . . .
+ 2 . . . X O O3O . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 22.125
+Root visits: 40
+New playouts: 40
+NN rows: 41
+NN batches: 41
+NN avg batch size: 1
+PV: A5 G3 C10 O3 O4
+Tree:
+: T -104.33c W -97.12c S  -7.21c (-17.4 L -14.3) N      40  --  A5 G3 C10 O3 O4
+---Black(^)---
+A5  : T -104.94c W -97.54c S  -7.40c (-17.8 L -15.0) LCB -119.27c P 11.33% WF   6.0 PSV      16 N       6  --  A5 G3 C10 O3 O4
+A4  : T -104.80c W -97.19c S  -7.62c (-18.7 L -15.4) LCB -123.14c P 10.70% WF   6.0 PSV      15 N       6  --  A4 G3 A5 C9 F8
+D10 : T -104.24c W -97.22c S  -7.02c (-16.8 L -13.8) LCB -242.55c P  3.80% WF   2.0 PSV       4 N       2  --  D10 O3
+C14 : T -104.63c W -97.17c S  -7.46c (-18.1 L -14.9) LCB -130.35c P  9.76% WF   5.0 PSV       2 N       5  --  C14 C10 E10
+C10 : T -103.58c W -96.88c S  -6.70c (-15.9 L -13.1) LCB -107.50c P 17.91% WF  13.0 PSV       1 N      13  --  C10 G3 O3 R10 R12
+O3  : T -105.17c W -97.42c S  -7.75c (-18.9 L -15.7) LCB -130.88c P 10.74% WF   5.0 PSV       1 N       5  --  O3 C10 E10
+C11 : T -104.66c W -97.38c S  -7.28c (-17.5 L -14.4) LCB -242.98c P  3.87% WF   2.0 PSV       0 N       2  --  C11 O3
+
+2026-01-31 21:46:02+0100: = D10
+2026-01-31 21:46:06+0100: Controller: play white E3
+2026-01-31 21:46:06+0100: ? illegal move
+2026-01-31 21:46:30+0100: Controller: play white K16
+2026-01-31 21:46:30+0100: = 
+2026-01-31 21:46:30+0100: Controller: genmove black
+2026-01-31 21:46:50+0100: MoveNum: 34 HASH: C63DE06CB9F05949754FEE4AA016A6D0
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . O3. . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . @ . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . X2. . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . X X X X X O . . . . . . . . . . . .
+ 5 . O X O X O O . . . . . . . . . . . .
+ 4 . O O O O X O . . . . . . . . X . . .
+ 3 . X X O X X . . . . . . . . . . . . .
+ 2 . . . X O O1O . . . . . . . . . . . .
+ 1 . . . . . . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 19.703
+Root visits: 40
+New playouts: 40
+NN rows: 38
+NN batches: 38
+NN avg batch size: 1
+PV: L17
+Tree:
+: T -103.27c W -96.67c S  -6.61c (-15.7 L -12.7) N      40  --  L17
+---Black(^)---
+C14 : T -103.15c W -96.65c S  -6.50c (-15.4 L -12.5) LCB -107.10c P 17.19% WF  13.0 PSV      28 N      13  --  C14 G3 O3 R10 R12
+O3  : T -103.10c W -96.53c S  -6.57c (-15.6 L -12.5) LCB -104.94c P 24.70% WF  20.0 PSV       7 N      20  --  O3 C12 C14 E12 C16
+A5  : T -104.49c W -97.35c S  -7.15c (-17.0 L -14.2) LCB -173.03c P  5.19% WF   3.0 PSV       4 N       3  --  A5 G3 C14
+G16 : T -103.74c W -96.96c S  -6.78c (-16.0 L -13.1) LCB -172.27c P  4.63% WF   3.0 PSV       0 N       3  --  G16 G17 O3
+
+2026-01-31 21:46:50+0100: = C14
+2026-01-31 21:46:55+0100: Controller: play white D1
+2026-01-31 21:46:55+0100: = 
+2026-01-31 21:46:55+0100: Controller: genmove black
+2026-01-31 21:47:09+0100: MoveNum: 36 HASH: D6EB8B9F8FACFD29FD5BA4BFDCDD253D
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . O1. . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . X2. . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . X . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . X X X X X O . . . . . . . . . . . .
+ 5 . O X O X O O . . . . . . . . . . . .
+ 4 . O O O O X O . . . . . . . . X . . .
+ 3 . X X O X X . . . . . . . . . . . . .
+ 2 . . @ X O O O . . . . . . . . . . . .
+ 1 . . . O3. . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 14.157
+Root visits: 40
+New playouts: 40
+NN rows: 40
+NN batches: 40
+NN avg batch size: 1
+PV: C2
+Tree:
+: T -49.85c W -47.98c S  -1.87c ( -4.3 L  -2.8) N      40  --  C2
+---Black(^)---
+A5  : T -71.21c W -68.14c S  -3.07c ( -7.1 L  -4.9) LCB -396.21c P 12.79% WF   0.9 PSV      23 N       1  --  A5
+O3  : T -49.41c W -47.56c S  -1.85c ( -4.3 L  -2.8) LCB  -56.24c P 70.47% WF  38.1 PSV      16 N      38  --  O3 D11 C11 C12 D12 E11 B12 C10
+
+2026-01-31 21:47:09+0100: = C2
+2026-01-31 21:47:14+0100: Controller: play white A3
+2026-01-31 21:47:14+0100: = 
+2026-01-31 21:47:14+0100: Controller: genmove black
+2026-01-31 21:47:27+0100: MoveNum: 38 HASH: 7E9D422E39EE7AFE73924533BAC2EAA5
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . O . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . X . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . X . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . X X X X X O . . . . . . . . . . . .
+ 5 . O X O X O O . . . . . . . . . . . .
+ 4 . O O O O X O . . . . . . . . X . . .
+ 3 O3X X O X X . . . . . . . . . . . . .
+ 2 @ . X2X O O O . . . . . . . . . . . .
+ 1 . . . O1. . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 13.25
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: A2 O3 O4
+Tree:
+: T -37.33c W -35.87c S  -1.46c ( -3.4 L  -2.3) N      40  --  A2 O3 O4
+---Black(^)---
+A2  : T -55.74c W -53.52c S  -2.22c ( -5.1 L  -3.4) LCB -105.20c P 28.11% WF   3.7 PSV      38 N       4  --  A2 O3 O4
+O3  : T -35.68c W -34.29c S  -1.39c ( -3.2 L  -2.2) LCB  -51.36c P 57.48% WF  35.3 PSV       1 N      35  --  O3 D11 E11 D12 C10 D14 R10 B11
+
+2026-01-31 21:47:27+0100: = A2
+2026-01-31 21:47:35+0100: Controller: play white E1
+2026-01-31 21:47:35+0100: = 
+2026-01-31 21:47:35+0100: Controller: genmove black
+2026-01-31 21:47:49+0100: MoveNum: 40 HASH: 7AE44DF00801789DC3F450995111E650
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . O . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . X . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . X . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . X X X X X O . . . . . . . . . . . .
+ 5 . O X O X O O . . . . . . . . . . . .
+ 4 . O O O O X O . . . . . . . . X . . .
+ 3 O1X X O X X . . . . . . . . . . . . .
+ 2 X2. X X O O O . . . . . . . . . . . .
+ 1 . @ . O O3. . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 14.391
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: A4
+Tree:
+: T  81.33c W  77.56c S   3.76c ( +8.7 L  +6.0) N      40  --  A4
+---Black(^)---
+A5  : T  39.16c W  37.55c S   1.62c ( +3.8 L  +2.2) LCB -285.84c P  8.62% WF   0.9 PSV      36 N       1  --  A5
+O3  : T  82.46c W  78.64c S   3.82c ( +8.8 L  +6.1) LCB   77.12c P 66.80% WF  38.1 PSV       2 N      38  --  O3 D11 C11 C12 D12 E11 B12 C10
+
+2026-01-31 21:47:49+0100: = B1
+2026-01-31 21:48:00+0100: Controller: play white A4
+2026-01-31 21:48:00+0100: = 
+2026-01-31 21:48:00+0100: Controller: genmove black
+2026-01-31 21:48:13+0100: MoveNum: 42 HASH: D0EB6961B595D25AE097AA2439644B55
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . O . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . X . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . X . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . X X X X X O . . . . . . . . . . . .
+ 5 @ O X O X O O . . . . . . . . . . . .
+ 4 O3O O O O X O . . . . . . . . X . . .
+ 3 O X X O X X . . . . . . . . . . . . .
+ 2 X . X X O O O . . . . . . . . . . . .
+ 1 . X2. O O1. . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 13.344
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: A5 K3 L3 L4 M3 K4
+Tree:
+: T 114.34c W  99.75c S  14.58c (+40.4 L +38.3) N      40  --  A5 K3 L3 L4 M3 K4
+---Black(^)---
+A5  : T 114.38c W  99.78c S  14.60c (+40.4 L +38.3) LCB  113.88c P 98.30% WF  39.0 PSV      39 N      39  --  A5 K3 L3 L4 M3 K4
+
+2026-01-31 21:48:13+0100: = A5
+2026-01-31 21:48:21+0100: Controller: play white C1
+2026-01-31 21:48:21+0100: = 
+2026-01-31 21:48:21+0100: Controller: genmove black
+2026-01-31 21:48:37+0100: MoveNum: 44 HASH: B10CB1A8BB2AF034183B91C5A786D38E
+   A B C D E F G H J K L M N O P Q R S T
+19 . . . . . . . . . . . . . . . . . . .
+18 . . . . . . . . . . . . . . . . . . .
+17 . . . . . O . . . . . . . X . . . . .
+16 . . . O . . . . . O . . . . . X . . .
+15 . . . . . . . . . . . . . . . . . . .
+14 . . X . . . . . . . . . . . . . . . .
+13 . . . . . . . . . . . . . . . . . . .
+12 . . . . . . . . . . . . . . . . . . .
+11 . . . . . . . . . . . . . . . . . . .
+10 . . . X . . . . . . . . . . . . . . .
+ 9 . . . . . . . . . . . . . . . . . . .
+ 8 . . . . . . . . . . . . . . . . . . .
+ 7 . . . . . . . . . . . . . . . . . . .
+ 6 . X X X X X O . . . . . . . . . . . .
+ 5 X2. X . X O O . . . . . . . . . . . .
+ 4 .1. . . . X O . . . . . . . . X . . .
+ 3 . X X . X X @ . . . . . . . . . . . .
+ 2 X . X X O O O . . . . . . . . . . . .
+ 1 . X O3O O . . . . . . . . . . . . . .
+
+koSIMPLEscoreTERRITORYtaxSEKIsui0komi6.5
+Time taken: 16.063
+Root visits: 40
+New playouts: 40
+NN rows: 42
+NN batches: 42
+NN avg batch size: 1
+PV: G3 H3 J3
+Tree:
+: T 117.66c W  99.91c S  17.75c (+55.7 L +53.3) N      40  --  G3 H3 J3
+---Black(^)---
+G3  : T 117.19c W  99.92c S  17.27c (+52.7 L +50.5) LCB   48.66c P  6.59% WF   3.0 PSV      37 N       3  --  G3 H3 J3
+K3  : T 117.44c W  99.91c S  17.53c (+54.3 L +52.1) LCB   91.74c P  9.09% WF   5.0 PSV       1 N       5  --  K3 J2 K2
+J3  : T 117.69c W  99.91c S  17.77c (+55.8 L +53.3) LCB  115.85c P 34.28% WF  19.0 PSV       0 N      19  --  J3 G3 J5 J6 K6
+J2  : T 117.87c W  99.92c S  17.96c (+56.9 L +54.6) LCB  113.34c P 21.19% WF  12.0 PSV       0 N      12  --  J2 G3 J4 J6 L5
+
+2026-01-31 21:48:37+0100: = G3
+2026-01-31 21:50:05+0100: GPU -1 finishing, processed 901 rows 901 batches
+2026-01-31 21:50:06+0100: GPU -1 finishing, processed 46 rows 46 batches
+2026-01-31 21:50:06+0100: All cleaned up, quitting

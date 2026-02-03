@@ -42,39 +42,70 @@ class AccountFrame(ttk.Frame):
 
         super().__init__(parent)
         self.app = app
+        loading = self.app.show_loading("Chargement...")
+
+        # Create canvas and scrollbar for scrollable content
+        canvas_frame = ttk.Frame(self)
+        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(80, 20))
+
+        canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0)
+        scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Enable mouse wheel scrolling
+        def _on_mousewheel(event):
+            try:
+                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            except tk.TclError:
+                # Canvas has been destroyed, binding will be cleaned up
+                pass
+
+        self._mousewheel_binding = self.bind_all("<MouseWheel>", _on_mousewheel)
+
+        # Account information
+        title = ttk.Label(
+            scrollable_frame, text="Informations du compte", style="SubTitle.TLabel"
+        )
+        title.pack(pady=0)
 
         # Account management frame
-        main_account_frame = self.app.Frame(self, bg="black", bd=1)
+        main_account_frame = self.app.Frame(scrollable_frame, bg="black", bd=1)
         main_account_frame.pack(pady=20, fill=tk.X, padx=20)
         account_frame = self.app.Frame(main_account_frame)
         account_frame.pack(pady=3, padx=3, fill=tk.X)
 
         # Change name entry
-        self.name_var = tk.StringVar()
+        self.name_var = tk.StringVar(value=self.app.name)
         self.app.Label(
             account_frame,
             text="Changer le nom d'affichage",
-        ).pack(pady=(20, 5), padx=20)
-        self.name_entry = tk.Entry(
+        ).pack(pady=(10, 5), padx=20)
+        self.name_entry = ttk.Entry(
             account_frame,
             textvariable=self.name_var,
-            takefocus=True,
             font=("Skranji", 14),
-            bg="#1e1e1e",
-            fg="white",
-            borderwidth=0,
-            insertbackground="white",
-            highlightthickness=2,
-            highlightcolor="white",
-            highlightbackground="black",
+            takefocus=True,
+            state=tk.NORMAL if self.app.password else tk.DISABLED,
         )
         self.name_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
-        # Password entry
-        self.password_var = tk.StringVar()
+        # Change password entry
+        self.password_var = tk.StringVar(
+            value=self.app.password if self.app.password else ""
+        )
         self.app.Label(
             account_frame,
-            text="Mot de passe",
+            text="Changer le mot de passe",
         ).pack(pady=(10, 5), padx=20)
         self.password_entry = tk.Entry(
             account_frame,
@@ -89,36 +120,37 @@ class AccountFrame(ttk.Frame):
             highlightthickness=2,
             highlightcolor="white",
             highlightbackground="black",
+            state=tk.NORMAL if self.app.password else tk.DISABLED,
         )
         self.password_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
-        # Login button
-        self.login_button = self.app.Button(
-            login_frame,
-            text="Se connecter",
-            command=self._login,
+        # Edit account button
+        self.edit_account_button = self.app.Button(
+            account_frame,
+            text="Sauvegarder" if self.app.password else "Éditer le compte",
+            overlay_path=(
+                self.app.save_icon_path
+                if self.app.password
+                else self.app.edit_icon_path
+            ),
+            hover_overlay_path=(
+                self.app.hovered_save_icon_path
+                if self.app.password
+                else self.app.hovered_edit_icon_path
+            ),
+            command=self._on_edit_account,
             takefocus=False,
+            state=(
+                tk.DISABLED
+                if (
+                    self.app.password
+                    and self.app.name == self.name_var.get()
+                    and self.app.password == self.password_var.get()
+                )
+                else tk.NORMAL
+            ),
         )
-        self.login_button.pack(pady=(10, 20), padx=20)
-
-        # Error label
-        self.error_label = ttk.Label(
-            self,
-            text="",
-            style="Error.TLabel",
-        )
-        self.error_label.pack(pady=(0, 10), padx=20, fill=tk.X)
-
-        # Register button
-        self.register_button = ttk.Button(
-            self,
-            text="Pas de compte ? S'inscrire",
-            command=self._on_register,
-            takefocus=False,
-            cursor="hand2",
-            padding=0,
-        )
-        self.register_button.pack(pady=10)
+        self.edit_account_button.pack(pady=(10, 20), padx=20)
 
         # Return button
         self.return_button = self.app.Button(
@@ -129,22 +161,58 @@ class AccountFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=(10, 20), padx=20, anchor=tk.S)
+        self.return_button.pack(pady=(0, 20), padx=20, anchor=tk.S)
 
         # Bind Enter key to login
         self.bind("<Return>", lambda event: self._login())
-        self.username_entry.bind("<Return>", lambda event: self._login())
+        self.name_entry.bind("<Return>", lambda event: self._login())
         self.password_entry.bind("<Return>", lambda event: self._login())
 
         # Bind Tab key to navigate between entries
-        self.username_entry.bind(
+        self.name_entry.bind(
             "<Tab>", lambda e: (self.password_entry.focus_set(), "break")[1]
         )
         self.password_entry.bind(
-            "<Tab>", lambda e: (self.username_entry.focus_set(), "break")[1]
+            "<Tab>", lambda e: (self.name_entry.focus_set(), "break")[1]
         )
 
         self.app.hide_loading(loading)
+
+        self.name_entry.bind("<KeyRelease>", self._update_button)
+        self.password_entry.bind("<KeyRelease>", self._update_button)
+
+    def _update_button(self, e):
+        """
+        Update state of self.edit_account_button when we change the name or the password of the user.
+        """
+
+        if (
+            self.name_var.get() != self.app.name
+            or self.password_var.get() != self.app.password
+        ):
+            self.edit_account_button.config(state=tk.NORMAL)
+        else:
+            self.edit_account_button.config(state=tk.DISABLED)
+
+    def _on_edit_account(self):
+        """
+        Give permission to modify the information of the account.
+        Check if the user logged in manually or automatically. If automatically,
+        open login dialog to login manually.
+        """
+
+        if self.app.password:
+            self.name_entry.config(state=tk.NORMAL)
+            self.password_entry.config(state=tk.NORMAL)
+            self.edit_account_button.configure(
+                state=tk.DISABLED,
+                text="Sauvegarder",
+                overlay_path=self.app.save_icon_path,
+                hover_overlay_path=self.app.hovered_save_icon_path,
+            )
+
+        else:
+            self.app._show_login_dialog()
 
     def _login(self) -> None:
         """

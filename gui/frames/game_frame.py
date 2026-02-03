@@ -23,6 +23,8 @@ from gui.frames.settings_frame import SettingsFrame
 from gui.widgets import TopLevelWindow
 from player.ai import Martin, Leo, Magnus, KatagoAI, Player
 
+from config import BASE_FOLDER_PATH
+
 if TYPE_CHECKING:
     from gui.app import App
 
@@ -243,7 +245,7 @@ class GameFrame(ttk.Frame):
         Important: Each goban image has a 100-pixel border that needs to be accounted for.
         The full image is 2000x2000 pixels (100 border + 1800 grid + 100 border).
         """
-        images_dir = Path(__file__).parent.parent / "images/board"
+        images_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "board"
 
         # Original image dimensions and border
         self.border_pixels_original = 105  # 100-pixel border on the original image

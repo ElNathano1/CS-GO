@@ -881,6 +881,13 @@ class TopLevelWindow(tk.Toplevel):
         # Show window (still invisible with alpha=0)
         self.wm_deiconify()
 
+        # Restore dialog/overlay visibility when app regains focus
+        self.bind("<FocusIn>", self._on_focus_in, add="+")
+        try:
+            self.master.bind("<FocusIn>", self._on_master_focus_in, add="+")
+        except Exception:
+            pass
+
         # Force complete rendering of all widgets
         self.update()
 
@@ -898,6 +905,24 @@ class TopLevelWindow(tk.Toplevel):
             self.attributes("-alpha", 1.0)
 
         # Grab/wait are deferred so callers can attach content before showing
+
+    def _on_master_focus_in(self, event=None) -> None:
+        self._restore_visibility()
+
+    def _on_focus_in(self, event=None) -> None:
+        self._restore_visibility()
+
+    def _restore_visibility(self) -> None:
+        try:
+            if self.overlay_window and self.overlay_window.winfo_exists():
+                self.overlay_window.deiconify()
+                self.overlay_window.lift(self.master)
+            self.deiconify()
+            self.lift()
+            if float(self.attributes("-alpha")) < 1.0:
+                self.attributes("-alpha", 1.0)
+        except tk.TclError:
+            pass
 
     def _center_window(self) -> None:
         """

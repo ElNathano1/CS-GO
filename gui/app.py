@@ -39,14 +39,14 @@ from gui.utils import (
 )  # Legacy name
 from gui.frames import LobbyFrame
 from gui.frames.login_dialog import LoginFrame
+from gui.frames.account_frame import AccountFrame
 
 # Game logic imports
-from player.ai import Martin, Leo, Magnus
 from game.core import Goban, GoGame
 from game.utils import save_game
 
 # API base URL
-from config import BASE_URL, APP_NAME, WS_URL
+from config import BASE_URL, APP_NAME, WS_URL, BASE_FOLDER_PATH
 
 
 class App(tk.Tk):
@@ -86,8 +86,10 @@ class App(tk.Tk):
 
         # Store and apply preferences
         self.username = None
+        self.password = None
         self.name = None
         self.token = None
+        self._random_display_name = None
         self.preferences = preferences
         self.apply_preferences()
 
@@ -148,7 +150,7 @@ class App(tk.Tk):
         self._create_account_panel()
 
         # Preload UI images in the background
-        images_dir = Path(__file__).parent / "images"
+        images_dir = Path(BASE_FOLDER_PATH) / "images"
         image_dirs = [
             images_dir / "textures",
             images_dir / "banners",
@@ -271,7 +273,7 @@ class App(tk.Tk):
         Load banner image for the application.
         """
 
-        banner_dir = Path(__file__).parent / "images/banners"
+        banner_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "banners"
 
         # Load welcome banner
         self.cs_go_banner_path = banner_dir / "cs_go_banner.png"
@@ -287,7 +289,7 @@ class App(tk.Tk):
         Load icons for the widgets.
         """
 
-        images_dir = Path(__file__).parent / "images/icons"
+        images_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "icons"
 
         # Load application icon
         self.icon_path = images_dir / "app_icon.ico"
@@ -454,6 +456,86 @@ class App(tk.Tk):
                 )
             )
 
+        # Load login icon
+        self.login_icon_path = images_dir / "login.png"
+        if self.login_icon_path.exists():
+            self.login_icon = ImageTk.PhotoImage(
+                Image.open(self.login_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_login_icon_path = images_dir / "hovered_login.png"
+        if self.hovered_login_icon_path.exists():
+            self.hovered_login_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_login_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load register icon
+        self.register_icon_path = images_dir / "register.png"
+        if self.register_icon_path.exists():
+            self.register_icon = ImageTk.PhotoImage(
+                Image.open(self.register_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_register_icon_path = images_dir / "hovered_register.png"
+        if self.hovered_register_icon_path.exists():
+            self.hovered_register_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_register_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load edit account icon
+        self.edit_icon_path = images_dir / "edit.png"
+        if self.edit_icon_path.exists():
+            self.edit_icon = ImageTk.PhotoImage(
+                Image.open(self.edit_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_edit_icon_path = images_dir / "hovered_edit.png"
+        if self.hovered_edit_icon_path.exists():
+            self.hovered_edit_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_edit_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load save account icon
+        self.save_icon_path = images_dir / "save.png"
+        if self.save_icon_path.exists():
+            self.save_icon = ImageTk.PhotoImage(
+                Image.open(self.save_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_save_icon_path = images_dir / "hovered_save.png"
+        if self.hovered_save_icon_path.exists():
+            self.hovered_save_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_save_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load add friend icon
+        self.add_friend_icon_path = images_dir / "add_friend.png"
+        if self.add_friend_icon_path.exists():
+            self.add_friend_icon = ImageTk.PhotoImage(
+                Image.open(self.add_friend_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_add_friend_icon_path = images_dir / "hovered_add_friend.png"
+        if self.hovered_add_friend_icon_path.exists():
+            self.hovered_add_friend_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_add_friend_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
         # Load preferences icons
         # Load main volume icon
         self.sound_icon_path = images_dir / "sound.png"
@@ -562,7 +644,7 @@ class App(tk.Tk):
         Load textures for the widgets.
         """
 
-        textures_dir = Path(__file__).parent / "images/textures"
+        textures_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "textures"
 
         # Load light wood texture
         light_wood_path = textures_dir / "light_wood_texture.png"
@@ -648,6 +730,12 @@ class App(tk.Tk):
             background="#1e1e1e",
             foreground="white",
         )
+        style.configure(
+            "SubTitle.TLabel",
+            font=("Spell of Asia", 20, "bold"),
+            background="#1e1e1e",
+            foreground="white",
+        )
 
         # Configure account label style
         style.configure(
@@ -668,6 +756,7 @@ class App(tk.Tk):
         # Configure entry style
         style.configure(
             "TEntry",
+            background="#1e1e1e",
             foreground="white",
             fieldbackground="#1e1e1e",
             borderwidth=2,
@@ -675,9 +764,14 @@ class App(tk.Tk):
             bordercolor="black",
             padding=2,
             insertcolor="white",
+            font=("Skranji", 14),
         )
         style.map(
             "TEntry",
+            background=[("disabled", "#1e1e1e"), ("!disabled", "#1e1e1e")],
+            foreground=[("disabled", "gray"), ("!disabled", "white")],
+            fieldbackground=[("disabled", "#1e1e1e"), ("!disabled", "#1e1e1e")],
+            insertcolor=[("disabled", "gray"), ("!disabled", "white")],
             lightcolor=[("focus", "white"), ("!focus", "black")],
             lightthickness=[("focus", 2), ("!focus", 2)],
             bordercolor=[("focus", "white"), ("!focus", "black")],
@@ -704,8 +798,11 @@ class App(tk.Tk):
     def Button(
         self,
         parent,
-        texture_path: str | Path = Path(__file__).parent
-        / "images/textures/light_wood_texture.png",
+        texture_path: str | Path = Path(BASE_FOLDER_PATH)
+        / "gui"
+        / "images"
+        / "textures"
+        / "light_wood_texture.png",
         text: str = "",
         overlay_path: str | Path | None = None,
         hover_overlay_path: str | Path | None = None,
@@ -754,8 +851,11 @@ class App(tk.Tk):
     def Frame(
         self,
         parent,
-        texture_path: str | Path = Path(__file__).parent
-        / "images/textures/dark_wood_texture.png",
+        texture_path: str | Path = Path(BASE_FOLDER_PATH)
+        / "gui"
+        / "images"
+        / "textures"
+        / "dark_wood_texture.png",
         width: int | None = None,
         height: int | None = None,
         bd: int = 2,
@@ -857,10 +957,11 @@ class App(tk.Tk):
         self.wifi_signal.pack(side=tk.RIGHT, padx=(5, 0))
 
         # Account info button
-        initial_photo = self.get_profile_photo()
+        name = self._get_display_name()
+        initial_photo = self.get_profile_photo(name.split(" ")[0])
         self.account_profile_photo = ttk.Button(
             self.account_panel,
-            text=(f"{self.name} " if self.name else f"{random_username()} "),
+            text=(f"{name} "),
             image=initial_photo,
             command=lambda: (
                 self._show_account_dialog()
@@ -876,6 +977,13 @@ class App(tk.Tk):
         self.account_profile_photo.pack(side=tk.RIGHT)
         # Keep reference to prevent garbage collection
         self.account_profile_photo.image = initial_photo  # type: ignore
+
+    def _get_display_name(self) -> str:
+        if self.name:
+            return self.name
+        if not self._random_display_name:
+            self._random_display_name = random_username()
+        return self._random_display_name
 
     def apply_preferences(self) -> None:
         """
@@ -970,8 +1078,9 @@ class App(tk.Tk):
             hasattr(self, "account_profile_photo")
             and self.account_profile_photo.winfo_exists()
         ):
-            new_text = f"{self.name} " if self.name else f"{random_username()} "
-            new_image = self.get_profile_photo()
+            name = self._get_display_name()
+            new_text = f"{name} "
+            new_image = self.get_profile_photo(name.split(" ")[0])
             self.account_profile_photo.config(image=new_image)
             self.account_profile_photo.image = new_image  # type: ignore
             self.account_profile_photo.config(text=new_text)
@@ -988,6 +1097,7 @@ class App(tk.Tk):
                     data = response.json()
                     self.name = data.get("name")
                     self.level = data.get("level")
+                    self._random_display_name = None
                     # Update account panel with real name
                     self.after(0, self._update_account_panel)
             except Exception as e:
@@ -1033,9 +1143,81 @@ class App(tk.Tk):
             frame = frame_class(dialog.body_frame, self)  # type: ignore
             frame.pack(fill=tk.BOTH, expand=True)
 
-        # If account panel should be shown, display it
+        dialog_account_panel = None
+
+        # If account panel should be shown, display a dialog overlay panel
         if show_account_panel:
-            self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+            dialog_account_panel = ttk.Frame(dialog)
+
+            wifi_label = ttk.Label(
+                dialog_account_panel,
+                image=self.wifi_signal.cget("image"),
+                style="Account.TLabel",
+                takefocus=False,
+            )
+            wifi_label.pack(side=tk.RIGHT, padx=(5, 0))
+
+            name_text = self.account_profile_photo.cget("text")
+            name_image = self.account_profile_photo.image  # type: ignore
+            dialog_button = ttk.Button(
+                dialog_account_panel,
+                text=name_text,
+                image=name_image,
+                command=lambda: (
+                    self._show_account_dialog()
+                    if self.username
+                    else self._show_login_dialog()
+                ),
+                compound=tk.RIGHT,
+                takefocus=False,
+                cursor="hand2",
+                style="Account.TButton",
+                padding=3,
+            )
+            dialog_button.pack(side=tk.RIGHT)
+            dialog_button.image = name_image  # type: ignore
+
+            def _place_dialog_panel():
+                if not dialog.winfo_exists():
+                    return
+                self.update_idletasks()
+                dialog.update_idletasks()
+
+                panel_w = dialog_account_panel.winfo_reqwidth()
+                panel_h = dialog_account_panel.winfo_reqheight()
+
+                root_x = self.winfo_rootx()
+                root_y = self.winfo_rooty()
+                root_w = self.winfo_width()
+                root_h = self.winfo_height()
+
+                target_x_root = root_x + int(root_w * 0.98) - panel_w
+                target_y_root = root_y + int(root_h * 0.04)
+
+                dialog_x = dialog.winfo_rootx()
+                dialog_y = dialog.winfo_rooty()
+
+                target_x = target_x_root - dialog_x
+                target_y = target_y_root - dialog_y
+
+                dialog_account_panel.place(x=target_x, y=target_y)
+                dialog_account_panel.lift()
+
+            self.after(0, _place_dialog_panel)
+
+            def restore_panel_after_close():
+                if dialog.winfo_exists():
+                    self.after(100, restore_panel_after_close)
+                else:
+                    if dialog_account_panel is not None:
+                        try:
+                            dialog_account_panel.destroy()
+                        except tk.TclError:
+                            pass
+                    self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+                    self.account_panel.lift()
+
+            self.after(100, restore_panel_after_close)
         else:
             # Otherwise, schedule to show it after dialog closes
             def show_panel_on_close():
@@ -1044,7 +1226,13 @@ class App(tk.Tk):
                     self.after(100, show_panel_on_close)
                 else:
                     # Dialog has closed, show the panel
+                    if dialog_account_panel is not None:
+                        try:
+                            dialog_account_panel.destroy()
+                        except tk.TclError:
+                            pass
                     self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+                    self.account_panel.lift()
 
             self.after(100, show_panel_on_close)
 
@@ -1081,7 +1269,9 @@ class App(tk.Tk):
                 self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
                 self.account_panel.lift()
 
-    def get_profile_photo(self, size: int = 32) -> ImageTk.PhotoImage:
+    def get_profile_photo(
+        self, username: str | None = None, size: int = 32
+    ) -> ImageTk.PhotoImage:
         """
         Get the user's profile photo as a PhotoImage.
 
@@ -1109,9 +1299,11 @@ class App(tk.Tk):
             except Exception as e:
                 pass
 
-        return self._get_default_profile_photo()
+        return self._get_default_profile_photo(username)
 
-    def _get_default_profile_photo(self) -> ImageTk.PhotoImage:
+    def _get_default_profile_photo(
+        self, username: str | None = None
+    ) -> ImageTk.PhotoImage:
         """
         Get the default profile photo.
 
@@ -1119,10 +1311,31 @@ class App(tk.Tk):
             ImageTk.PhotoImage: The default profile photo image.
         """
 
-        images_dir = Path(__file__).parent / "images/profiles"
+        images_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "profiles"
         default_photo_path = images_dir / "default_profile_photo.png"
+        username_photo_path = (
+            (
+                images_dir
+                / "animals"
+                / f"{username.lower().replace('é', 'e').replace('è', 'e').replace('ê', 'e').replace('ï', 'i')}_profile_photo.png"
+            )
+            if username
+            else None
+        )
+        print(username_photo_path)
+        print(
+            username_photo_path.exists()
+            if username_photo_path
+            else "No username photo path"
+        )
 
-        if default_photo_path.exists():
+        if username_photo_path and username_photo_path.exists():
+            return ImageTk.PhotoImage(
+                Image.open(username_photo_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        elif default_photo_path.exists():
             return ImageTk.PhotoImage(
                 Image.open(default_photo_path).resize(
                     (32, 32), Image.Resampling.LANCZOS
@@ -1137,7 +1350,8 @@ class App(tk.Tk):
         """
         Show the account dialog (called when clicking on profile photo).
         """
-        pass
+
+        self.open_dialog(TopLevelWindow(self, width=400, height=720, position="right"), AccountFrame, show_account_panel=True)  # type: ignore
 
     def notify_username_updated(self) -> None:
         """

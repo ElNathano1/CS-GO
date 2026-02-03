@@ -195,6 +195,9 @@ class LobbyFrame(ttk.Frame):
         """
         Update the account info displayed in the account panel.
         """
+        if hasattr(self.app, "_update_account_panel"):
+            self.app._update_account_panel()
+            return
         display_name = self.app.name if self.app.name else random_username()
         self.app.account_profile_photo.config(text=f"{display_name}  ")
         self._update_profile_photo()

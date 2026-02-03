@@ -54,6 +54,10 @@ class LocalLobbyFrame(ttk.Frame):
         self.container = ttk.Frame(self)
         self.container.pack()
 
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
+        self.container.grid_columnconfigure(1, weight=1)
+
         # Ensure account panel is visible on this frame
         if hasattr(self.app, "account_panel") and self.app.account_panel:
             self.app.account_panel.lift()
@@ -63,9 +67,9 @@ class LocalLobbyFrame(ttk.Frame):
     def _build_step_2(self) -> None:
         # Number of players selection frame
         main_player_frame = self.app.Frame(self.container, bg="black", bd=1)
-        main_player_frame.pack(pady=20, fill=tk.X)
+        main_player_frame.grid(row=0, column=0, pady=20, padx=5, sticky="nes")
         player_frame = self.app.Frame(main_player_frame)
-        player_frame.pack(pady=3, padx=3, fill=tk.X)
+        player_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
 
         # Buttons for number of players
         ttk.Radiobutton(
@@ -74,23 +78,23 @@ class LocalLobbyFrame(ttk.Frame):
             variable=self.multiplayer,
             value=False,
             takefocus=False,
-        ).pack(padx=30, pady=(20, 10), fill=tk.X)
+        ).pack(padx=30, pady=(20, 10), fill=tk.BOTH)
         ttk.Radiobutton(
             player_frame.content_frame,
             text="Deux joueurs (local)",
             variable=self.multiplayer,
             value=True,
             takefocus=False,
-        ).pack(padx=30, pady=(10, 20), fill=tk.X)
+        ).pack(padx=30, pady=(10, 20), fill=tk.BOTH)
 
         self.after(0, self._build_step_3)
 
     def _build_step_3(self) -> None:
         # Board size selection frame
         main_size_frame = self.app.Frame(self.container, bg="black", bd=1)
-        main_size_frame.pack(pady=20, fill=tk.X)
+        main_size_frame.grid(row=0, column=1, pady=20, padx=5, sticky="nws")
         size_frame = self.app.Frame(main_size_frame)
-        size_frame.pack(pady=3, padx=3, fill=tk.X)
+        size_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
 
         # Buttons for different board sizes
         ttk.Radiobutton(
@@ -119,7 +123,7 @@ class LocalLobbyFrame(ttk.Frame):
 
     def _build_step_4(self) -> None:
         self.app.Button(
-            self.container,
+            self,
             text="Continuer la partie",
             command=lambda: self._resume_game(game=self.app.current_game),  # type: ignore
             state=tk.DISABLED if self.app.current_game is None else tk.NORMAL,
@@ -128,7 +132,7 @@ class LocalLobbyFrame(ttk.Frame):
 
         # Start Game button
         self.app.Button(
-            self.container,
+            self,
             text="Démarrer la partie",
             command=self._start_game,
             takefocus=False,
@@ -136,7 +140,7 @@ class LocalLobbyFrame(ttk.Frame):
 
         # Return to Lobby button
         self.app.Button(
-            self.container,
+            self,
             text="Retour au Lobby",
             overlay_path=self.app.return_icon_path,
             hover_overlay_path=self.app.hovered_return_icon_path,
@@ -156,14 +160,15 @@ class LocalLobbyFrame(ttk.Frame):
 
         board_size = game.goban.size
         if not game.singleplayer:
+            display_name = self.app._get_display_name()
             self.app.show_frame(
                 lambda parent, app: GameFrame(
                     parent,
                     app,
                     board_size,
                     Player(
-                        self.app.account_profile_photo["text"].strip(),
-                        self.app.get_profile_photo(),
+                        display_name,
+                        self.app.get_profile_photo(display_name.split(" ")[0]),
                         color=Goban.BLACK,
                         level=-3000,
                     ),
@@ -178,6 +183,7 @@ class LocalLobbyFrame(ttk.Frame):
             )
         else:
             print("Resuming singleplayer game...")
+            display_name = self.app._get_display_name()
             self.app.show_frame(
                 lambda parent, app: SingleplayerGameFrame(
                     parent,
@@ -185,8 +191,8 @@ class LocalLobbyFrame(ttk.Frame):
                     board_size,
                     KatagoAI("Test", game, Goban.BLACK, -1750),
                     Player(
-                        self.app.account_profile_photo["text"].strip(),
-                        self.app.get_profile_photo(),
+                        display_name,
+                        self.app.get_profile_photo(display_name.split(" ")[0]),
                         color=Goban.WHITE,
                         level=-3000,
                     ),
@@ -206,6 +212,7 @@ class LocalLobbyFrame(ttk.Frame):
         from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
 
         if self.multiplayer.get():
+            display_name = self.app._get_display_name()
             game = GoGame(self.board_size.get())
             self.app.show_frame(
                 lambda parent, app: GameFrame(
@@ -213,8 +220,8 @@ class LocalLobbyFrame(ttk.Frame):
                     app,
                     self.board_size.get(),
                     Player(
-                        self.app.account_profile_photo["text"].strip(),
-                        self.app.get_profile_photo(),
+                        display_name,
+                        self.app.get_profile_photo(display_name.split(" ")[0]),
                         color=Goban.BLACK,
                         level=-3000,
                     ),
@@ -229,6 +236,7 @@ class LocalLobbyFrame(ttk.Frame):
             )
 
         if not self.multiplayer.get():
+            display_name = self.app._get_display_name()
             game = GoGame(self.board_size.get())
             self.app.show_frame(
                 lambda parent, app: SingleplayerGameFrame(
@@ -237,8 +245,8 @@ class LocalLobbyFrame(ttk.Frame):
                     self.board_size.get(),
                     KatagoAI("Test", game, Goban.BLACK, -1750),
                     Player(
-                        self.app.account_profile_photo["text"].strip(),
-                        self.app.get_profile_photo(),
+                        display_name,
+                        self.app.get_profile_photo(display_name.split(" ")[0]),
                         color=Goban.WHITE,
                         level=-3000,
                     ),

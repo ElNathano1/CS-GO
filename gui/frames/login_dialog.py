@@ -58,18 +58,11 @@ class LoginFrame(ttk.Frame):
             login_frame,
             text="Nom d'utilisateur",
         ).pack(pady=(20, 5), padx=20)
-        self.username_entry = tk.Entry(
+        self.username_entry = ttk.Entry(
             login_frame,
             textvariable=self.username_var,
-            takefocus=True,
             font=("Skranji", 14),
-            bg="#1e1e1e",
-            fg="white",
-            borderwidth=0,
-            insertbackground="white",
-            highlightthickness=2,
-            highlightcolor="white",
-            highlightbackground="black",
+            takefocus=True,
         )
         self.username_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
@@ -79,19 +72,12 @@ class LoginFrame(ttk.Frame):
             login_frame,
             text="Mot de passe",
         ).pack(pady=(10, 5), padx=20)
-        self.password_entry = tk.Entry(
+        self.password_entry = ttk.Entry(
             login_frame,
             textvariable=self.password_var,
-            takefocus=True,
             font=("Skranji", 14),
+            takefocus=True,
             show="*",
-            bg="#1e1e1e",
-            fg="white",
-            borderwidth=0,
-            insertbackground="white",
-            highlightthickness=2,
-            highlightcolor="white",
-            highlightbackground="black",
         )
         self.password_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
@@ -99,6 +85,8 @@ class LoginFrame(ttk.Frame):
         self.login_button = self.app.Button(
             login_frame,
             text="Se connecter",
+            overlay_path=self.app.login_icon_path,
+            hover_overlay_path=self.app.hovered_login_icon_path,
             command=self._login,
             takefocus=False,
         )
@@ -171,13 +159,13 @@ class LoginFrame(ttk.Frame):
         # Check if all fields are filled
         if username == "" or password == "":
             if username == "":
-                self.username_entry.configure(highlightbackground="red")
+                self.username_entry.configure(style="Error.TEntry")
             if password == "":
-                self.password_entry.configure(highlightbackground="red")
+                self.password_entry.configure(style="Error.TEntry")
             self._show_error("Veuillez remplir tous les champs.")
             return
-        self.username_entry.configure(highlightcolor="black")
-        self.password_entry.configure(highlightcolor="black")
+        self.username_entry.configure(style="TEntry")
+        self.password_entry.configure(style="TEntry")
 
         self.login_button.config(state=tk.DISABLED)
         self._login_loading = self.app.show_loading("Connexion...")
@@ -219,6 +207,7 @@ class LoginFrame(ttk.Frame):
             self._login_loading = None
         self.app.token = data["token"]
         self.app.username = data["username"]
+        self.app.password = self.password_entry.get()  # type: ignore
 
         # Fetch full user data to get the name
         self.app._fetch_user_data()
@@ -230,15 +219,14 @@ class LoginFrame(ttk.Frame):
         self.app.notify_username_updated()
         self.app.notify_profile_photo_updated()
 
-        # Import here to avoid circular dependency at module load time
-        from gui.frames import LobbyFrame
-
         # Close dialog and show lobby
         dialog = self.winfo_toplevel()
         if isinstance(dialog, TopLevelWindow):
             dialog.close()
 
         self.app.preferences["auth_token"] = self.app.token
+        from gui.frames import LobbyFrame
+
         self.app.show_frame_with_loading(LobbyFrame, "Chargement du lobby...")
 
     def _on_login_error(self, error: str) -> None:
@@ -247,8 +235,8 @@ class LoginFrame(ttk.Frame):
             self.app.hide_loading(self._login_loading)
             self._login_loading = None
         self.login_button.config(state=tk.NORMAL)
-        self.username_entry.configure(highlightbackground="red")
-        self.password_entry.configure(highlightbackground="red")
+        self.username_entry.configure(style="Error.TEntry")
+        self.password_entry.configure(style="Error.TEntry")
         self._show_error(error)
 
         # Re-raise dialog above parent after messagebox closes
@@ -373,18 +361,11 @@ class RegisterFrame(ttk.Frame):
             register_frame,
             text="Nom d'utilisateur",
         ).pack(pady=(20, 5), padx=20)
-        self.username_entry = tk.Entry(
+        self.username_entry = ttk.Entry(
             register_frame,
             textvariable=self.username_var,
-            takefocus=True,
             font=("Skranji", 14),
-            bg="#1e1e1e",
-            fg="white",
-            borderwidth=0,
-            highlightcolor="white",
-            highlightbackground="black",
-            highlightthickness=2,
-            insertbackground="white",
+            takefocus=True,
         )
         self.username_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
@@ -394,18 +375,11 @@ class RegisterFrame(ttk.Frame):
             register_frame,
             text="Nom d'affichage",
         ).pack(pady=(20, 5), padx=20)
-        self.name_entry = tk.Entry(
+        self.name_entry = ttk.Entry(
             register_frame,
             textvariable=self.name_var,
-            takefocus=True,
             font=("Skranji", 14),
-            bg="#1e1e1e",
-            fg="white",
-            borderwidth=0,
-            highlightcolor="white",
-            highlightbackground="black",
-            highlightthickness=2,
-            insertbackground="white",
+            takefocus=True,
         )
         self.name_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
@@ -415,19 +389,12 @@ class RegisterFrame(ttk.Frame):
             register_frame,
             text="Mot de passe",
         ).pack(pady=(10, 5), padx=20)
-        self.password_entry = tk.Entry(
+        self.password_entry = ttk.Entry(
             register_frame,
             textvariable=self.password_var,
-            takefocus=True,
             font=("Skranji", 14),
+            takefocus=True,
             show="*",
-            bg="#1e1e1e",
-            fg="white",
-            borderwidth=0,
-            highlightcolor="white",
-            highlightbackground="black",
-            highlightthickness=2,
-            insertbackground="white",
         )
         self.password_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
@@ -437,19 +404,12 @@ class RegisterFrame(ttk.Frame):
             register_frame,
             text="Confirmer le mot de passe",
         ).pack(pady=(10, 5), padx=20)
-        self.confirm_password_entry = tk.Entry(
+        self.confirm_password_entry = ttk.Entry(
             register_frame,
             textvariable=self.confirm_password_var,
-            takefocus=True,
             font=("Skranji", 14),
+            takefocus=True,
             show="*",
-            bg="#1e1e1e",
-            fg="white",
-            borderwidth=0,
-            highlightcolor="white",
-            highlightbackground="black",
-            highlightthickness=2,
-            insertbackground="white",
         )
         self.confirm_password_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
 
@@ -457,6 +417,8 @@ class RegisterFrame(ttk.Frame):
         self.register_button = self.app.Button(
             register_frame,
             text="S'inscrire",
+            overlay_path=self.app.register_icon_path,
+            hover_overlay_path=self.app.hovered_register_icon_path,
             command=self._handle_register,
             takefocus=False,
         )
@@ -534,19 +496,19 @@ class RegisterFrame(ttk.Frame):
         # Check if all fields are filled
         if username == "" or name == "" or password == "" or confirm_password == "":
             if username == "":
-                self.username_entry.configure(highlightbackground="red")
+                self.username_entry.configure(style="Error.TEntry")
             if name == "":
-                self.name_entry.configure(highlightbackground="red")
+                self.name_entry.configure(style="Error.TEntry")
             if password == "":
-                self.password_entry.configure(highlightbackground="red")
+                self.password_entry.configure(style="Error.TEntry")
             if confirm_password == "":
-                self.confirm_password_entry.configure(highlightbackground="red")
+                self.confirm_password_entry.configure(style="Error.TEntry")
             self._show_error("Veuillez remplir tous les champs.")
             return
 
         # Check if username is only alphanumeric
         if not username.isalnum() or username != username.lower():
-            self.username_entry.configure(highlightbackground="red")
+            self.username_entry.configure(style="Error.TEntry")
             self._show_error("Le nom d'utilisateur doit être alphanumérique.")
             return
 
@@ -557,7 +519,7 @@ class RegisterFrame(ttk.Frame):
                 timeout=5,
             )
             if response.status_code == 200:
-                self.username_entry.configure(highlightbackground="red")
+                self.username_entry.configure(style="Error.TEntry")
                 self._show_error("Le nom d'utilisateur est déjà pris.")
                 return
 
@@ -569,8 +531,8 @@ class RegisterFrame(ttk.Frame):
 
         # Check if passwords match
         if password != confirm_password:
-            self.password_entry.configure(highlightbackground="red")
-            self.confirm_password_entry.configure(highlightbackground="red")
+            self.password_entry.configure(style="Error.TEntry")
+            self.confirm_password_entry.configure(style="Error.TEntry")
             self._show_error("Les mots de passe ne correspondent pas.")
             return
 
@@ -586,17 +548,17 @@ class RegisterFrame(ttk.Frame):
             or not any(c.isupper() for c in password)
             or not any(c in "!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?`~" for c in password)
         ):
-            self.password_entry.configure(highlightbackground="red")
-            self.confirm_password_entry.configure(highlightbackground="red")
+            self.password_entry.configure(style="Error.TEntry")
+            self.confirm_password_entry.configure(style="Error.TEntry")
             self._show_error(
                 "Le mot de passe doit contenir au moins 8 caractères, "
                 "dont une majuscule, une minuscule, un chiffre et un caractère spécial."
             )
             return
 
-        self.username_entry.configure(highlightcolor="white")
-        self.password_entry.configure(highlightcolor="white")
-        self.confirm_password_entry.configure(highlightcolor="white")
+        self.username_entry.configure(style="TEntry")
+        self.password_entry.configure(style="TEntry")
+        self.confirm_password_entry.configure(style="TEntry")
         self.register_button.config(state=tk.DISABLED)
 
         thread = threading.Thread(
@@ -681,10 +643,10 @@ class RegisterFrame(ttk.Frame):
     def _on_register_error(self, error: str) -> None:
         """Appelé dans le thread principal après erreur."""
         self.register_button.config(state=tk.NORMAL)
-        self.username_entry.configure(highlightbackground="red")
-        self.name_entry.configure(highlightbackground="red")
-        self.password_entry.configure(highlightbackground="red")
-        self.confirm_password_entry.configure(highlightbackground="red")
+        self.username_entry.configure(style="Error.TEntry")
+        self.name_entry.configure(style="Error.TEntry")
+        self.password_entry.configure(style="Error.TEntry")
+        self.confirm_password_entry.configure(style="Error.TEntry")
         self._show_error(error)
 
         # Re-raise dialog above parent after messagebox closes
