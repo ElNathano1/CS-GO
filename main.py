@@ -5,6 +5,7 @@ This FastAPI service provides:
 - Account management APIs (users, friends, levels, connection state)
 - Profile picture processing (upload, convert to WebP/JPEG, thumbnails)
 - File management utilities scoped to `UPLOAD_DIR`
+- Messaging and invitations
 - Realtime multiplayer support via WebSockets:
   - `/ws/lobby`: matchmaking queue by level and invitations
   - `/ws/room/{room_id}`: in-room events (moves, chat, presence)

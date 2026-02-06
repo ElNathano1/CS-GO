@@ -22,6 +22,8 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
+    Text,
+    DateTime,
     ForeignKey,
     UniqueConstraint,
 )
@@ -59,6 +61,7 @@ class User(Base):
     level = Column(Integer, default=0)
     profile_picture = Column(String(255), nullable=True)
     is_connected = Column(Integer, nullable=False, default=0)
+    in_game = Column(Integer, nullable=False, default=0)
 
     # Relations
     friendships_initiated = relationship(
@@ -71,6 +74,19 @@ class User(Base):
         "Friendship",
         foreign_keys="Friendship.friend_id",
         back_populates="friend",
+        cascade="all, delete-orphan",
+    )
+
+    games_played_as_black = relationship(
+        "Game",
+        foreign_keys="Game.black_player_id",
+        back_populates="black_player",
+        cascade="all, delete-orphan",
+    )
+    games_played_as_white = relationship(
+        "Game",
+        foreign_keys="Game.white_player_id",
+        back_populates="white_player",
         cascade="all, delete-orphan",
     )
 
@@ -155,6 +171,39 @@ class User(Base):
         """
         return len(self.friendships_initiated)
 
+    def get_games(self) -> list[Game]:
+        """
+        Get list of all games played by this user.
+
+        Returns:
+            List of Game objects that this user has played
+        """
+        return self.games_played_as_black + self.games_played_as_white
+
+    def get_game_count(self) -> int:
+        """
+        Get the number of games played.
+
+        Returns:
+            Integer count of games played
+        """
+        return len(self.games_played_as_black) + len(self.games_played_as_white)
+
+    def get_win_count(self) -> int:
+        """
+        Get the number of games won by this user.
+
+        Returns:
+            Integer count of games won
+        """
+        wins_as_black = sum(
+            1 for game in self.games_played_as_black if game.result == "1-0"
+        )
+        wins_as_white = sum(
+            1 for game in self.games_played_as_white if game.result == "0-1"
+        )
+        return wins_as_black + wins_as_white
+
 
 class Friendship(Base):
     """
@@ -190,6 +239,43 @@ class Friendship(Base):
         return f"Friendship(user_id={self.user_id}, friend_id={self.friend_id})"
 
 
+class Game(Base):
+    """
+    SQLAlchemy ORM model for a game record.
+
+    Attributes:
+        id: Primary key
+        black_player_id: Foreign key to User (first player)
+        white_player_id: Foreign key to User (second player)
+        date: Timestamp of when the game was played
+        result: String representing the game result (e.g., "1-0", "0-1", "0.5-0.5")
+        moves: String representing the sequence of moves in the game
+    """
+
+    __tablename__ = "games"
+
+    __table_args__ = (
+        UniqueConstraint("black_player_id", "white_player_id", "date", name="uq_game"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    black_player_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    white_player_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    date = Column(DateTime, nullable=False)
+    result = Column(String(10), nullable=False)
+    moves = Column(Text, nullable=False)
+
+    black_player = relationship(
+        "User", foreign_keys=[black_player_id], back_populates="games_played_as_black"
+    )
+    white_player = relationship(
+        "User", foreign_keys=[white_player_id], back_populates="games_played_as_white"
+    )
+
+    def __repr__(self) -> str:
+        return f"Game(id={self.id}, black_player_id={self.black_player_id}, white_player_id={self.white_player_id}, date={self.date}, result={self.result})"
+
+
 # Database initialization
 def init_db():
     """Initialize database and create all tables."""
@@ -204,3 +290,14 @@ def get_session() -> Session:
         A new Session bound to the database engine
     """
     return Session(engine)
+
+
+init_db()
+
+sql = """
+ALTER TABLE users
+ADD COLUMN in_game TINYINT(1) NOT NULL DEFAULT 0
+"""
+
+with engine.begin() as conn:
+    conn.execute(text(sql))
