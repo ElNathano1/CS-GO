@@ -474,12 +474,9 @@ class UploadProfilePictureFrame(ttk.Frame):
         self.original_image = picture.convert("RGBA")
         self.on_complete = on_complete
 
-        self.crop_size = 236
+        self.crop_size = 316
         self.canvas_size = 320
         self._drag_start: tuple[int, int] | None = None
-
-        title = ttk.Label(self, text="Ajuster la photo", style="SubTitle.TLabel")
-        title.pack(pady=(20, 10))
 
         self.canvas = tk.Canvas(
             self,
@@ -488,13 +485,13 @@ class UploadProfilePictureFrame(ttk.Frame):
             bg="#1e1e1e",
             highlightthickness=0,
         )
-        self.canvas.pack(pady=10)
+        self.canvas.pack(pady=20)
 
         self.error_label = ttk.Label(self, text="", style="Error.TLabel")
         self.error_label.pack(pady=(0, 10))
 
         button_row = ttk.Frame(self)
-        button_row.pack(pady=(10, 20))
+        button_row.pack(pady=(0, 20))
 
         self.cancel_button = self.app.Button(
             button_row,
