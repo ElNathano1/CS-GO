@@ -284,6 +284,9 @@ class App(tk.Tk):
                 )
             )
 
+        # Load edit profile picture banner
+        self.edit_picture_banner_path = banner_dir / "edit_profile_picture_banner.png"
+
     def _load_icons(self) -> None:
         """
         Load icons for the widgets.
