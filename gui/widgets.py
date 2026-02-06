@@ -55,6 +55,18 @@ def _get_resized_image(image_path: Path, width: int, height: int) -> Image.Image
     return cached
 
 
+def clear_image_cache(image_path: Path) -> None:
+    """Remove cached entries for a specific image path."""
+    with _IMAGE_CACHE_LOCK:
+        _IMAGE_CACHE.pop(image_path, None)
+    with _RESIZED_IMAGE_CACHE_LOCK:
+        keys_to_remove = [
+            key for key in _RESIZED_IMAGE_CACHE if key[0] == image_path
+        ]
+        for key in keys_to_remove:
+            _RESIZED_IMAGE_CACHE.pop(key, None)
+
+
 def preload_images_async(paths: list[Path]) -> None:
     """Preload images on a background thread to avoid UI stalls."""
 

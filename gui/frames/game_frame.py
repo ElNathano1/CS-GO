@@ -6,6 +6,7 @@ Includes both multiplayer and single-player game frames with full game logic,
 board rendering, stone animations, and game controls.
 """
 
+import re
 import threading
 import multiprocessing
 import queue
@@ -411,6 +412,7 @@ class GameFrame(ttk.Frame):
             highlightthickness=1,
             highlightbackground="black",
             highlightcolor="black",
+            relief=tk.SOLID,
         ).pack(side=tk.RIGHT, padx=0)
         self.black_name = ttk.Label(
             black_player_panel,
@@ -442,6 +444,7 @@ class GameFrame(ttk.Frame):
             highlightthickness=1,
             highlightbackground="black",
             highlightcolor="black",
+            relief=tk.SOLID,
         ).pack(side=tk.LEFT, padx=0)
         self.white_name = ttk.Label(
             white_player_panel,
@@ -947,18 +950,20 @@ class GameFrame(ttk.Frame):
         )
 
         # Update scores
-        self.black_score_label.config(text=str(self.game.get_score()[Goban.BLACK]))
-        self.white_score_label.config(text=str(self.game.get_score()[Goban.WHITE]))
-        # self.player_label.config(text=self._get_player_text())
-        # self.moves_label.config(
-        #     text=(
-        #         f"{self.game.nbr_moves} coup joué"
-        #         if self.game.nbr_moves == 1
-        #         else f"{self.game.nbr_moves} coups joués"
-        #     )
-        # )
-
-        # Save current game state to app for resuming later
+        self.black_score_label.config(
+            text=re.sub(
+                r"(Score:\s*)[-+]?\d+(?:\.\d+)?",
+                r"\g<1>" + str(self.game.get_score()[Goban.BLACK]),
+                self.black_score_label["text"],
+            )
+        )
+        self.white_score_label.config(
+            text=re.sub(
+                r"(Score:\s*)[-+]?\d+(?:\.\d+)?",
+                r"\g<1>" + str(self.game.get_score()[Goban.WHITE]),
+                self.white_score_label["text"],
+            )
+        )
         self.app.current_game = self.game  # type: ignore
 
     def _resume_game(self) -> None:
@@ -1168,6 +1173,7 @@ class SingleplayerGameFrame(GameFrame):
             highlightthickness=1,
             highlightbackground="black",
             highlightcolor="black",
+            relief=tk.SOLID,
         ).pack(side=tk.RIGHT, padx=0)
         self.white_name = ttk.Label(
             white_player_panel,
@@ -1201,6 +1207,7 @@ class SingleplayerGameFrame(GameFrame):
             highlightthickness=1,
             highlightbackground="black",
             highlightcolor="black",
+            relief=tk.SOLID,
         ).pack(side=tk.LEFT, padx=0)
         self.black_name = ttk.Label(
             black_player_panel,
