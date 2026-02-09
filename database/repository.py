@@ -351,6 +351,28 @@ class AccountRepository:
         self.session.add(game)
         self.session.commit()
 
+    def get_game_history(self, username: str) -> list[Game] | None:
+        """
+        Retrieve the game history for a specific user.
+
+        Args:
+            username: The username of the account
+        Returns:
+            List of Game objects the user participated in, or None if no games found
+        """
+        user = self.session.query(User).filter_by(username=username).first()
+        if not user:
+            return None
+
+        games_as_black = (
+            self.session.query(Game).filter_by(black_player_id=user.id).all()
+        )
+        games_as_white = (
+            self.session.query(Game).filter_by(white_player_id=user.id).all()
+        )
+
+        return games_as_black + games_as_white
+
     def remove_user(self, username: str) -> None:
         """
         Delete a user account and all associated friendships from the database.

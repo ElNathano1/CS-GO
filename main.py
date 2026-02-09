@@ -265,7 +265,24 @@ def get_free(repo: AccountRepository = Depends(get_repo)):
     ]
 
 
-@app.post("/add_game")
+@app.get("/games/{username}")
+def get_games(username: str, repo: AccountRepository = Depends(get_repo)):
+    games = repo.get_game_history(username)
+    if not games:
+        raise HTTPException(status_code=404, detail="No games found for user")
+    return [
+        {
+            "black_player": game.black_player,
+            "white_player": game.white_player,
+            "date": game.date,
+            "result": game.result,
+            "moves": game.moves,
+        }
+        for game in games
+    ]
+
+
+@app.post("/games/")
 def add_game(
     black_player_username: str,
     white_player_username: str,
