@@ -284,6 +284,9 @@ def init_db():
 
 def ensure_schema() -> None:
     """Ensure required columns exist without failing on redeploys."""
+    if os.environ.get("SKIP_SCHEMA_CHECK", "0").lower() in {"1", "true", "yes"}:
+        return
+
     inspector = inspect(engine)
     if not inspector.has_table("users"):
         return

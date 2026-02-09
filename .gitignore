@@ -4,3 +4,19 @@
 # Ignoring temporary or preferencies files
 *.prefs
 *.csgogame
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environments
+.venv/
+venv/
+env/
+.env
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
