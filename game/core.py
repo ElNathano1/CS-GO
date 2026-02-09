@@ -356,6 +356,8 @@ class GoGame:
         self.white_passed: bool = False
         self.nbr_moves: int = 0
 
+        self.moves_list: str = ""
+
         self.singleplayer: bool = False
 
     def copy(self) -> "GoGame":
@@ -373,6 +375,7 @@ class GoGame:
         new_game.black_passed = self.black_passed
         new_game.white_passed = self.white_passed
         new_game.nbr_moves = self.nbr_moves
+        new_game.moves_list = self.moves_list
 
         return new_game
 
@@ -406,10 +409,12 @@ class GoGame:
         """
         successfull, capture = self.goban.play_move(x, y, self.current_color)
         if successfull:
+            self.moves_list += f"{self.current_color} {x} {y}\n"
             self.nbr_moves += 1
             self.black_passed = False
             self.white_passed = False
             self.switch_player()
+
             return True, capture
         return False, False
 
@@ -418,8 +423,10 @@ class GoGame:
         Pass the current player's turn.
         """
         if self.current_color == Goban.BLACK:
+            self.moves_list += f"{self.current_color} pass\n"
             self.black_passed = True
         else:
+            self.moves_list += f"{self.current_color} pass\n"
             self.white_passed = True
 
         self.nbr_moves += 1

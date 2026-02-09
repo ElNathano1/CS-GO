@@ -166,6 +166,47 @@ class AccountFrame(ttk.Frame):
         )
         self.edit_account_button.pack(pady=(10, 20), padx=20)
 
+        # Account statistics
+        title = ttk.Label(
+            scrollable_frame, text="Statistiques du compte", style="SubTitle.TLabel"
+        )
+        title.pack(pady=0)
+
+        # Account statistics frame
+        main_statistics_frame = self.app.Frame(scrollable_frame, bg="black", bd=1)
+        main_statistics_frame.pack(pady=20, fill=tk.X, padx=20)
+        statistics_frame = self.app.Frame(main_statistics_frame)
+        statistics_frame.pack(pady=3, padx=3, fill=tk.X)
+
+        self.fetch_account_statistics()
+
+        # Number of games played
+        self.app.Label(
+            statistics_frame,
+            text="Nombre de parties jouées",
+        ).pack(pady=(10, 5), padx=20, side=tk.LEFT)
+        self.games_played_label = ttk.Label(
+            statistics_frame,
+            text=self.account_statistics.get("games_played", "0"),
+            font=("Skranji", 14),
+        )
+        self.games_played_label.pack(pady=(10, 5), padx=20, side=tk.RIGHT)
+
+        # View of the 3 last games played with the result and the opponent's name
+        self.draw_recent_games(statistics_frame)
+
+        # Number of wins
+        self.app.Label(
+            statistics_frame,
+            text="Nombre de victoires",
+        ).pack(pady=(10, 5), padx=20, side=tk.LEFT)
+        self.games_won_label = ttk.Label(
+            statistics_frame,
+            text=self.account_statistics.get("games_won", "0"),
+            font=("Skranji", 14),
+        )
+        self.games_won_label.pack(pady=(10, 5), padx=20, side=tk.RIGHT)
+
         # Return button
         self.return_button = self.app.Button(
             self,
@@ -306,6 +347,20 @@ class AccountFrame(ttk.Frame):
         clear_image_cache(picture_path)
         self.change_profile_picture_button.configure(texture_path=picture_path)
         self.app.notify_profile_photo_updated()
+
+    def fetch_account_statistics(self) -> None:
+        """
+        Fetch the user's account statistics from the backend API.
+        """
+
+        self.account_statistics = {}
+
+    def draw_recent_games(self, parent: tk.Widget) -> None:
+        """
+        Draw a list of the user's 3 most recent games with the result and opponent's name.
+        """
+
+        pass
 
     def _login(self) -> None:
         """

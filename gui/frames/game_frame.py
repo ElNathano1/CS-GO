@@ -1002,18 +1002,22 @@ class GameFrame(ttk.Frame):
         white_score = self.game.get_score()[Goban.WHITE]
 
         if resigned_by is not None:
+            self.game.moves_list += f"{resigned_by} resign\nRESULT: {("0-1" if resigned_by == Goban.BLACK else "1-0")}\n"
             winner = "Les Noirs" if resigned_by == Goban.WHITE else "Les Blancs"
             message = f"{winner} gagnent par abandon !"
         else:
             if black_score > white_score:
+                self.game.moves_list += f"RESULT: {'1-0'}\n"
                 winner = "Les Noirs"
                 margin = black_score - white_score
                 message = f"Les Noirs gagnent avec une avance de {margin} points !"
             elif white_score > black_score:
+                self.game.moves_list += f"RESULT: {'0-1'}\n"
                 winner = "Les Blancs"
                 margin = white_score - black_score
                 message = f"Les Blancs gagnent avec une avance de {margin} points !"
             else:
+                self.game.moves_list += f"RESULT: {'0.5-0.5'}\n"
                 winner = None
                 message = "Egalité !"
 
