@@ -290,14 +290,3 @@ def get_session() -> Session:
         A new Session bound to the database engine
     """
     return Session(engine)
-
-
-init_db()
-
-sql = """
-ALTER TABLE users
-ADD COLUMN in_game TINYINT(1) NOT NULL DEFAULT 0
-"""
-
-with engine.begin() as conn:
-    conn.execute(text(sql))

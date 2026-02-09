@@ -240,9 +240,45 @@ def get_connected(repo: AccountRepository = Depends(get_repo)):
             "friends": account.friends,
             "profile_picture": account.profile_picture,
             "connected": account.is_connected,
+            "in_game": account.in_game,
         }
         for account in accounts
     ]
+
+
+@app.get("/free")
+def get_free(repo: AccountRepository = Depends(get_repo)):
+    accounts = repo.get_free()
+    if not accounts:
+        raise HTTPException(status_code=404, detail="No free users found")
+    return [
+        {
+            "username": account.username,
+            "name": account.name,
+            "level": account.level,
+            "friends": account.friends,
+            "profile_picture": account.profile_picture,
+            "connected": account.is_connected,
+            "in_game": account.in_game,
+        }
+        for account in accounts
+    ]
+
+
+@app.post("/add_game")
+def add_game(
+    black_player_username: str,
+    white_player_username: str,
+    date: str,
+    result: str,
+    moves: str,
+    repo: AccountRepository = Depends(get_repo),
+):
+    repo.save_game(black_player_username, white_player_username, date, result, moves)
+    return {
+        "status": "success",
+        "message": f"Game between {black_player_username} and {white_player_username} added",
+    }
 
 
 @app.get("/users/{username}")
@@ -257,6 +293,7 @@ def get_user(username: str, repo: AccountRepository = Depends(get_repo)):
         "friends": account.friends,
         "profile_picture": account.profile_picture,
         "connected": account.is_connected,
+        "in_game": account.in_game,
     }
 
 
@@ -273,6 +310,7 @@ def get_all_users(repo: AccountRepository = Depends(get_repo)):
             "friends": account.friends,
             "profile_picture": account.profile_picture,
             "connected": account.is_connected,
+            "in_game": account.in_game,
         }
         for account in accounts
     ]
@@ -296,7 +334,7 @@ def change_password(
 ):
     repo.change_password(username, old_password, new_password)
     return {
-        "status": "succes",
+        "status": "success",
         "message": f"{username} changed password",
     }
 
@@ -307,7 +345,7 @@ def reset_password(
 ):
     repo.reset_password(username, new_password)
     return {
-        "status": "succes",
+        "status": "success",
         "message": f"{username} reset password",
     }
 
@@ -320,7 +358,7 @@ def change_name(
 ):
     repo.change_name(username, new_name)
     return {
-        "status": "succes",
+        "status": "success",
         "message": f"{username} changed name to {new_name}",
     }
 
@@ -333,7 +371,7 @@ def change_profile_picture(
 ):
     repo.change_profile_picture(username, new_profile_picture)
     return {
-        "status": "succes",
+        "status": "success",
         "message": f"{username} changed profile picture to {new_profile_picture}",
     }
 
@@ -378,7 +416,7 @@ def update_level(
 def connect(username: str, repo: AccountRepository = Depends(get_repo)):
     repo.connect(username)
     return {
-        "status": "succes",
+        "status": "success",
         "is_connected": 1,
     }
 
@@ -387,8 +425,26 @@ def connect(username: str, repo: AccountRepository = Depends(get_repo)):
 def disconnect(username: str, repo: AccountRepository = Depends(get_repo)):
     repo.disconnect(username)
     return {
-        "status": "succes",
+        "status": "success",
         "is_connected": 0,
+    }
+
+
+@app.post("/users/{username}/in_game")
+def set_in_game(username: str, repo: AccountRepository = Depends(get_repo)):
+    repo.set_in_game(username, True)
+    return {
+        "status": "success",
+        "in_game": 1,
+    }
+
+
+@app.post("/users/{username}/not_in_game")
+def set_not_in_game(username: str, repo: AccountRepository = Depends(get_repo)):
+    repo.set_in_game(username, False)
+    return {
+        "status": "success",
+        "in_game": 0,
     }
 
 

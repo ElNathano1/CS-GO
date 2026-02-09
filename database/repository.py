@@ -10,7 +10,7 @@ Classes:
 """
 
 from sqlalchemy.orm import Session
-from database.models import User, Friendship
+from database.models import User, Friendship, Game
 from database.account import Account
 
 
@@ -48,6 +48,7 @@ class AccountRepository:
             profile_picture=user.profile_picture,  # type: ignore
             friends=friends,
             is_connected=user.is_connected,  # type: ignore
+            in_game=user.in_game,  # type: ignore
         )
 
     def get_all_users(self) -> list[Account] | None:
@@ -73,6 +74,7 @@ class AccountRepository:
                     profile_picture=user.profile_picture,  # type: ignore
                     friends=friends,
                     is_connected=user.is_connected,  # type: ignore
+                    in_game=user.in_game,  # type: ignore
                 )
             )
 
@@ -236,6 +238,19 @@ class AccountRepository:
             user.is_connected = 0  # type: ignore
             self.session.commit()
 
+    def set_in_game(self, username: str, in_game: bool) -> None:
+        """
+        Update a user's in-game status.
+
+        Args:
+            username: The username of the account
+            in_game: True if the user is currently in a game, False otherwise
+        """
+        user = self.session.query(User).filter_by(username=username).first()
+        if user:
+            user.in_game = 1 if in_game else 0  # type: ignore
+            self.session.commit()
+
     def get_connected(self) -> list[Account] | None:
         """
         Retrieve all currently connected/online users.
@@ -259,10 +274,82 @@ class AccountRepository:
                     profile_picture=user.profile_picture,  # type: ignore
                     friends=friends,
                     is_connected=user.is_connected,  # type: ignore
+                    in_game=user.in_game,  # type: ignore
                 )
             )
 
         return connected
+
+    def get_free(self) -> list[Account] | None:
+        """
+        Retrieve all currently connected users who are not in a game.
+
+        Returns:
+            List of free Account objects, or None if no users are available
+        """
+        users = self.session.query(User).filter_by(is_connected=1, in_game=0).all()
+        if not users:
+            return None
+
+        free_users = []
+        for user in users:
+            friends = [f.friend.username for f in user.friendships_initiated]
+            free_users.append(
+                Account(
+                    username=user.username,  # type: ignore
+                    password_hash=user.password_hash,  # type: ignore
+                    name=user.name,  # type: ignore
+                    level=user.level,  # type: ignore
+                    profile_picture=user.profile_picture,  # type: ignore
+                    friends=friends,
+                    is_connected=user.is_connected,  # type: ignore
+                    in_game=user.in_game,  # type: ignore
+                )
+            )
+
+        return free_users
+
+    def save_game(
+        self,
+        black_player_username: str,
+        white_player_username: str,
+        date: str,
+        result: str = "0.5-0.5",
+        moves: str = "",
+    ) -> None:
+        """
+        Save a completed game to the database.
+
+        Args:
+            black_player_username: The username of the black player
+            white_player_username: The username of the white player
+            date: The date the game was played (ISO format)
+            result: The result of the game ("black_win", "white_win", "draw")
+            moves: The moves made during the game in a specific format
+        """
+
+        # This method would create a new Game record in the database
+        # and associate it with the black and white players.
+
+        black_player = (
+            self.session.query(User).filter_by(username=black_player_username).first()
+        )
+        white_player = (
+            self.session.query(User).filter_by(username=white_player_username).first()
+        )
+
+        if not black_player or not white_player:
+            return
+
+        game = Game(
+            black_player_id=black_player.id,
+            white_player_id=white_player.id,
+            date=date,
+            result=result,
+            moves=moves,
+        )
+        self.session.add(game)
+        self.session.commit()
 
     def remove_user(self, username: str) -> None:
         """

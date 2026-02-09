@@ -30,6 +30,7 @@ class Account:
         profile_picture: str = "default",
         friends: list[str] | None = None,
         is_connected: int = 0,
+        in_game: int = 0,
     ):
         """
         Initializes the user account.
@@ -51,6 +52,7 @@ class Account:
         self.profile_picture = profile_picture
         self.friends = friends or []
         self.is_connected = is_connected
+        self.in_game = in_game
 
     def __str__(self) -> str:
         return f"Account: {self.username} - {self.name} (Level {self.level})"
