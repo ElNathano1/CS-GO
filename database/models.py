@@ -282,6 +282,22 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 
+def ensure_schema() -> None:
+    """Ensure required columns exist without failing on redeploys."""
+    inspector = inspect(engine)
+    if not inspector.has_table("users"):
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("users")}
+    if "in_game" in columns:
+        return
+
+    with engine.begin() as connection:
+        connection.execute(
+            text("ALTER TABLE users ADD COLUMN in_game INTEGER NOT NULL DEFAULT 0")
+        )
+
+
 def get_session() -> Session:
     """
     Get a new SQLAlchemy session.
@@ -290,3 +306,6 @@ def get_session() -> Session:
         A new Session bound to the database engine
     """
     return Session(engine)
+
+
+ensure_schema()
