@@ -313,7 +313,7 @@ class AccountRepository:
         self,
         black_player_username: str,
         white_player_username: str,
-        date: str,
+        date: "datetime",
         result: str = "0.5-0.5",
         moves: str = "",
     ) -> None:
@@ -323,7 +323,7 @@ class AccountRepository:
         Args:
             black_player_username: The username of the black player
             white_player_username: The username of the white player
-            date: The date the game was played (ISO format)
+            date: The date the game was played
             result: The result of the game ("black_win", "white_win", "draw")
             moves: The moves made during the game in a specific format
         """

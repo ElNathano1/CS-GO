@@ -124,6 +124,14 @@ class LevelUpdate(BaseModel):
     new_level: int
 
 
+class GameCreate(BaseModel):
+    black_player_username: str
+    white_player_username: str
+    date: str
+    result: str
+    moves: str
+
+
 # === Helper functions for profile pictures ===
 def get_profile_pic_dir(profile_picture: str) -> str:
     """Get profile picture directory for a user"""
@@ -181,6 +189,14 @@ def process_profile_picture(file_bytes: bytes, username: str) -> tuple[str, str]
     thumb.save(thumb_jpeg_path, "JPEG", quality=80)
 
     return webp_path, jpeg_path
+
+
+def parse_game_date(date_value: str) -> datetime:
+    """Parse a game date string into a datetime."""
+    try:
+        return datetime.fromisoformat(date_value)
+    except ValueError:
+        return datetime.strptime(date_value, "%d-%m-%Y")
 
 
 @app.post("/auth/login")
@@ -283,18 +299,32 @@ def get_games(username: str, repo: AccountRepository = Depends(get_repo)):
 
 
 @app.post("/games/")
-def add_game(
-    black_player_username: str,
-    white_player_username: str,
-    date: str,
-    result: str,
-    moves: str,
-    repo: AccountRepository = Depends(get_repo),
-):
-    repo.save_game(black_player_username, white_player_username, date, result, moves)
+def add_game(game: GameCreate, repo: AccountRepository = Depends(get_repo)):
+    if not repo.get_by_username(game.black_player_username):
+        raise HTTPException(status_code=404, detail="Black player not found")
+    if not repo.get_by_username(game.white_player_username):
+        raise HTTPException(status_code=404, detail="White player not found")
+
+    try:
+        parsed_date = parse_game_date(game.date)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid date format. Use ISO 8601 or DD-MM-YYYY.",
+        )
+
+    repo.save_game(
+        game.black_player_username,
+        game.white_player_username,
+        parsed_date,
+        game.result,
+        game.moves,
+    )
     return {
         "status": "success",
-        "message": f"Game between {black_player_username} and {white_player_username} added",
+        "message": (
+            f"Game between {game.black_player_username} and {game.white_player_username} added"
+        ),
     }
 
 
