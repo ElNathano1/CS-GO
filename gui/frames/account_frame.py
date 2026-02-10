@@ -178,19 +178,29 @@ class AccountFrame(ttk.Frame):
         statistics_frame = self.app.Frame(main_statistics_frame)
         statistics_frame.pack(pady=3, padx=3, fill=tk.X)
 
-        self.fetch_account_statistics()
+        statistics_frame.columnconfigure(0, weight=1)
+        statistics_frame.columnconfigure(1, weight=1)
+        statistics_frame.rowconfigure(0, weight=1)
+        statistics_frame.rowconfigure(1, weight=1)
+
+        self.account_statistics = {}
+        thread = threading.Thread(
+            target=lambda: asyncio.run(self.fetch_account_statistics())
+        )
+        thread.start()
 
         # Number of games played
         self.app.Label(
             statistics_frame,
             text="Nombre de parties jouées",
-        ).pack(pady=(10, 5), padx=20, side=tk.LEFT)
-        self.games_played_label = ttk.Label(
+        ).grid(row=0, column=0, pady=10, padx=20, sticky="nw")
+        self.games_played_label = self.app.Label(
             statistics_frame,
             text=self.account_statistics.get("games_played", "0"),
-            font=("Skranji", 14),
         )
-        self.games_played_label.pack(pady=(10, 5), padx=20, side=tk.RIGHT)
+        self.games_played_label.grid(
+            row=0, column=1, pady=10, padx=(0, 20), sticky="ne"
+        )
 
         # View of the 3 last games played with the result and the opponent's name
         self.draw_recent_games(statistics_frame)
@@ -199,13 +209,12 @@ class AccountFrame(ttk.Frame):
         self.app.Label(
             statistics_frame,
             text="Nombre de victoires",
-        ).pack(pady=(10, 5), padx=20, side=tk.LEFT)
-        self.games_won_label = ttk.Label(
+        ).grid(row=1, column=0, pady=10, padx=20, sticky="nw")
+        self.games_won_label = self.app.Label(
             statistics_frame,
             text=self.account_statistics.get("games_won", "0"),
-            font=("Skranji", 14),
         )
-        self.games_won_label.pack(pady=(10, 5), padx=20, side=tk.RIGHT)
+        self.games_won_label.grid(row=1, column=1, pady=10, padx=(0, 20), sticky="ne")
 
         # Return button
         self.return_button = self.app.Button(
@@ -348,19 +357,54 @@ class AccountFrame(ttk.Frame):
         self.change_profile_picture_button.configure(texture_path=picture_path)
         self.app.notify_profile_photo_updated()
 
-    def fetch_account_statistics(self) -> None:
+    async def fetch_account_statistics(self) -> None:
         """
         Fetch the user's account statistics from the backend API.
         """
 
-        self.account_statistics = {}
+        try:
+            async with httpx.AsyncClient(verify=False) as client:
+                response = await client.get(f"{BASE_URL}/games/{self.app.username}")
+
+                if response.status_code == 200:
+                    data = response.json()
+                    self.account_statistics = {
+                        "games_played": len(data.get("games", [])),
+                        "games_won": sum(
+                            1
+                            for game in data.get("games", [])
+                            if game.get("result") == "1-0"
+                            and game.black_player == self.app.username
+                            or game.get("result") == "0-1"
+                            and game.white_player == self.app.username
+                        ),
+                        "recent_games": data.get("games", [])[:3],
+                    }
+                else:
+                    pass
+
+        except Exception as e:
+            pass
 
     def draw_recent_games(self, parent: tk.Widget) -> None:
         """
         Draw a list of the user's 3 most recent games with the result and opponent's name.
         """
 
-        pass
+        if not self.account_statistics:
+            return
+
+        for game in self.account_statistics.get("recent_games", []):
+            result = game.get("result", "N/A")
+            opponent = (
+                game.get("black_player")
+                if game.get("white_player") == self.app.username
+                else game.get("white_player")
+            )
+            game_label = tk.Label(
+                parent, text=f"Result: {result}, Opponent: {opponent}"
+            )
+            game_label.pack()
 
     def _login(self) -> None:
         """
