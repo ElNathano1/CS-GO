@@ -12,6 +12,7 @@ Classes:
 from sqlalchemy.orm import Session
 from database.models import User, Friendship, Game
 from database.account import Account
+from datetime import datetime
 
 
 class AccountRepository:
@@ -313,7 +314,7 @@ class AccountRepository:
         self,
         black_player_username: str,
         white_player_username: str,
-        date: "datetime",
+        date: datetime,
         result: str = "0.5-0.5",
         moves: str = "",
     ) -> None:
