@@ -60,9 +60,7 @@ def clear_image_cache(image_path: Path) -> None:
     with _IMAGE_CACHE_LOCK:
         _IMAGE_CACHE.pop(image_path, None)
     with _RESIZED_IMAGE_CACHE_LOCK:
-        keys_to_remove = [
-            key for key in _RESIZED_IMAGE_CACHE if key[0] == image_path
-        ]
+        keys_to_remove = [key for key in _RESIZED_IMAGE_CACHE if key[0] == image_path]
         for key in keys_to_remove:
             _RESIZED_IMAGE_CACHE.pop(key, None)
 
@@ -618,6 +616,7 @@ class TexturedButton(tk.Button):
         texture_path: str | Path | None = None,
         text: str | None = None,
         overlay_path: str | Path | None = None,
+        hover_overlay_path: str | Path | None = None,
         width: int | None = None,
         height: int | None = None,
         overlay_compound: str | None = None,
@@ -638,6 +637,8 @@ class TexturedButton(tk.Button):
             self.text = text
         if overlay_path is not None:
             self.overlay_path = overlay_path
+        if hover_overlay_path is not None:
+            self.hover_overlay_path = hover_overlay_path
         if width is not None:
             super().configure(width=width)
             self.width = width
@@ -760,13 +761,18 @@ class TexturedFrame(tk.Frame):
 
     def _update_texture(self, width: int, height: int):
         """Load texture, crop/resize to frame size, and apply as background."""
+        if not self.winfo_exists() or not self.bg_label.winfo_exists():
+            return
         # Load and crop texture to frame size
         texture = _get_resized_image(self.texture_path, width, height)
 
         # Convert to PhotoImage
         photo = ImageTk.PhotoImage(texture)
         self.bg_label._photo = photo  # type: ignore # Keep reference
-        self.bg_label.config(image=photo)
+        try:
+            self.bg_label.config(image=photo)
+        except tk.TclError:
+            return
 
     def resize(self, new_width: int, new_height: int):
         """Dynamically resize frame and re-render texture."""

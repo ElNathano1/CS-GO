@@ -5,6 +5,7 @@ This module provides the dialog interface for users to log in or register.
 """
 
 from pathlib import Path
+from tkinter import messagebox
 from typing import TYPE_CHECKING, Callable
 from io import BytesIO
 import tkinter as tk
@@ -47,9 +48,19 @@ class AccountFrame(ttk.Frame):
         self.app = app
         loading = self.app.show_loading("Chargement...")
 
+        # Logout button
+        self.logout_button = ttk.Button(
+            self,
+            image=self.app.hovered_logout_icon,
+            command=self._on_logout,
+            takefocus=False,
+            cursor="hand2",
+        )
+        self.logout_button.pack(pady=(18, 0), padx=20, anchor=tk.NW)
+
         # Create canvas and scrollbar for scrollable content
         canvas_frame = ttk.Frame(self)
-        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(80, 20))
+        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(30, 20))
 
         canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0)
         scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
@@ -59,11 +70,18 @@ class AccountFrame(ttk.Frame):
             "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        scrollable_window = canvas.create_window(
+            (0, 0), window=scrollable_frame, anchor="n"
+        )
         canvas.configure(yscrollcommand=scrollbar.set)
 
+        def _on_canvas_configure(event):
+            canvas.itemconfig(scrollable_window, width=event.width)
+            canvas.coords(scrollable_window, event.width / 2, 0)
+
+        canvas.bind("<Configure>", _on_canvas_configure)
+
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Enable mouse wheel scrolling
         def _on_mousewheel(event):
@@ -177,6 +195,7 @@ class AccountFrame(ttk.Frame):
         main_statistics_frame.pack(pady=20, fill=tk.X, padx=20)
         statistics_frame = self.app.Frame(main_statistics_frame)
         statistics_frame.pack(pady=3, padx=3, fill=tk.X)
+        self.statistics_frame = statistics_frame
 
         statistics_frame.columnconfigure(0, weight=1)
         statistics_frame.columnconfigure(1, weight=1)
@@ -184,9 +203,7 @@ class AccountFrame(ttk.Frame):
         statistics_frame.rowconfigure(1, weight=1)
 
         self.account_statistics = {}
-        thread = threading.Thread(
-            target=lambda: asyncio.run(self.fetch_account_statistics())
-        )
+        thread = threading.Thread(target=self._load_statistics_worker, daemon=True)
         thread.start()
 
         # Number of games played
@@ -209,12 +226,14 @@ class AccountFrame(ttk.Frame):
         self.app.Label(
             statistics_frame,
             text="Nombre de victoires",
-        ).grid(row=1, column=0, pady=10, padx=20, sticky="nw")
+        ).grid(row=1, column=0, pady=(10, 20), padx=(20, 0), sticky="nw")
         self.games_won_label = self.app.Label(
             statistics_frame,
             text=self.account_statistics.get("games_won", "0"),
         )
-        self.games_won_label.grid(row=1, column=1, pady=10, padx=(0, 20), sticky="ne")
+        self.games_won_label.grid(
+            row=1, column=1, pady=(10, 20), padx=(0, 20), sticky="ne"
+        )
 
         # Return button
         self.return_button = self.app.Button(
@@ -225,12 +244,12 @@ class AccountFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=(0, 20), padx=20, anchor=tk.S)
+        self.return_button.pack(pady=(0, 20), padx=(20, 0), anchor=tk.S)
 
         # Bind Enter key to login
-        self.bind("<Return>", lambda event: self._login())
-        self.name_entry.bind("<Return>", lambda event: self._login())
-        self.password_entry.bind("<Return>", lambda event: self._login())
+        self.bind("<Return>", lambda event: self._on_edit_account())
+        self.name_entry.bind("<Return>", lambda event: self._on_edit_account())
+        self.password_entry.bind("<Return>", lambda event: self._on_edit_account())
 
         # Bind Tab key to navigate between entries
         self.name_entry.bind(
@@ -266,17 +285,57 @@ class AccountFrame(ttk.Frame):
         """
 
         if self.app.password:
-            self.name_entry.config(state=tk.NORMAL)
-            self.password_entry.config(state=tk.NORMAL)
-            self.edit_account_button.configure(
-                state=tk.DISABLED,
-                text="Sauvegarder",
-                overlay_path=self.app.save_icon_path,
-                hover_overlay_path=self.app.hovered_save_icon_path,
-            )
+            self._on_save_account()
 
         else:
             self.app._show_login_dialog()
+            self._on_return()
+
+    def _on_save_account(self):
+        """
+        Save the new account information (name and password) to the backend API.
+        """
+
+        try:
+            response = requests.post(
+                f"{BASE_URL}/users/{self.app.username}/change_name",
+                params={"new_name": self.name_entry.get()},
+                timeout=5,
+            )
+            print(response)
+            if response.status_code == 200:
+                messagebox.showinfo(
+                    "Succès", "Informations du compte mises à jour avec succès."
+                )
+                self.app.name = self.name_entry.get()  # type: ignore
+            else:
+                messagebox.showerror(
+                    "Erreur", "Échec de la mise à jour des informations du compte."
+                )
+
+            response = requests.post(
+                f"{BASE_URL}/users/{self.app.username}/change_password",
+                params={
+                    "old_password": self.app.password,
+                    "new_password": self.password_entry.get(),
+                },
+                timeout=5,
+            )
+            if response.status_code == 200:
+                messagebox.showinfo(
+                    "Succès", "Informations du compte mises à jour avec succès."
+                )
+                self.app.password = self.password_entry.get()  # type: ignore
+            else:
+                messagebox.showerror(
+                    "Erreur", "Échec de la mise à jour des informations du compte."
+                )
+
+        except Exception as e:
+            messagebox.showerror(
+                "Erreur",
+                "Une erreur est survenue lors de la mise à jour des informations du compte.",
+            )
 
     def download_profile_picture(self) -> None:
         """
@@ -337,7 +396,7 @@ class AccountFrame(ttk.Frame):
         except Exception:
             return
 
-        dialog = TopLevelWindow(self.app, width=420, height=640)
+        dialog = TopLevelWindow(self.app, width=835, height=560)
         frame = UploadProfilePictureFrame(
             dialog.body_frame,
             self.app,
@@ -365,26 +424,49 @@ class AccountFrame(ttk.Frame):
         try:
             async with httpx.AsyncClient(verify=False) as client:
                 response = await client.get(f"{BASE_URL}/games/{self.app.username}")
-
                 if response.status_code == 200:
                     data = response.json()
                     self.account_statistics = {
-                        "games_played": len(data.get("games", [])),
+                        "games_played": len(data),
                         "games_won": sum(
                             1
-                            for game in data.get("games", [])
+                            for game in data
                             if game.get("result") == "1-0"
-                            and game.black_player == self.app.username
+                            and game.get("black_player").get("username")
+                            == self.app.username
                             or game.get("result") == "0-1"
-                            and game.white_player == self.app.username
+                            and game.get("white_player").get("username")
+                            == self.app.username
                         ),
-                        "recent_games": data.get("games", [])[:3],
+                        "recent_games": data[:3],
                     }
+
                 else:
                     pass
 
         except Exception as e:
             pass
+
+    def _load_statistics_worker(self) -> None:
+        asyncio.run(self.fetch_account_statistics())
+        self.app.after(0, self._refresh_statistics_ui)
+
+    def _refresh_statistics_ui(self) -> None:
+        if not self.winfo_exists():
+            return
+
+        self.games_played_label.set_text(
+            str(self.account_statistics.get("games_played", "0"))
+        )
+        self.games_won_label.set_text(
+            str(self.account_statistics.get("games_won", "0"))
+        )
+
+        for child in self.statistics_frame.grid_slaves():
+            row = int(child.grid_info().get("row", 0))
+            if row >= 2:
+                child.grid_forget()
+        self.draw_recent_games(self.statistics_frame)
 
     def draw_recent_games(self, parent: tk.Widget) -> None:
         """
@@ -394,142 +476,61 @@ class AccountFrame(ttk.Frame):
         if not self.account_statistics:
             return
 
-        for game in self.account_statistics.get("recent_games", []):
+        for i in range(len(self.account_statistics.get("recent_games", []))):
+            game = self.account_statistics["recent_games"][i]
+            color = (
+                "blancs"
+                if game.get("white_player").get("username") == self.app.username
+                else "noirs"
+            )
             result = game.get("result", "N/A")
             opponent = (
-                game.get("black_player")
-                if game.get("white_player") == self.app.username
-                else game.get("white_player")
+                game.get("black_player").get("name")
+                if game.get("white_player").get("username") == self.app.username
+                else game.get("white_player").get("name")
             )
-            game_label = tk.Label(
-                parent, text=f"Result: {result}, Opponent: {opponent}"
+            frame = tk.Frame(
+                parent,
+                bg=(
+                    "green"
+                    if result == "1-0"
+                    and color == "noirs"
+                    or result == "0-1"
+                    and color == "blancs"
+                    else "red" if result in ["1-0", "0-1"] else "#f6a90d"
+                ),
+                bd=0,
+                relief=tk.FLAT,
             )
-            game_label.pack()
+            game_label = ttk.Label(
+                frame,
+                text=f"{"Gagné" if result == "1-0" and color == "noirs" or result == "0-1" and color == "blancs" else "Perdu"} avec les {color} contre {opponent} !",
+                font=("Skranji", 8),
+                background="#1e1e1e" if color == "noirs" else "white",
+                foreground="white" if color == "noirs" else "black",
+                anchor=tk.CENTER,
+            )
+            game_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=2, ipadx=5, ipady=5)
+            frame.grid(
+                row=2 + i,
+                column=0,
+                columnspan=2,
+                sticky="ew",
+                padx=20,
+                pady=(
+                    (0, 20)
+                    if i == len(self.account_statistics.get("recent_games", [])) - 1
+                    else (0, 10)
+                ),
+            )
 
-    def _login(self) -> None:
+    def _on_logout(self) -> None:
         """
-        Handle user login action.
-        """
-
-        username = self.username_var.get()
-        password = self.password_var.get()
-
-        # Check if all fields are filled
-        if username == "" or password == "":
-            if username == "":
-                self.username_entry.configure(highlightbackground="red")
-            if password == "":
-                self.password_entry.configure(highlightbackground="red")
-            self._show_error("Veuillez remplir tous les champs.")
-            return
-        self.username_entry.configure(highlightcolor="black")
-        self.password_entry.configure(highlightcolor="black")
-
-        self.login_button.config(state=tk.DISABLED)
-
-        thread = threading.Thread(
-            target=lambda: asyncio.run(self._do_login(username, password))
-        )
-        thread.start()
-
-    async def _do_login(self, username: str, password: str) -> None:
-        """
-        Authenticate a user with the backend API using async httpx.
-
-        Args:
-            username (str): The username of the user.
-            password (str): The password of the user.
+        Handle logout action to log the user out and return to the login screen.
         """
 
-        self.app.show_loading("Connexion en cours...")
-
-        try:
-            async with httpx.AsyncClient(verify=False) as client:
-                response = await client.post(
-                    f"{BASE_URL}/auth/login",
-                    params={"username": username, "password": password},
-                )
-
-                if response.status_code == 200:
-                    data = response.json()
-                    self.app.after(0, self._on_login_success, data)
-                else:
-                    self.app.after(0, self._on_login_error, "Identifiants incorrects")
-
-        except Exception as e:
-            self.app.after(0, self._on_login_error, str(e))
-
-    def _on_login_success(self, data: dict) -> None:
-        """Appelé dans le thread principal après succès."""
-        self.app.token = data["token"]
-        self.app.username = data["username"]
-
-        # Fetch full user data to get the name
-        self.app._fetch_user_data()
-
-        # Mark user as connected in database
-        self.app._mark_user_connected()
-
-        # Notify that username and profile photo have been updated
-        self.app.notify_username_updated()
-        self.app.notify_profile_photo_updated()
-
-        # Import here to avoid circular dependency at module load time
-        from gui.frames import LobbyFrame
-
-        # Close dialog and show lobby
-        self.app.hide_loading()
-        dialog = self.winfo_toplevel()
-        if isinstance(dialog, TopLevelWindow):
-            dialog.close()
-
-        self.app.preferences["auth_token"] = self.app.token
-        self.app.show_frame_with_loading(LobbyFrame, "Chargement du lobby...")
-
-    def _on_login_error(self, error: str) -> None:
-        """
-        Appelé dans le thread principal après erreur.
-        """
-        self.app.hide_loading()
-        self.login_button.config(state=tk.NORMAL)
-        self.username_entry.configure(highlightbackground="red")
-        self.password_entry.configure(highlightbackground="red")
-        self._show_error(error)
-
-        # Re-raise dialog above parent after messagebox closes
-        dialog = self.winfo_toplevel()
-        if isinstance(dialog, tk.Toplevel):
-            dialog.lift()
-            dialog.focus_set()
-
-        # Reset entries and button for retry
-        self.password_var.set("")
-        self.username_var.set("")
-        self.login_button.config(state=tk.NORMAL)
-
-    def _show_error(self, message: str) -> None:
-        """
-        Display an error message to the user.
-
-        Args:
-            message (str): The error message to display.
-        """
-
-        self.error_label.config(text=message)
-
-    def _on_register(self) -> None:
-        """
-        Switch to registration frame.
-        """
-        # Get the parent container (dialog body_frame)
-        parent = self.master
-
-        # Destroy current frame
-        self.destroy()
-
-        # Create and pack the RegisterFrame
-        register_frame = RegisterFrame(parent, self.app)  # type: ignore
-        register_frame.pack(fill=tk.BOTH, expand=True)
+        self.app._logout()
+        self._on_return()
 
     def _on_return(self) -> None:
         """
@@ -573,8 +574,12 @@ class UploadProfilePictureFrame(ttk.Frame):
         self.original_image = picture.convert("RGBA")
         self.on_complete = on_complete
 
-        self.crop_size = 316
-        self.canvas_size = 320
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        self.crop_size = 496
+        self.canvas_size = 500
         self._drag_start: tuple[int, int] | None = None
 
         self.canvas = tk.Canvas(
@@ -584,33 +589,43 @@ class UploadProfilePictureFrame(ttk.Frame):
             bg="#1e1e1e",
             highlightthickness=0,
         )
-        self.canvas.pack(pady=20)
-
-        self.error_label = ttk.Label(self, text="", style="Error.TLabel")
-        self.error_label.pack(pady=(0, 10))
+        self.canvas.grid(row=0, column=0, pady=20, padx=20, sticky="news")
 
         button_row = ttk.Frame(self)
-        button_row.pack(pady=(0, 20))
+        button_row.grid(row=0, column=1, pady=20, padx=20, sticky="n")
 
-        self.cancel_button = self.app.Button(
-            button_row,
-            text="Annuler",
-            width=160,
-            height=45,
-            command=self._on_cancel,
-            takefocus=False,
-        )
-        self.cancel_button.pack(side=tk.LEFT, padx=10)
+        self.error_label = ttk.Label(button_row, text="", style="Error.TLabel")
+        self.error_label.pack(pady=(0, 10))
 
         self.upload_button = self.app.Button(
             button_row,
             text="Importer",
-            width=160,
-            height=45,
+            overlay_path=self.app.save_icon_path,
+            hover_overlay_path=self.app.hovered_save_icon_path,
             command=self._on_upload,
             takefocus=False,
         )
-        self.upload_button.pack(side=tk.LEFT, padx=10)
+        self.upload_button.pack(pady=(10, 0))
+
+        self.change_picture_button = self.app.Button(
+            button_row,
+            text="Changer de photo",
+            overlay_path=self.app.upload_icon_path,
+            hover_overlay_path=self.app.hovered_upload_icon_path,
+            command=self._on_change_picture,
+            takefocus=False,
+        )
+        self.change_picture_button.pack(pady=(10, 0))
+
+        self.cancel_button = self.app.Button(
+            button_row,
+            text="Annuler",
+            overlay_path=self.app.return_icon_path,
+            hover_overlay_path=self.app.hovered_return_icon_path,
+            command=self._on_cancel,
+            takefocus=False,
+        )
+        self.cancel_button.pack(pady=10)
 
         self._init_canvas_image()
 
@@ -679,7 +694,7 @@ class UploadProfilePictureFrame(ttk.Frame):
             self.canvas.itemconfig(self._image_id, image=self._photo)
             self.canvas.coords(self._image_id, center[0], center[1])
 
-        self.canvas.image = self._photo
+        self.canvas.image = self._photo  # type: ignore
         if hasattr(self, "crop_rect"):
             self.canvas.tag_raise(self.crop_rect)
 
@@ -836,3 +851,23 @@ class UploadProfilePictureFrame(ttk.Frame):
         return cropped.resize(
             (self.crop_size, self.crop_size), Image.Resampling.LANCZOS
         )
+
+    def _on_change_picture(self) -> None:
+        """
+        Change the picture file to edit
+        """
+
+        new_profile_picture = filedialog.askopenfilename(
+            title="Sélectionner une nouvelle photo de profil",
+            filetypes=[("Image files", "*.png *.jpg *.jpeg *.webp")],
+        )
+        if not new_profile_picture:
+            return
+
+        try:
+            picture = Image.open(new_profile_picture).convert("RGBA")
+        except Exception:
+            return
+
+        self.original_image = picture.convert("RGBA")
+        self._init_canvas_image()

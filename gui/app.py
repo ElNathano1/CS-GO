@@ -146,8 +146,9 @@ class App(tk.Tk):
             # No token to verify, show dialog immediately
             self.after(100, self._show_login_dialog)
 
-        # Create account panel once (will be shown/hidden by frames)
+        # Create panels once (will be shown/hidden by frames)
         self._create_account_panel()
+        self._create_social_panel()
 
         # Preload UI images in the background
         images_dir = Path(BASE_FOLDER_PATH) / "images"
@@ -491,6 +492,22 @@ class App(tk.Tk):
                 )
             )
 
+        # Load logout icon
+        self.logout_icon_path = images_dir / "logout.png"
+        if self.logout_icon_path.exists():
+            self.logout_icon = ImageTk.PhotoImage(
+                Image.open(self.logout_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_logout_icon_path = images_dir / "hovered_logout.png"
+        if self.hovered_logout_icon_path.exists():
+            self.hovered_logout_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_logout_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
         # Load edit account icon
         self.edit_icon_path = images_dir / "edit.png"
         if self.edit_icon_path.exists():
@@ -523,6 +540,22 @@ class App(tk.Tk):
                 )
             )
 
+        # Load upload picture icon
+        self.upload_icon_path = images_dir / "upload.png"
+        if self.upload_icon_path.exists():
+            self.upload_icon = ImageTk.PhotoImage(
+                Image.open(self.upload_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_upload_icon_path = images_dir / "hovered_upload.png"
+        if self.hovered_upload_icon_path.exists():
+            self.hovered_upload_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_upload_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
         # Load add friend icon
         self.add_friend_icon_path = images_dir / "add_friend.png"
         if self.add_friend_icon_path.exists():
@@ -535,6 +568,22 @@ class App(tk.Tk):
         if self.hovered_add_friend_icon_path.exists():
             self.hovered_add_friend_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_add_friend_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load message icon
+        self.message_icon_path = images_dir / "message.png"
+        if self.message_icon_path.exists():
+            self.message_icon = ImageTk.PhotoImage(
+                Image.open(self.message_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_message_icon_path = images_dir / "hovered_message.png"
+        if self.hovered_message_icon_path.exists():
+            self.hovered_message_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_message_icon_path).resize(
                     (32, 32), Image.Resampling.LANCZOS
                 )
             )
@@ -949,6 +998,11 @@ class App(tk.Tk):
         """
         Create account info panel in top right corner (created once, reused across frames).
         """
+        if hasattr(self, "account_panel") and self.account_panel:
+            try:
+                self.account_panel.destroy()
+            except tk.TclError:
+                pass
         self.account_panel = ttk.Frame(self)
 
         self.wifi_signal = ttk.Label(
@@ -980,6 +1034,39 @@ class App(tk.Tk):
         self.account_profile_photo.pack(side=tk.RIGHT)
         # Keep reference to prevent garbage collection
         self.account_profile_photo.image = initial_photo  # type: ignore
+
+    def _create_social_panel(self) -> None:
+        """
+        Create social panel in top left corner (created once, reused across frames).
+        """
+        if hasattr(self, "social_panel") and self.social_panel:
+            try:
+                self.social_panel.destroy()
+            except tk.TclError:
+                pass
+        self.social_panel = ttk.Frame(self)
+
+        # Social button (friends list)
+        self.social_button = ttk.Button(
+            self.social_panel,
+            image=self.hovered_add_friend_icon,
+            command=self._show_friends_dialog,
+            style="Account.TButton",
+            takefocus=False,
+            cursor="hand2",
+        )
+        self.social_button.pack(side=tk.RIGHT, padx=(0, 10))
+
+        # Message button (placeholder for future notifications)
+        self.message_button = ttk.Button(
+            self.social_panel,
+            image=self.message_icon,
+            command=self._show_messages_dialog,
+            style="Account.TButton",
+            takefocus=False,
+            cursor="hand2",
+        )
+        self.message_button.pack(side=tk.RIGHT, padx=(0, 10))
 
     def _get_display_name(self) -> str:
         if self.name:
@@ -1072,8 +1159,9 @@ class App(tk.Tk):
         # Notify connection change (trigger callback if registered)
         self._update_wifi_signal()
 
-        # Show account panel if not already visible
+        # Show panels if not already visible
         self._show_account_panel_if_visible()
+        self._show_social_panel_if_visible()
 
     def _update_account_panel(self) -> None:
         """Update account panel button text with current user info."""
@@ -1219,6 +1307,8 @@ class App(tk.Tk):
                             pass
                     self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
                     self.account_panel.lift()
+                    self.social_panel.place(relx=0.02, rely=0.04, anchor="nw")
+                    self.social_panel.lift()
 
             self.after(100, restore_panel_after_close)
         else:
@@ -1236,6 +1326,8 @@ class App(tk.Tk):
                             pass
                     self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
                     self.account_panel.lift()
+                    self.social_panel.place(relx=0.02, rely=0.04, anchor="nw")
+                    self.social_panel.lift()
 
             self.after(100, show_panel_on_close)
 
@@ -1263,7 +1355,7 @@ class App(tk.Tk):
         """
         Show account panel if we have an authenticated user and current frame is LobbyFrame.
         """
-        if self.username and hasattr(self, "account_panel") and self.account_panel:
+        if hasattr(self, "account_panel") and self.account_panel:
             # Check if current frame is LobbyFrame
             if (
                 self.current_frame
@@ -1271,6 +1363,35 @@ class App(tk.Tk):
             ):
                 self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
                 self.account_panel.lift()
+
+    def _show_friends_dialog(self) -> None:
+        """
+        Show the friends list dialog (called when clicking on social button).
+        """
+
+        # self.open_dialog(TopLevelWindow(self, width=400, height=700), FriendsFrame)  # type: ignore
+        pass
+
+    def _show_messages_dialog(self) -> None:
+        """
+        Show the messages dialog (placeholder for future notifications).
+        """
+
+        # self.open_dialog(TopLevelWindow(self, width=400, height=700), MessagesFrame)  # type: ignore
+        pass
+
+    def _show_social_panel_if_visible(self) -> None:
+        """
+        Show social panel if we have an authenticated user and current frame is LobbyFrame.
+        """
+        if hasattr(self, "social_panel") and self.social_panel:
+            # Check if current frame is LobbyFrame
+            if (
+                self.current_frame
+                and self.current_frame.__class__.__name__ == "LobbyFrame"
+            ):
+                self.social_panel.place(relx=0.02, rely=0.04, anchor="nw")
+                self.social_panel.lift()
 
     def get_profile_photo(
         self, username: str | None = None, size: int = 32
@@ -1325,12 +1446,6 @@ class App(tk.Tk):
             if username
             else None
         )
-        print(username_photo_path)
-        print(
-            username_photo_path.exists()
-            if username_photo_path
-            else "No username photo path"
-        )
 
         if username_photo_path and username_photo_path.exists():
             return ImageTk.PhotoImage(
@@ -1354,7 +1469,7 @@ class App(tk.Tk):
         Show the account dialog (called when clicking on profile photo).
         """
 
-        self.open_dialog(TopLevelWindow(self, width=400, height=720, position="right"), AccountFrame, show_account_panel=True)  # type: ignore
+        self.open_dialog(TopLevelWindow(self, width=450, height=720, position="right"), AccountFrame, show_account_panel=True)  # type: ignore
 
     def notify_username_updated(self) -> None:
         """
@@ -1456,6 +1571,48 @@ class App(tk.Tk):
         # Call connection strength callback (e.g., to disable online button)
         if self.connection_strength_callback:
             self.connection_strength_callback(self._connection_strength)
+
+    def _logout(self) -> None:
+        """
+        Logout the user by clearing authentication data and showing the login dialog.
+        """
+
+        # Mark user as disconnected in database
+        if self.username:
+            try:
+                requests.post(
+                    f"{BASE_URL}/users/{self.username}/disconnect",
+                    timeout=5,
+                )
+            except Exception as e:
+                pass
+
+        self.username = None
+        self.password = None
+        self.name = None
+        self.token = None
+        self._random_display_name = None
+        if hasattr(self, "level"):
+            self.level = None
+
+        # Hide panels
+        if hasattr(self, "account_panel") and self.account_panel:
+            self.account_panel.place_forget()
+        if hasattr(self, "social_panel") and self.social_panel:
+            self.social_panel.place_forget()
+
+        self.preferences["auth_token"] = None
+
+        # Show login dialog after logout
+        self._show_login_dialog()
+
+        # Recreate panel like on app startup (not placed until login)
+        self._create_account_panel()
+        self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+        self.account_panel.lift()
+        self._create_social_panel()
+        self.social_panel.place(relx=0.02, rely=0.04, anchor="nw")
+        self.social_panel.lift()
 
     def return_to_desktop(self) -> None:
         """
