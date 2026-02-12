@@ -40,6 +40,7 @@ class LoginFrame(ttk.Frame):
 
         super().__init__(parent)
         self.app = app
+        self._login_timeout_handle = None
         loading = self.app.show_loading("Chargement...")
 
         # Title
@@ -169,6 +170,12 @@ class LoginFrame(ttk.Frame):
 
         self.login_button.config(state=tk.DISABLED)
         self._login_loading = self.app.show_loading("Connexion...")
+        if self._login_timeout_handle is not None:
+            try:
+                self.after_cancel(self._login_timeout_handle)
+            except Exception:
+                pass
+        self._login_timeout_handle = self.after(15000, self._on_login_timeout)
 
         thread = threading.Thread(
             target=lambda: asyncio.run(self._do_login(username, password))
@@ -185,23 +192,44 @@ class LoginFrame(ttk.Frame):
         """
 
         try:
-            async with httpx.AsyncClient(verify=False) as client:
+            payload = {"username": username, "password": password}
+            async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
                 response = await client.post(
                     f"{BASE_URL}/auth/login",
-                    params={"username": username, "password": password},
+                    json=payload,
                 )
+                if response.status_code != 200:
+                    response = await client.post(
+                        f"{BASE_URL}/auth/login",
+                        params=payload,
+                    )
 
                 if response.status_code == 200:
                     data = response.json()
                     self.app.after(0, self._on_login_success, data)
                 else:
-                    self.app.after(0, self._on_login_error, "Identifiants incorrects")
+                    error_detail = None
+                    try:
+                        error_detail = response.json().get("detail")
+                    except Exception:
+                        error_detail = None
+                    self.app.after(
+                        0,
+                        self._on_login_error,
+                        error_detail or "Identifiants incorrects",
+                    )
 
         except Exception as e:
             self.app.after(0, self._on_login_error, str(e))
 
     def _on_login_success(self, data: dict) -> None:
         """Appelé dans le thread principal après succès."""
+        if self._login_timeout_handle is not None:
+            try:
+                self.after_cancel(self._login_timeout_handle)
+            except Exception:
+                pass
+            self._login_timeout_handle = None
         if getattr(self, "_login_loading", None) is not None:
             self.app.hide_loading(self._login_loading)
             self._login_loading = None
@@ -231,10 +259,21 @@ class LoginFrame(ttk.Frame):
 
     def _on_login_error(self, error: str) -> None:
         """Appelé dans le thread principal après erreur."""
+        if self._login_timeout_handle is not None:
+            try:
+                self.after_cancel(self._login_timeout_handle)
+            except Exception:
+                pass
+            self._login_timeout_handle = None
         if getattr(self, "_login_loading", None) is not None:
             self.app.hide_loading(self._login_loading)
             self._login_loading = None
         self.login_button.config(state=tk.NORMAL)
+
+    def _on_login_timeout(self) -> None:
+        """Fail login after a timeout to avoid silent hangs."""
+        if getattr(self, "_login_loading", None) is not None:
+            self._on_login_error("Connexion impossible. Verifiez votre connexion.")
         self.username_entry.configure(style="Error.TEntry")
         self.password_entry.configure(style="Error.TEntry")
         self._show_error(error)
@@ -577,7 +616,7 @@ class RegisterFrame(ttk.Frame):
         """
 
         try:
-            async with httpx.AsyncClient(verify=False) as client:
+            async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
                 # Create user account
                 response = await client.post(
                     f"{BASE_URL}/users/",
@@ -586,7 +625,6 @@ class RegisterFrame(ttk.Frame):
                         "name": name,
                         "password": password,
                     },
-                    timeout=5,
                 )
 
                 if response.status_code != 200:
@@ -600,8 +638,14 @@ class RegisterFrame(ttk.Frame):
                 # Login with new account
                 response = await client.post(
                     f"{BASE_URL}/auth/login",
-                    params={"username": username, "password": password},
+                    json={"username": username, "password": password},
                 )
+
+                if response.status_code != 200:
+                    response = await client.post(
+                        f"{BASE_URL}/auth/login",
+                        params={"username": username, "password": password},
+                    )
 
                 if response.status_code == 200:
                     data = response.json()

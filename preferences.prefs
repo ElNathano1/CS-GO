@@ -1,7 +1,7 @@
 {
   "master_volume": 100.0,
-  "music_volume": 0.0,
+  "music_volume": 48.148148148148145,
   "effects_volume": 100.0,
   "stay_logged_in": true,
-  "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVsbmF0aGFubyIsImV4cCI6MTc3MDg1MDIwMCwiaWF0IjoxNzcwNzYzODAwfQ.fiYLiqshwc1FKMGYFIFhkzxOvCyrdwNcGsE4z6amCQ0"
+  "auth_token": null
 }
