@@ -10,6 +10,8 @@ This module provides:
 Models:
 - User: Represents a player account with profile, level, and friends
 - Friendship: Represents a directional friendship relationship between users
+- Game: Represents a game record between two users
+- Message: Represents a message sent between users
 """
 
 from __future__ import annotations
@@ -87,6 +89,19 @@ class User(Base):
         "Game",
         foreign_keys="Game.white_player_id",
         back_populates="white_player",
+        cascade="all, delete-orphan",
+    )
+
+    messages_sent = relationship(
+        "Message",
+        foreign_keys="Message.sender_id",
+        back_populates="sender",
+        cascade="all, delete-orphan",
+    )
+    messages_received = relationship(
+        "Message",
+        foreign_keys="Message.recipient_id",
+        back_populates="recipient",
         cascade="all, delete-orphan",
     )
 
@@ -247,7 +262,7 @@ class Game(Base):
         id: Primary key
         black_player_id: Foreign key to User (first player)
         white_player_id: Foreign key to User (second player)
-        date: Timestamp of when the game was played
+        timestamp: Timestamp of when the game was played
         result: String representing the game result (e.g., "1-0", "0-1", "0.5-0.5")
         moves: String representing the sequence of moves in the game
     """
@@ -255,13 +270,15 @@ class Game(Base):
     __tablename__ = "games"
 
     __table_args__ = (
-        UniqueConstraint("black_player_id", "white_player_id", "date", name="uq_game"),
+        UniqueConstraint(
+            "black_player_id", "white_player_id", "timestamp", name="uq_game"
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True)
     black_player_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     white_player_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    date = Column(DateTime, nullable=False)
+    timestamp = Column(DateTime, nullable=False)
     result = Column(String(10), nullable=False)
     moves = Column(Text, nullable=False)
 
@@ -273,7 +290,62 @@ class Game(Base):
     )
 
     def __repr__(self) -> str:
-        return f"Game(id={self.id}, black_player_id={self.black_player_id}, white_player_id={self.white_player_id}, date={self.date}, result={self.result})"
+        return f"Game(id={self.id}, black_player_id={self.black_player_id}, white_player_id={self.white_player_id}, timestamp={self.timestamp}, result={self.result})"
+
+
+class Message(Base):
+    """
+    SQLAlchemy ORM model for a message sent between users.
+
+    Attributes:
+        id: Primary key
+        sender_id: Foreign key to User (message sender)
+        recipient_id: Foreign key to User (message recipient)
+        timestamp: Timestamp of when the message was sent
+        content: Text content of the message
+    """
+
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    type = Column(
+        String(20), nullable=False, default="message"
+    )  # e.g., "message", "friend invite", "game invite", "system message"
+    timestamp = Column(DateTime, nullable=False)
+    content = Column(Text, nullable=False)
+
+    sender = relationship(
+        "User", foreign_keys=[sender_id], back_populates="messages_sent"
+    )
+    recipient = relationship(
+        "User", foreign_keys=[recipient_id], back_populates="messages_received"
+    )
+
+    def __repr__(self) -> str:
+        return f"Message(id={self.id}, sender_id={self.sender_id}, recipient_id={self.recipient_id}, timestamp={self.timestamp})"
+
+    def __str__(self) -> str:
+        return f"Message from User {self.sender_id} to User {self.recipient_id} at {self.timestamp}:\n{self.content}"
+
+    def is_friend_invitation(self) -> bool:
+        """
+        Check if the message content indicates a friend invitation.
+
+        Returns:
+            True if the message is a friend invitation, False otherwise
+        """
+        return self.type == "friend invite"  # type: ignore
+
+    def is_game_invitation(self) -> bool:
+        """
+        Check if the message content indicates a game invitation.
+
+        Returns:
+            True if the message is a game invitation, False otherwise
+        """
+        return self.type == "game invite"  # type: ignore
 
 
 # Database initialization

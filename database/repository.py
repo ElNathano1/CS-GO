@@ -10,7 +10,7 @@ Classes:
 """
 
 from sqlalchemy.orm import Session
-from database.models import User, Friendship, Game
+from database.models import User, Friendship, Game, Message
 from database.account import Account
 from datetime import datetime
 
@@ -158,6 +158,36 @@ class AccountRepository:
             user.profile_picture = new_profile_picture  # type: ignore
             self.session.commit()
 
+    def post_message(
+        self,
+        sender_username: str,
+        recipient_username: str,
+        content: str,
+        type: int = "message",  # type: ignore
+    ) -> None:
+        """
+        Post a message from one user to another.
+
+        Args:
+            sender_username: The username of the sender
+            recipient_username: The username of the recipient
+            content: The message content
+            is_invite: True if the message is a game invitation, False otherwise
+        """
+        sender = self.session.query(User).filter_by(username=sender_username).first()
+        recipient = (
+            self.session.query(User).filter_by(username=recipient_username).first()
+        )
+
+        if not sender or not recipient:
+            return
+
+        message = Message(
+            sender_id=sender.id, recipient_id=recipient.id, type=type, content=content
+        )
+        self.session.add(message)
+        self.session.commit()
+
     def add_friend(self, username: str, friend_username: str) -> None:
         """
         Add a friend relationship between two users.
@@ -201,6 +231,64 @@ class AccountRepository:
         if friendship:
             self.session.delete(friendship)
             self.session.commit()
+
+    def invite_friend(self, sender_username: str, recipient_username: str) -> None:
+        """
+        Invite a friend (create a relationship and send a friend invitation message) from one user to another.
+
+        Args:
+            sender_username: The username of the sender
+            recipient_username: The username of the recipient
+        """
+        sender = self.get_by_username(sender_username)
+        recipient = self.get_by_username(recipient_username)
+
+        if not sender or not recipient:
+            return
+
+        self.add_friend(sender_username, recipient_username)
+        self.post_message(
+            sender_username=sender_username,
+            recipient_username=recipient_username,
+            content=f"{recipient.name}, soyons amis !",  # type: ignore
+            type="friend invite",  # type: ignore
+        )
+        self.post_message(
+            sender_username=recipient_username,
+            recipient_username=sender_username,
+            content=f"Vous avez envoyé une invitation d'ami à {recipient.name}",  # type: ignore
+            type="system message",  # type: ignore
+        )
+
+    def accept_friend_invite(
+        self, sender_username: str, recipient_username: str
+    ) -> None:
+        """
+        Accept a friend invitation by creating a reciprocal friendship and sending a confirmation message.
+
+        Args:
+            sender_username: The username of the sender of the original invite
+            recipient_username: The username of the recipient accepting the invite
+        """
+        sender = self.get_by_username(sender_username)
+        recipient = self.get_by_username(recipient_username)
+
+        if not sender or not recipient:
+            return
+
+        self.add_friend(sender_username, recipient_username)
+        self.post_message(
+            sender_username=sender_username,
+            recipient_username=recipient_username,
+            content=f"{recipient.name}, soyons amis !",  # type: ignore
+            type="friend invite",  # type: ignore
+        )
+        self.post_message(
+            sender_username=recipient_username,
+            recipient_username=sender_username,
+            content=f"Vous avez envoyé une invitation d'ami à {recipient.name}",  # type: ignore
+            type="system message",  # type: ignore
+        )
 
     def update_level(self, username: str, new_level: int) -> None:
         """
@@ -314,7 +402,7 @@ class AccountRepository:
         self,
         black_player_username: str,
         white_player_username: str,
-        date: datetime,
+        timestamp: datetime,
         result: str = "0.5-0.5",
         moves: str = "",
     ) -> None:
@@ -324,7 +412,7 @@ class AccountRepository:
         Args:
             black_player_username: The username of the black player
             white_player_username: The username of the white player
-            date: The date the game was played
+            timestamp: The timestamp the game was played
             result: The result of the game ("black_win", "white_win", "draw")
             moves: The moves made during the game in a specific format
         """
@@ -345,7 +433,7 @@ class AccountRepository:
         game = Game(
             black_player_id=black_player.id,
             white_player_id=white_player.id,
-            date=date,
+            timestamp=timestamp,
             result=result,
             moves=moves,
         )

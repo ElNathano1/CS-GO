@@ -127,7 +127,7 @@ class LevelUpdate(BaseModel):
 class GameCreate(BaseModel):
     black_player_username: str
     white_player_username: str
-    date: str
+    timestamp: str
     result: str
     moves: str
 
@@ -191,12 +191,12 @@ def process_profile_picture(file_bytes: bytes, username: str) -> tuple[str, str]
     return webp_path, jpeg_path
 
 
-def parse_game_date(date_value: str) -> datetime:
-    """Parse a game date string into a datetime."""
+def parse_game_timestamp(timestamp_value: str) -> datetime:
+    """Parse a game timestamp string into a datetime."""
     try:
-        return datetime.fromisoformat(date_value)
+        return datetime.fromisoformat(timestamp_value)
     except ValueError:
-        return datetime.strptime(date_value, "%d-%m-%Y")
+        return datetime.strptime(timestamp_value, "%d-%m-%Y")
 
 
 @app.post("/auth/login")
@@ -290,7 +290,7 @@ def get_games(username: str, repo: AccountRepository = Depends(get_repo)):
         {
             "black_player": game.black_player,
             "white_player": game.white_player,
-            "date": game.date,
+            "timestamp": game.timestamp,
             "result": game.result,
             "moves": game.moves,
         }
@@ -306,17 +306,17 @@ def add_game(game: GameCreate, repo: AccountRepository = Depends(get_repo)):
         raise HTTPException(status_code=404, detail="White player not found")
 
     try:
-        parsed_date = parse_game_date(game.date)
+        parsed_timestamp = parse_game_timestamp(game.timestamp)
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail="Invalid date format. Use ISO 8601 or DD-MM-YYYY.",
+            detail="Invalid timestamp format. Use ISO 8601 or DD-MM-YYYY.",
         )
 
     repo.save_game(
         game.black_player_username,
         game.white_player_username,
-        parsed_date,
+        parsed_timestamp,
         game.result,
         game.moves,
     )
