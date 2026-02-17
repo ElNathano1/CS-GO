@@ -4,3 +4,6 @@
 # Ignoring temporary or preferencies files
 *.prefs
 *.csgogame
+
+# Ignoring Katago logs
+*.log

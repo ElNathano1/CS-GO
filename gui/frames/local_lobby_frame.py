@@ -179,7 +179,8 @@ class LocalLobbyFrame(ttk.Frame):
                         level=-3000,
                     ),
                     game,
-                )
+                ),
+                show_social_panel=False,
             )
         else:
             print("Resuming singleplayer game...")
@@ -197,7 +198,8 @@ class LocalLobbyFrame(ttk.Frame):
                         level=-3000,
                     ),
                     game,
-                )
+                ),
+                show_social_panel=False,
             )
 
     def _start_game(self) -> None:
@@ -232,7 +234,8 @@ class LocalLobbyFrame(ttk.Frame):
                         level=-3000,
                     ),
                     game,
-                )
+                ),
+                show_social_panel=False,
             )
 
         if not self.multiplayer.get():
@@ -251,7 +254,8 @@ class LocalLobbyFrame(ttk.Frame):
                         level=-3000,
                     ),
                     game,
-                )
+                ),
+                show_social_panel=False,
             )
 
     def _return_to_lobby(self) -> None:

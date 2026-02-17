@@ -976,7 +976,12 @@ class App(tk.Tk):
             **kwargs,
         )
 
-    def show_frame(self, frame_class) -> None:
+    def show_frame(
+        self,
+        frame_class,
+        show_account_panel: bool = True,
+        show_social_panel: bool = True,
+    ) -> None:
         """
         Switch to a different frame.
 
@@ -991,8 +996,14 @@ class App(tk.Tk):
         self.current_frame.grid(row=0, column=0, sticky="nsew")
 
         # Ensure account panel stays on top if it exists
-        if hasattr(self, "account_panel") and self.account_panel:
-            self.account_panel.lift()
+        if show_account_panel and hasattr(self, "account_panel") and self.account_panel:
+            self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+        elif hasattr(self, "account_panel") and self.account_panel:
+            self.account_panel.place_forget()
+        if show_social_panel and hasattr(self, "social_panel") and self.social_panel:
+            self.social_panel.place(relx=0.02, rely=0.04, anchor="nw")
+        elif hasattr(self, "social_panel") and self.social_panel:
+            self.social_panel.place_forget()
 
     def _create_account_panel(self) -> None:
         """
