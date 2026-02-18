@@ -556,6 +556,15 @@ class App(tk.Tk):
                 )
             )
 
+        # Load search icon
+        self.search_icon_path = images_dir / "search.png"
+        if self.search_icon_path.exists():
+            self.search_icon = ImageTk.PhotoImage(
+                Image.open(self.search_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
         # Load add friend icon
         self.add_friend_icon_path = images_dir / "add_friend.png"
         if self.add_friend_icon_path.exists():
