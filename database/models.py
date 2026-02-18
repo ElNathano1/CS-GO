@@ -359,6 +359,9 @@ def ensure_schema() -> None:
     if os.environ.get("SKIP_SCHEMA_CHECK", "0").lower() in {"1", "true", "yes"}:
         return
 
+    # Ensure all declared tables exist (safe: creates only missing tables)
+    Base.metadata.create_all(bind=engine)
+
     inspector = inspect(engine)
     if not inspector.has_table("users"):
         return
