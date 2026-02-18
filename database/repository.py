@@ -280,13 +280,70 @@ class AccountRepository:
         self.post_message(
             sender_username=sender_username,
             recipient_username=recipient_username,
-            content=f"{recipient.name}, soyons amis !",  # type: ignore
-            type="friend invite",  # type: ignore
+            content=f"Vous avez accepté l'invitation d'ami de {sender.name}",  # type: ignore
+            type="system message",  # type: ignore
         )
         self.post_message(
             sender_username=recipient_username,
             recipient_username=sender_username,
-            content=f"Vous avez envoyé une invitation d'ami à {recipient.name}",  # type: ignore
+            content=f"{recipient.name} a accepté votre invitation d'ami",  # type: ignore
+            type="system message",  # type: ignore
+        )
+
+    def reject_friend_invite(
+        self, sender_username: str, recipient_username: str
+    ) -> None:
+        """
+        Reject a friend invitation by sending a rejection message.
+
+        Args:
+            sender_username: The username of the sender of the original invite
+            recipient_username: The username of the recipient rejecting the invite
+        """
+        sender = self.get_by_username(sender_username)
+        recipient = self.get_by_username(recipient_username)
+
+        if not sender or not recipient:
+            return
+
+        self.remove_friend(sender_username, recipient_username)
+        self.post_message(
+            sender_username=sender_username,
+            recipient_username=recipient_username,
+            content=f"Vous avez rejeté l'invitation d'ami de {sender.name}",  # type: ignore
+            type="system message",  # type: ignore
+        )
+        self.post_message(
+            sender_username=recipient_username,
+            recipient_username=sender_username,
+            content=f"{recipient.name} a rejeté votre invitation d'ami",  # type: ignore
+            type="system message",  # type: ignore
+        )
+
+    def invite_to_game(self, sender_username: str, recipient_username: str) -> None:
+        """
+        Invite a friend to a game by sending a game invitation message.
+
+        Args:
+            sender_username: The username of the sender
+            recipient_username: The username of the recipient
+        """
+        sender = self.get_by_username(sender_username)
+        recipient = self.get_by_username(recipient_username)
+
+        if not sender or not recipient:
+            return
+
+        self.post_message(
+            sender_username=sender_username,
+            recipient_username=recipient_username,
+            content=f"Une petite partie {recipient.name} ? Let's GO !",  # type: ignore
+            type="game invite",  # type: ignore
+        )
+        self.post_message(
+            sender_username=recipient_username,
+            recipient_username=sender_username,
+            content=f"Vous avez envoyé une invitation de jeu à {recipient.name}",  # type: ignore
             type="system message",  # type: ignore
         )
 

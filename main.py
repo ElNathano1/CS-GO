@@ -37,6 +37,7 @@ Incoming from server:
 """
 
 import os
+from random import random
 import shutil
 import jwt
 from datetime import datetime, timedelta
@@ -431,6 +432,28 @@ def add_friend(
     return {
         "status": "success",
         "message": f"{action.friend_username} added to {username}",
+    }
+
+
+@app.post("/users/{username}/accept_friend")
+def accept_friend(
+    username: str, action: FriendAction, repo: AccountRepository = Depends(get_repo)
+):
+    repo.accept_friend_invite(username, action.friend_username)
+    return {
+        "status": "success",
+        "message": f"{action.friend_username} and {username} are now friends",
+    }
+
+
+@app.post("/users/{username}/reject_friend")
+def reject_friend(
+    username: str, action: FriendAction, repo: AccountRepository = Depends(get_repo)
+):
+    repo.reject_friend_invite(username, action.friend_username)
+    return {
+        "status": "success",
+        "message": f"{action.friend_username} rejected friend invite from {username}",
     }
 
 
@@ -1108,7 +1131,7 @@ async def ws_lobby(ws: WebSocket):
 
                     # Try to find the closest level opponent
                     opponent: str | None = None
-                    best_diff = 1_000_000
+                    best_diff = 1000000
                     for other in ws_manager.queue:
                         if other == username:
                             continue
@@ -1154,8 +1177,13 @@ async def ws_lobby(ws: WebSocket):
                                 },
                             )
 
-                        # Assign colors deterministically
-                        ws_manager.room_colors[room_id] = {username: 1, opponent: 2}
+                        # Assign colors randomly
+                        colors = [1, 2]
+                        random.shuffle(colors)  # type: ignore
+                        ws_manager.room_colors[room_id] = {
+                            username: colors[0],
+                            opponent: colors[1],
+                        }
                         ws_manager.room_users[room_id] = {username, opponent}
                 continue
 
@@ -1206,8 +1234,14 @@ async def ws_lobby(ws: WebSocket):
                 room_id = uuid.uuid4().hex
                 inviter = str(invite.get("from"))
                 inviter_ws = ws_manager.lobby_clients.get(inviter)
-                # Assign colors deterministically
-                ws_manager.room_colors[room_id] = {inviter: 1, username: 2}
+
+                # Assign colors randomly
+                colors = [1, 2]
+                random.shuffle(colors)  # type: ignore
+                ws_manager.room_colors[room_id] = {
+                    inviter: colors[0],
+                    username: colors[1],
+                }
                 ws_manager.room_users[room_id] = {inviter, username}
                 await ws_manager.send(
                     ws,
@@ -1332,6 +1366,7 @@ async def ws_room(ws: WebSocket, room_id: str):
                 await ws_manager.send(
                     ws, {"type": "room.joined", "payload": {"room_id": room_id}}
                 )
+
                 # Broadcast presence
                 await ws_manager.broadcast_room(
                     room_id,
