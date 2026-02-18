@@ -372,7 +372,7 @@ def get_messages(username: str, repo: AccountRepository = Depends(get_repo)):
 
 
 @app.post("/messages/{sender_username}")
-def send_message_with_path(
+def send_message(
     sender_username: str,
     message: MessageCreate,
     repo: AccountRepository = Depends(get_repo),
@@ -401,19 +401,6 @@ def send_message_with_path(
         "status": "success",
         "message": f"Message sent from {sender_username} to {message.recipient_username}:\n({message.type} ; {parsed_timestamp})\n'{message.content}'",
     }
-
-
-@app.post("/messages/")
-def send_message(
-    message: MessageCreate,
-    sender_username: str,
-    repo: AccountRepository = Depends(get_repo),
-):
-    return send_message_with_path(
-        sender_username=sender_username,
-        message=message,
-        repo=repo,
-    )
 
 
 @app.get("/users/{username}")
