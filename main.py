@@ -371,11 +371,11 @@ def get_messages(username: str, repo: AccountRepository = Depends(get_repo)):
     }
 
 
-@app.post("/messages/")
-def send_message(
-    message: MessageCreate,
+@app.post("/messages/{sender_username}")
+def send_message_with_path(
     sender_username: str,
-    repo: AccountRepository = Depends(get_repo),
+    message: MessageCreate,
+    repo: AccountRepository,
 ):
     if not repo.get_by_username(sender_username):
         raise HTTPException(status_code=404, detail="Sender not found")

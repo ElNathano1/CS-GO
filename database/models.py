@@ -365,12 +365,25 @@ def ensure_schema() -> None:
 
     columns = {column["name"] for column in inspector.get_columns("users")}
     if "in_game" in columns:
-        return
+        pass
 
-    with engine.begin() as connection:
-        connection.execute(
-            text("ALTER TABLE users ADD COLUMN in_game INTEGER NOT NULL DEFAULT 0")
-        )
+    else:
+        with engine.begin() as connection:
+            connection.execute(
+                text("ALTER TABLE users ADD COLUMN in_game INTEGER NOT NULL DEFAULT 0")
+            )
+
+    if inspector.has_table("messages"):
+        message_columns = {
+            column["name"] for column in inspector.get_columns("messages")
+        }
+        if "type" not in message_columns:
+            with engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "ALTER TABLE messages ADD COLUMN type VARCHAR(20) NOT NULL DEFAULT 'message'"
+                    )
+                )
 
 
 def get_session() -> Session:
