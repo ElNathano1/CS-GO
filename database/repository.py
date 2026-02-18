@@ -163,7 +163,8 @@ class AccountRepository:
         sender_username: str,
         recipient_username: str,
         content: str,
-        type: int = "message",  # type: ignore
+        timestamp: datetime | None = None,
+        type: str = "message",
     ) -> None:
         """
         Post a message from one user to another.
@@ -172,7 +173,7 @@ class AccountRepository:
             sender_username: The username of the sender
             recipient_username: The username of the recipient
             content: The message content
-            is_invite: True if the message is a game invitation, False otherwise
+            type: The type of the message ("chat", "system message", "friend invite", etc.)
         """
         sender = self.session.query(User).filter_by(username=sender_username).first()
         recipient = (
@@ -182,8 +183,15 @@ class AccountRepository:
         if not sender or not recipient:
             return
 
+        if timestamp is None:
+            timestamp = datetime.utcnow()
+
         message = Message(
-            sender_id=sender.id, recipient_id=recipient.id, type=type, content=content
+            sender_id=sender.id,
+            recipient_id=recipient.id,
+            type=type,
+            content=content,
+            timestamp=timestamp,
         )
         self.session.add(message)
         self.session.commit()
@@ -518,6 +526,28 @@ class AccountRepository:
         )
 
         return games_as_black + games_as_white
+
+    def get_messages(self, username: str) -> dict[str, list[Message] | None]:
+        """
+        Retrieve all messages sent to or received by a specific user.
+
+        Args:
+            username: The username of the account
+        Returns:
+            Dictionary with keys "sent" and "received" containing lists of Message objects, or None if no messages found
+        """
+        user = self.session.query(User).filter_by(username=username).first()
+        if not user:
+            return {"sent": None, "received": None}
+
+        sent_messages = (
+            self.session.query(Message).filter((Message.sender_id == user.id)).all()
+        )
+        received_messages = (
+            self.session.query(Message).filter((Message.recipient_id == user.id)).all()
+        )
+
+        return {"sent": sent_messages, "received": received_messages}
 
     def remove_user(self, username: str) -> None:
         """

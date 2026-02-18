@@ -133,6 +133,13 @@ class GameCreate(BaseModel):
     moves: str
 
 
+class MessageCreate(BaseModel):
+    recipient_username: str
+    timestamp: str | None = None
+    content: str
+    type: str  # "chat", "system message", "friend invite", etc.
+
+
 # === Helper functions for profile pictures ===
 def get_profile_pic_dir(profile_picture: str) -> str:
     """Get profile picture directory for a user"""
@@ -326,6 +333,56 @@ def add_game(game: GameCreate, repo: AccountRepository = Depends(get_repo)):
         "message": (
             f"Game between {game.black_player_username} and {game.white_player_username} added"
         ),
+    }
+
+
+@app.get("/messages/{username}")
+def get_messages(username: str, repo: AccountRepository = Depends(get_repo)):
+    messages = repo.get_messages(username)
+    if not messages:
+        raise HTTPException(status_code=404, detail="No messages found for user")
+    return {
+        "sent": [
+            {
+                "recipient": repo.get_by_username(msg.recipient_id).username,  # type: ignore
+                "content": msg.content,
+                "timestamp": msg.timestamp,
+                "type": msg.type,
+            }
+            for msg in messages["sent"]  # type: ignore
+        ],
+        "received": [
+            {
+                "sender": repo.get_by_username(msg.sender_id).username,  # type: ignore
+                "content": msg.content,
+                "timestamp": msg.timestamp,
+                "type": msg.type,
+            }
+            for msg in messages["received"]  # type: ignore
+        ],
+    }
+
+
+@app.post("/messages/")
+def send_message(
+    message: MessageCreate,
+    sender_username: str,
+    repo: AccountRepository = Depends(get_repo),
+):
+    if not repo.get_by_username(sender_username):
+        raise HTTPException(status_code=404, detail="Sender not found")
+    if not repo.get_by_username(message.recipient_username):
+        raise HTTPException(status_code=404, detail="Recipient not found")
+
+    repo.post_message(
+        sender_username=sender_username,
+        recipient_username=message.recipient_username,
+        content=message.content,
+        type=message.type,
+    )
+    return {
+        "status": "success",
+        "message": f"Message sent from {sender_username} to {message.recipient_username}:\n({message.type} ; {message.timestamp})\n'{message.content}'",
     }
 
 
