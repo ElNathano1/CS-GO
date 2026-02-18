@@ -135,7 +135,7 @@ class GameCreate(BaseModel):
 
 class MessageCreate(BaseModel):
     recipient_username: str
-    timestamp: str | None = None
+    timestamp: str
     content: str
     type: str  # "chat", "system message", "friend invite", etc.
 
@@ -205,6 +205,14 @@ def parse_game_timestamp(timestamp_value: str) -> datetime:
         return datetime.fromisoformat(timestamp_value)
     except ValueError:
         return datetime.strptime(timestamp_value, "%d-%m-%Y")
+
+
+def parse_message_timestamp(timestamp_value: str) -> datetime:
+    """Parse a message timestamp string into a datetime."""
+    try:
+        return datetime.fromisoformat(timestamp_value)
+    except ValueError:
+        return datetime.strptime(timestamp_value, "%d-%m-%Y %H:%M:%S")
 
 
 @app.post("/auth/login")
@@ -374,15 +382,24 @@ def send_message(
     if not repo.get_by_username(message.recipient_username):
         raise HTTPException(status_code=404, detail="Recipient not found")
 
+    try:
+        parsed_timestamp = parse_message_timestamp(message.timestamp)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid timestamp format. Use ISO 8601 or DD-MM-YYYY HH:MM:SS.",
+        )
+
     repo.post_message(
         sender_username=sender_username,
         recipient_username=message.recipient_username,
+        timestamp=parsed_timestamp,
         content=message.content,
         type=message.type,
     )
     return {
         "status": "success",
-        "message": f"Message sent from {sender_username} to {message.recipient_username}:\n({message.type} ; {message.timestamp})\n'{message.content}'",
+        "message": f"Message sent from {sender_username} to {message.recipient_username}:\n({message.type} ; {parsed_timestamp})\n'{message.content}'",
     }
 
 
