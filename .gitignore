@@ -21,6 +21,8 @@ env/
 Thumbs.db
 .vscode/
 
-# Logs
+# Logs and saves
+saves/
+*.csgogame
 gtp_logs/
 *.log
