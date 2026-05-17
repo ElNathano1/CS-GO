@@ -19,10 +19,9 @@ from PIL import Image, ImageTk
 
 from gui.game_canvas import StoneBowl
 from game.core import Goban, GoGame
-from game.utils import game_to_dict
 from gui.frames.settings_frame import SettingsFrame
 from gui.widgets import TopLevelWindow
-from player.ai import Martin, Leo, Magnus, KatagoAI, Player
+from player.ai import KatagoAI, Martin, Amina, Leo, Sofia, Ravi, Ada, Player
 
 from config import BASE_FOLDER_PATH
 
@@ -30,10 +29,9 @@ if TYPE_CHECKING:
     from gui.app import App
 
 
-def _ai_move_worker(game_state: dict, ai_kind: str, color: int, out_queue) -> None:
-    from player.ai import compute_ai_move
+def _ai_move_worker(ai: Martin | KatagoAI, out_queue) -> None:
 
-    move = compute_ai_move(game_state, ai_kind, color)
+    move = ai.choose_move()
     out_queue.put(move)
 
 
@@ -1337,13 +1335,11 @@ class SingleplayerGameFrame(GameFrame):
             self.after(50, self._poll_ai_result)
             return
 
-        game_state = game_to_dict(self.game)
-
         ctx = multiprocessing.get_context("spawn")
         self._ai_result_queue = ctx.Queue()
         self._ai_process = ctx.Process(
             target=_ai_move_worker,
-            args=(game_state, ai_kind, self.ai_color, self._ai_result_queue),
+            args=(ai, self._ai_result_queue),
             daemon=True,
         )
         self._ai_process.start()

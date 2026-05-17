@@ -625,6 +625,7 @@ class TexturedButton(tk.Button):
         font: tuple[str, int] | None = None,
         font_dpi_scale: float | None = None,
         bd: int | None = None,
+        bg: str | None = None,
         highlightthickness: int | None = None,
         **kwargs,
     ) -> None:
@@ -637,6 +638,7 @@ class TexturedButton(tk.Button):
             self.text = text
         if overlay_path is not None:
             self.overlay_path = overlay_path
+            self._original_overlay_path = self.overlay_path
         if hover_overlay_path is not None:
             self.hover_overlay_path = hover_overlay_path
         if width is not None:
@@ -651,19 +653,21 @@ class TexturedButton(tk.Button):
             self.overlay_padding = overlay_padding
         if text_color is not None:
             self.text_color = text_color
+            self._original_text_color = self.text_color
         if font is not None:
             self.font = font
         if font_dpi_scale is not None:
             self.font_dpi_scale = font_dpi_scale
         if bd is not None:
             self.bd = bd
+        if bg is not None:
+            super().configure(bg=bg)
+            self.bg = bg
+            self._original_bg = self.bg
         if highlightthickness is not None:
             self.highlightthickness = highlightthickness
 
         super().config(**kwargs)
-        self._original_text_color = self.text_color
-        self._original_overlay_path = self.texture_path
-        self._original_bg = self.bg
         self._update_texture()
 
     def hover_effect_on_enter(self, event):
@@ -672,8 +676,6 @@ class TexturedButton(tk.Button):
 
         Args:
             event: Tkinter event object.
-            text_color: Text color on hover.
-            border_color: Border color on hover.
         """
 
         if not self["state"] == tk.DISABLED:
@@ -688,8 +690,6 @@ class TexturedButton(tk.Button):
 
         Args:
             event: Tkinter event object.
-            text_color: Text color on hover.
-            border_color: Border color on hover.
         """
 
         if not self["state"] == tk.DISABLED:

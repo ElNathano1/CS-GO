@@ -658,6 +658,39 @@ class App(tk.Tk):
                 )
             )
 
+        # Toggle and untoggle icons
+        self.toggle_icon_path = images_dir / "toggle.png"
+        if self.toggle_icon_path.exists():
+            self.toggle_icon = ImageTk.PhotoImage(
+                Image.open(self.toggle_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        self.hovered_toggle_icon_path = images_dir / "hovered_toggle.png"
+        if self.hovered_toggle_icon_path.exists():
+            self.hovered_toggle_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_toggle_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        self.untoggle_icon_path = images_dir / "untoggle.png"
+        if self.untoggle_icon_path.exists():
+            self.untoggle_icon = ImageTk.PhotoImage(
+                Image.open(self.untoggle_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
+        self.hovered_untoggle_icon_path = images_dir / "hovered_untoggle.png"
+        if self.hovered_untoggle_icon_path.exists():
+            self.hovered_untoggle_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_untoggle_icon_path).resize(
+                    (32, 32), Image.Resampling.LANCZOS
+                )
+            )
+
         # Load effects icon
         self.effects_icon_path = images_dir / "effects.png"
         if self.effects_icon_path.exists():

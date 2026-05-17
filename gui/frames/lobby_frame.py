@@ -167,9 +167,6 @@ class LobbyFrame(ttk.Frame):
     def _open_local_game(self) -> None:
         """
         Open the game starting window.
-
-        Args:
-            game (GoGame, optional): The game instance to resume. Defaults to None.
         """
 
         self.app.show_frame(lambda parent, app: LocalLobbyFrame(parent, app))
@@ -178,6 +175,8 @@ class LobbyFrame(ttk.Frame):
         """
         Open the online game lobby.
         """
+
+        # self.app.show_frame(lambda parent, app: OnlineLobbyFrame(parent, app))
         pass
 
     def _open_settings(self) -> None:

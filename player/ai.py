@@ -4,12 +4,15 @@ AI players for the Go game.
 This module contains various AI implementations for playing Go:
 - Player: Base class for all players (human and AI)
 - Martin: Simple random-move AI (easy difficulty)
-- TrueAI: Base class for lookahead AI players
-- Leo: Intermediate AI with basic strategy (medium difficulty)
-- Magnus: Advanced AI with deeper lookahead (hard difficulty)
+- KatagoAI: AI using the KataGo engine (modular difficulty)
+    - Amina : Beginner (level -2950)
+    - Léo : Intermediate (level -2000)
+    - Sofia : Advanced (level -1050)
+    - Ravi : Expert (level -100)
+    - Ada : Master (level 850)
 
-AI players use different strategies and search depths to provide
-varying levels of challenge for human players.
+For a reminder, the levels are based on the French Federation of Go (FFG) ranking system, where:
+- The lowest level is -2950 (beginner) and the highest level is 2950 (master).
 """
 
 import numpy as np
@@ -169,269 +172,6 @@ class Martin(Player):
             return (random_position[0], random_position[1])
         else:
             return "pass"
-
-
-class TrueAI(Player):
-    """
-    A placeholder class for a more advanced AI opponent, that can look ahead few moves to pick the best one.
-
-    Attributes:
-        name (str): The name of the player.
-        level (int): The skill level of the player.
-        game (GoGame): The current state of the Go board.
-        color (int): The color assigned to the TrueAI (Goban.BLACK or Goban.WHITE).
-    """
-
-    def __init__(self, name: str, game: GoGame, color: int, level: int):
-        """
-        Initializes the advanced AI opponent.
-
-        Args:
-            id (int): The unique identifier of the AI.
-            name (str): The name of the AI.
-            level (int): The skill level of the AI.
-            game (GoGame): The current state of the Go board.
-            color (int): The color assigned to the TrueAI (Goban.BLACK or Goban.WHITE).
-        """
-
-        images_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "profiles"
-        default_photo_path = images_dir / f"{name.lower()}_profile_photo.png"
-
-        if default_photo_path.exists():
-            profile_photo = ImageTk.PhotoImage(
-                Image.open(default_photo_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
-                )
-            )
-        else:
-            # Create a blank image if default not found
-            blank_image = Image.new("RGBA", (32, 32), (255, 255, 255, 0))
-            profile_photo = ImageTk.PhotoImage(blank_image)
-
-        super().__init__(
-            name=name, color=color, profile_photo=profile_photo, level=level
-        )
-        self.game = game
-        self.profile_photo = profile_photo
-
-    def choose_move(
-        self, nbr_moves: int
-    ) -> tuple[int, int] | Literal["pass", "resign"]:
-        """
-        Chooses the best move among the possible moves by simulating each one using alpha-beta pruning.
-
-        Args:
-            nbr_moves (int): The number of moves to look ahead.
-
-        Returns:
-            tuple[int, int] | Literal["pass", "resign"]: The chosen move as (x, y), or "pass" if no moves are possible.
-        """
-
-        return _true_ai_choose_move(self.game, self.color, nbr_moves)
-
-
-def _true_ai_choose_move(
-    game: GoGame, color: int, nbr_moves: int
-) -> tuple[int, int] | Literal["pass", "resign"]:
-    opponent_color = Goban.BLACK if color == Goban.WHITE else Goban.WHITE
-
-    def look_ahead(
-        game: GoGame, depth: int, maximizing_player: bool, alpha: float, beta: float
-    ) -> float:
-        if depth == 0:
-            score = game.get_score()
-            return score[color] - score[opponent_color]
-
-        empty_positions = np.argwhere(game.goban.board == Goban.EMPTY)
-
-        if maximizing_player:
-            max_eval = -float("inf")
-            for position in empty_positions:
-                x, y = position
-                temp_game = game.copy()
-                valid_move, _ = temp_game.take_move(x, y)
-                if not valid_move:
-                    continue
-                eval = look_ahead(temp_game, depth - 1, False, alpha, beta)
-                max_eval = max(max_eval, eval)
-                alpha = max(alpha, eval)
-                if beta <= alpha:
-                    break
-            return max_eval
-
-        min_eval = float("inf")
-        for position in empty_positions:
-            x, y = position
-            temp_game = game.copy()
-            valid_move, _ = temp_game.take_move(x, y)
-            if not valid_move:
-                continue
-            eval = look_ahead(temp_game, depth - 1, True, alpha, beta)
-            min_eval = min(min_eval, eval)
-            beta = min(beta, eval)
-            if beta <= alpha:
-                break
-        return min_eval
-
-    empty_positions = np.argwhere(game.goban.board == Goban.EMPTY)
-    if len(empty_positions) == 0:
-        return "pass"
-
-    best_move = None
-    best_score = -float("inf")
-    _score = game.get_score()
-    current_score = _score[color] - _score[opponent_color]
-
-    for position in empty_positions:
-        x, y = position
-        temp_game = game.copy()
-        valid_move, _ = temp_game.take_move(x, y)
-        if not valid_move:
-            continue
-        score = look_ahead(temp_game, nbr_moves, False, -float("inf"), float("inf"))
-        if score > best_score:
-            best_score = score
-            best_move = [(x, y)]
-        elif score == best_score and best_move is not None:
-            best_move.append((x, y))
-
-    if best_score - current_score <= 0 and current_score > 0:
-        return "pass"
-
-    if best_move is None:
-        return "pass"
-
-    return best_move[rd.randint(0, len(best_move) - 1)]
-
-
-def compute_ai_move(
-    game_state: dict,
-    ai_kind: str,
-    color: int,
-    resign_threshold: int = 50,
-    resign_probability: float = 0.0001,
-    pass_probability: float = 0.5,
-) -> tuple[int, int] | Literal["pass", "resign"]:
-    """
-    Compute an AI move in a headless context (safe for multiprocessing).
-    """
-    game = game_from_dict(game_state)
-
-    if ai_kind == "Martin":
-        # Random AI (Martin)
-        opponent_color = Goban.BLACK if color == Goban.WHITE else Goban.WHITE
-        if rd.random() < resign_probability:
-            return "resign"
-
-        score = game.get_score()
-        if score[opponent_color] - score[color] > resign_threshold:
-            return "resign"
-
-        if (game.black_passed and color == Goban.WHITE) or (
-            game.white_passed and color == Goban.BLACK
-        ):
-            if rd.random() < pass_probability:
-                return "pass"
-
-        empty_positions = np.argwhere(game.goban.board == Goban.EMPTY)
-        valid = False
-        while not valid and len(empty_positions) > 0:
-            random_position = empty_positions[np.random.choice(len(empty_positions))]
-            temp_game = game.copy()
-            valid, _ = temp_game.take_move(random_position[0], random_position[1])
-            empty_positions = np.delete(
-                empty_positions,
-                np.where((empty_positions == random_position).all(axis=1)),
-                axis=0,
-            )
-
-        if valid:
-            return (random_position[0], random_position[1])
-        return "pass"
-
-    if ai_kind == "Leo":
-        return _true_ai_choose_move(game, color, 2)
-
-    if ai_kind == "Magnus":
-        return _true_ai_choose_move(game, color, 4)
-
-    return _true_ai_choose_move(game, color, 2)
-
-
-class Leo(TrueAI):
-    """
-    A class representing the AI opponent, "Leo", to play against the user.
-
-    Attributes:
-        game (GoGame): The current state of the Go board.
-        color (int): The color assigned to Leo (Goban.BLACK or Goban.WHITE).
-    """
-
-    def __init__(self, game: GoGame, color: int):
-        """
-        Initializes the AI opponent.
-
-        Args:
-            game (GoGame): The current state of the Go board.
-            color (int): The color assigned to Leo (Goban.BLACK or Goban.WHITE).
-        """
-
-        super().__init__(name="Leo", game=game, color=color, level=-2850)
-
-    def __str__(self) -> str:
-        return (
-            f"Player Leo (playing {'white' if self.color == Goban.WHITE else 'black'})\n"
-            "Leo (level -2850): Casual Player\n"
-            "A player that analyses all possible moves to pick the directly best one."
-        )
-
-    def choose_move(self) -> tuple[int, int] | Literal["pass", "resign"]:
-        """
-        Chooses the best move among the possible moves by simulating each one.
-
-        Returns:
-            tuple[int, int] | Literal["pass", "resign"]: The chosen move as (x, y), or "pass" if no moves are possible.
-        """
-
-        return super().choose_move(nbr_moves=2)
-
-
-class Magnus(TrueAI):
-    """
-    A class representing the AI opponent, "Magnus", to play against the user.
-
-    Attributes:
-        game (GoGame): The current state of the Go board.
-        color (int): The color assigned to Magnus (Goban.BLACK or Goban.WHITE).
-    """
-
-    def __init__(self, game: GoGame, color: int):
-        """
-        Initializes the AI opponent.
-
-        Args:
-            game (GoGame): The current state of the Go board.
-            color (int): The color assigned to Magnus (Goban.BLACK or Goban.WHITE).
-        """
-
-        super().__init__(name="Magnus", game=game, color=color, level=-2750)
-
-    def __str__(self) -> str:
-        return (
-            f"Player Magnus (playing {'white' if self.color == Goban.WHITE else 'black'})\n"
-            "Magnus (level -2750): Strategic Player\n"
-            "A player that analyses several moves ahead to pick the best one."
-        )
-
-    def choose_move(self) -> tuple[int, int] | Literal["pass", "resign"]:
-        """
-        Chooses the best move among the possible moves by simulating each one using look-ahead.
-
-        Returns:
-            tuple[int, int] | Literal["pass", "resign"]: The chosen move as (x, y), or "pass" if no moves are possible.
-        """
-
-        return super().choose_move(nbr_moves=4)
 
 
 class KatagoAI(Player):
@@ -701,3 +441,53 @@ class KatagoAI(Player):
             pass
         if self.process.poll() is None:
             self.process.terminate()
+
+
+class Amina(KatagoAI):
+    def __init__(self, game: GoGame, color: int):
+        super().__init__(
+            name="Amina",
+            game=game,
+            color=color,
+            level=-2950,
+        )
+
+
+class Leo(KatagoAI):
+    def __init__(self, game: GoGame, color: int):
+        super().__init__(
+            name="Léo",
+            game=game,
+            color=color,
+            level=-2000,
+        )
+
+
+class Sofia(KatagoAI):
+    def __init__(self, game: GoGame, color: int):
+        super().__init__(
+            name="Sofia",
+            game=game,
+            color=color,
+            level=-1050,
+        )
+
+
+class Ravi(KatagoAI):
+    def __init__(self, game: GoGame, color: int):
+        super().__init__(
+            name="Ravi",
+            game=game,
+            color=color,
+            level=-100,
+        )
+
+
+class Ada(KatagoAI):
+    def __init__(self, game: GoGame, color: int):
+        super().__init__(
+            name="Ada",
+            game=game,
+            color=color,
+            level=850,
+        )

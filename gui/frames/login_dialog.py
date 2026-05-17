@@ -268,12 +268,16 @@ class LoginFrame(ttk.Frame):
         if getattr(self, "_login_loading", None) is not None:
             self.app.hide_loading(self._login_loading)
             self._login_loading = None
+        self.username_entry.configure(style="Error.TEntry")
+        self.password_entry.configure(style="Error.TEntry")
+        self._show_error(error)
         self.login_button.config(state=tk.NORMAL)
 
     def _on_login_timeout(self) -> None:
         """Fail login after a timeout to avoid silent hangs."""
+        error = "Connexion impossible. Verifiez votre connexion."
         if getattr(self, "_login_loading", None) is not None:
-            self._on_login_error("Connexion impossible. Verifiez votre connexion.")
+            self._on_login_error(error)
         self.username_entry.configure(style="Error.TEntry")
         self.password_entry.configure(style="Error.TEntry")
         self._show_error(error)

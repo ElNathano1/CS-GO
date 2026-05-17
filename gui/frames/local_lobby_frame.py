@@ -12,7 +12,7 @@ import tkinter.ttk as ttk
 from game.core import Goban
 from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
 from gui.utils import random_username
-from player.ai import KatagoAI, Martin, Leo, Magnus, Player
+from player.ai import KatagoAI, Martin, Amina, Leo, Sofia, Ravi, Ada, Player
 
 from game.core import GoGame
 
@@ -72,20 +72,35 @@ class LocalLobbyFrame(ttk.Frame):
         player_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
 
         # Buttons for number of players
-        ttk.Radiobutton(
+        self.multiplayer_button = self.app.Button(
             player_frame.content_frame,
-            text="Un joueur (contre IA)",
-            variable=self.multiplayer,
-            value=False,
+            overlay_path=self.app.multiplayer_icon_path,
+            hover_overlay_path=self.app.hovered_multiplayer_icon_path,
+            text="Deux joueurs",
+            command=lambda: self._select_player("multiplayer"),
             takefocus=False,
-        ).pack(padx=30, pady=(20, 10), fill=tk.BOTH)
-        ttk.Radiobutton(
+        )
+        self.multiplayer_button.pack(padx=30, pady=(20, 10), fill=tk.BOTH)
+        self.singleplayer_button = self.app.Button(
             player_frame.content_frame,
-            text="Deux joueurs (local)",
-            variable=self.multiplayer,
-            value=True,
+            overlay_path=self.app.singleplayer_icon_path,
+            hover_overlay_path=self.app.hovered_singleplayer_icon_path,
+            text="Un joueur",
+            command=lambda: self._select_player("singleplayer"),
             takefocus=False,
-        ).pack(padx=30, pady=(10, 20), fill=tk.BOTH)
+        )
+        self.singleplayer_button.pack(padx=30, pady=10, fill=tk.BOTH)
+        self._select_player("multiplayer")
+
+        # Button to select AI difficulty (only visible in singleplayer mode)
+        self.ai_button = self.app.Button(
+            player_frame.content_frame,
+            overlay_path=self.app.singleplayer_icon_path,
+            hover_overlay_path=self.app.hovered_singleplayer_icon_path,
+            text="Un joueur",
+            command=lambda: self._select_player("singleplayer"),
+            takefocus=False,
+        )
 
         self.after(0, self._build_step_3)
 
@@ -97,27 +112,36 @@ class LocalLobbyFrame(ttk.Frame):
         size_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
 
         # Buttons for different board sizes
-        ttk.Radiobutton(
+        self.nine_button = self.app.Button(
             size_frame.content_frame,
-            text="9x9",
-            variable=self.board_size,
-            value=9,
+            overlay_path=self.app.untoggle_icon_path,
+            hover_overlay_path=self.app.hovered_untoggle_icon_path,
+            text="9 × 9  ",
+            width=150,
+            command=lambda: self._select_size(9),
             takefocus=False,
-        ).pack(padx=30, pady=(20, 10), fill=tk.X)
-        ttk.Radiobutton(
+        )
+        self.nine_button.pack(padx=30, pady=(20, 10), fill=tk.X)
+        self.thirteen_button = self.app.Button(
             size_frame.content_frame,
-            text="13x13",
-            variable=self.board_size,
-            value=13,
+            overlay_path=self.app.untoggle_icon_path,
+            hover_overlay_path=self.app.hovered_untoggle_icon_path,
+            text="13 × 13",
+            width=150,
+            command=lambda: self._select_size(13),
             takefocus=False,
-        ).pack(padx=30, pady=10, fill=tk.X)
-        ttk.Radiobutton(
+        )
+        self.thirteen_button.pack(padx=30, pady=10, fill=tk.X)
+        self.nineteen_button = self.app.Button(
             size_frame.content_frame,
-            text="19x19",
-            variable=self.board_size,
-            value=19,
+            overlay_path=self.app.toggle_icon_path,
+            hover_overlay_path=self.app.hovered_toggle_icon_path,
+            text="19 × 19",
+            width=150,
+            command=lambda: self._select_size(19),
             takefocus=False,
-        ).pack(padx=30, pady=(10, 20), fill=tk.X)
+        )
+        self.nineteen_button.pack(padx=30, pady=(10, 20), fill=tk.X)
 
         self.after(0, self._build_step_4)
 
@@ -149,6 +173,86 @@ class LocalLobbyFrame(ttk.Frame):
         ).pack(pady=(10, 20))
 
         self.app.hide_loading(self._loading)
+
+    def _select_player(self, mode: str) -> None:
+        """
+        Emulates the behavior of radiobuttons for player mode selection.
+
+        Args:
+            mode (str): The game mode to select ("singleplayer" or "multiplayer").
+        """
+
+        if mode == "singleplayer":
+            self.multiplayer.set(False)
+            self.multiplayer_button.configure(
+                overlay_path=self.app.multiplayer_icon_path,
+                hover_overlay_path=self.app.hovered_multiplayer_icon_path,
+            )
+            self.singleplayer_button.configure(
+                overlay_path=self.app.hovered_singleplayer_icon_path,
+                hover_overlay_path=self.app.hovered_singleplayer_icon_path,
+            )
+        elif mode == "multiplayer":
+            self.multiplayer.set(True)
+            self.multiplayer_button.configure(
+                overlay_path=self.app.hovered_multiplayer_icon_path,
+                hover_overlay_path=self.app.hovered_multiplayer_icon_path,
+            )
+            self.singleplayer_button.configure(
+                overlay_path=self.app.singleplayer_icon_path,
+                hover_overlay_path=self.app.hovered_singleplayer_icon_path,
+            )
+
+    def _select_size(self, size: int) -> None:
+        """
+        Emulates the behavior of radiobuttons
+
+        Args:
+            size (int): The size of the board to select (9, 13, or 19).
+        """
+
+        self.board_size.set(size)
+
+        match size:
+            case 9:
+                self.nine_button.configure(
+                    overlay_path=self.app.toggle_icon_path,
+                    hover_overlay_path=self.app.hovered_toggle_icon_path,
+                )
+                self.thirteen_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+                self.nineteen_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+            case 13:
+                self.nine_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+                self.thirteen_button.configure(
+                    overlay_path=self.app.toggle_icon_path,
+                    hover_overlay_path=self.app.hovered_toggle_icon_path,
+                )
+                self.nineteen_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+            case 19:
+                self.nine_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+                self.thirteen_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+                self.nineteen_button.configure(
+                    overlay_path=self.app.toggle_icon_path,
+                    hover_overlay_path=self.app.hovered_toggle_icon_path,
+                )
 
     def _resume_game(self, game: "GoGame") -> None:
         """
