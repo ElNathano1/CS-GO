@@ -9,5 +9,8 @@ env/
 .vscode/
 .DS_Store
 Thumbs.db
+saves/
+*.csgogame
+gtp_logs/
 *.log
 *.tmp
