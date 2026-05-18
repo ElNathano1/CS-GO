@@ -27,6 +27,8 @@ def game_to_dict(game: GoGame) -> dict:
         "nbr_moves": game.nbr_moves,
         "states": [state.tolist() for state in game.goban.states],
         "singleplayer": game.singleplayer,
+        "played_color": game.played_color,
+        "opponent_username": game.opponent_username,
     }
 
 
@@ -43,6 +45,8 @@ def game_from_dict(data: dict) -> GoGame:
     game.nbr_moves = data["nbr_moves"]
     game.goban.states = [np.array(state) for state in data["states"]]
     game.singleplayer = data["singleplayer"]
+    game.played_color = data["played_color"]
+    game.opponent_username = data["opponent_username"]
     return game
 
 

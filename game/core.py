@@ -359,6 +359,8 @@ class GoGame:
         self.moves_list: str = ""
 
         self.singleplayer: bool = False
+        self.played_color: int = Goban.BLACK
+        self.opponent_username: str = ""
 
     def copy(self) -> "GoGame":
         """
@@ -376,6 +378,9 @@ class GoGame:
         new_game.white_passed = self.white_passed
         new_game.nbr_moves = self.nbr_moves
         new_game.moves_list = self.moves_list
+        new_game.singleplayer = self.singleplayer
+        new_game.played_color = self.played_color
+        new_game.opponent_username = self.opponent_username
 
         return new_game
 

@@ -12,7 +12,8 @@ import tkinter.ttk as ttk
 from game.core import Goban
 from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
 from gui.utils import random_username
-from player.ai import KatagoAI, Martin, Amina, Leo, Sofia, Ravi, Ada, Player
+from player.ai import KatagoAI, Martin, Amina, Leo, Sofia, Ravi, Ada, Player, load_ai
+from random import randint
 
 from game.core import GoGame
 
@@ -43,7 +44,8 @@ class LocalLobbyFrame(ttk.Frame):
 
         self.board_size = tk.IntVar(value=19)
         self.multiplayer = tk.BooleanVar(value=True)
-        self.ai = None
+        self.ai = "Test"
+        self.played_color = tk.IntVar(value=randint(Goban.BLACK, Goban.WHITE))
         self.after(0, self._build_step_1)
 
     def _build_step_1(self) -> None:
@@ -57,6 +59,7 @@ class LocalLobbyFrame(ttk.Frame):
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
         self.container.grid_columnconfigure(1, weight=1)
+        self.container.grid_columnconfigure(2, weight=1)
 
         # Ensure account panel is visible on this frame
         if hasattr(self.app, "account_panel") and self.app.account_panel:
@@ -146,6 +149,44 @@ class LocalLobbyFrame(ttk.Frame):
         self.after(0, self._build_step_4)
 
     def _build_step_4(self) -> None:
+        # Color selection frame
+        main_color_frame = self.app.Frame(self.container, bg="black", bd=1)
+        main_color_frame.grid(row=0, column=2, pady=20, padx=5, sticky="nws")
+        color_frame = self.app.Frame(main_color_frame)
+        color_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+
+        # Buttons for different board sizes
+        self.black_button = self.app.Button(
+            color_frame.content_frame,
+            overlay_path=self.app.untoggle_icon_path,
+            hover_overlay_path=self.app.hovered_untoggle_icon_path,
+            text="Jouer les noirs",
+            command=lambda: self._select_color(Goban.BLACK),
+            takefocus=False,
+        )
+        self.black_button.pack(padx=30, pady=(20, 10), fill=tk.X)
+        self.white_button = self.app.Button(
+            color_frame.content_frame,
+            overlay_path=self.app.untoggle_icon_path,
+            hover_overlay_path=self.app.hovered_untoggle_icon_path,
+            text="Jouer les blancs",
+            command=lambda: self._select_color(Goban.WHITE),
+            takefocus=False,
+        )
+        self.white_button.pack(padx=30, pady=10, fill=tk.X)
+        self.indifferent_button = self.app.Button(
+            color_frame.content_frame,
+            overlay_path=self.app.toggle_icon_path,
+            hover_overlay_path=self.app.hovered_toggle_icon_path,
+            text="Indifférent    ",
+            command=lambda: self._select_color(3),
+            takefocus=False,
+        )
+        self.indifferent_button.pack(padx=30, pady=(10, 20), fill=tk.X)
+
+        self.after(0, self._build_step_5)
+
+    def _build_step_5(self) -> None:
         self.app.Button(
             self,
             text="Continuer la partie",
@@ -254,6 +295,61 @@ class LocalLobbyFrame(ttk.Frame):
                     hover_overlay_path=self.app.hovered_toggle_icon_path,
                 )
 
+    def _select_color(self, color: int) -> None:
+        """
+        Emulates the behavior of radiobuttons
+
+        Args:
+            color (int): The color to select (Goban.BLACK or Goban.WHITE).
+        """
+
+        self.played_color.set(
+            color
+            if color in (Goban.BLACK, Goban.WHITE)
+            else randint(Goban.BLACK, Goban.WHITE)
+        )
+
+        match color:
+            case Goban.BLACK:
+                self.black_button.configure(
+                    overlay_path=self.app.toggle_icon_path,
+                    hover_overlay_path=self.app.hovered_toggle_icon_path,
+                )
+                self.white_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+                self.indifferent_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+            case Goban.WHITE:
+                self.black_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+                self.white_button.configure(
+                    overlay_path=self.app.toggle_icon_path,
+                    hover_overlay_path=self.app.hovered_toggle_icon_path,
+                )
+                self.indifferent_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+            case 3:
+                self.black_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+                self.white_button.configure(
+                    overlay_path=self.app.untoggle_icon_path,
+                    hover_overlay_path=self.app.hovered_untoggle_icon_path,
+                )
+                self.indifferent_button.configure(
+                    overlay_path=self.app.toggle_icon_path,
+                    hover_overlay_path=self.app.hovered_toggle_icon_path,
+                )
+
     def _resume_game(self, game: "GoGame") -> None:
         """
         Resume an existing game.
@@ -263,45 +359,87 @@ class LocalLobbyFrame(ttk.Frame):
         """
 
         board_size = game.goban.size
+        color_played = game.played_color
+        display_name = self.app._get_display_name()
+        opponent_username = game.opponent_username
+
         if not game.singleplayer:
-            display_name = self.app._get_display_name()
+
+            if color_played == Goban.BLACK:
+                black_player = Player(
+                    display_name,
+                    self.app.get_profile_photo(display_name.split(" ")[0]),
+                    color=Goban.BLACK,
+                    level=-3000,
+                )
+                white_player = Player(
+                    opponent_username,
+                    self.app._get_default_profile_photo(
+                        opponent_username.split(" ")[0]
+                    ),
+                    color=Goban.WHITE,
+                    level=-3000,
+                )
+
+            else:
+                white_player = Player(
+                    display_name,
+                    self.app.get_profile_photo(display_name.split(" ")[0]),
+                    color=Goban.WHITE,
+                    level=-3000,
+                )
+                black_player = Player(
+                    opponent_username,
+                    self.app._get_default_profile_photo(
+                        opponent_username.split(" ")[0]
+                    ),
+                    color=Goban.BLACK,
+                    level=-3000,
+                )
+
             self.app.show_frame(
                 lambda parent, app: GameFrame(
                     parent,
                     app,
                     board_size,
-                    Player(
-                        display_name,
-                        self.app.get_profile_photo(display_name.split(" ")[0]),
-                        color=Goban.BLACK,
-                        level=-3000,
-                    ),
-                    Player(
-                        random_username(),
-                        self.app._get_default_profile_photo(),
-                        color=Goban.WHITE,
-                        level=-3000,
-                    ),
+                    black_player,
+                    white_player,
                     game,
+                    game.played_color,
                 ),
                 show_social_panel=False,
             )
+
         else:
             print("Resuming singleplayer game...")
-            display_name = self.app._get_display_name()
+
+            if color_played == Goban.BLACK:
+                black_player = Player(
+                    display_name,
+                    self.app.get_profile_photo(display_name.split(" ")[0]),
+                    color=Goban.BLACK,
+                    level=-3000,
+                )
+                white_player = load_ai(opponent_username, game, Goban.WHITE)
+
+            else:
+                white_player = Player(
+                    display_name,
+                    self.app.get_profile_photo(display_name.split(" ")[0]),
+                    color=Goban.WHITE,
+                    level=-3000,
+                )
+                black_player = load_ai(opponent_username, game, Goban.BLACK)
+
             self.app.show_frame(
                 lambda parent, app: SingleplayerGameFrame(
                     parent,
                     app,
                     board_size,
-                    KatagoAI("Test", game, Goban.BLACK, -1750),
-                    Player(
-                        display_name,
-                        self.app.get_profile_photo(display_name.split(" ")[0]),
-                        color=Goban.WHITE,
-                        level=-3000,
-                    ),
+                    black_player,
+                    white_player,
                     game,
+                    color_played,
                 ),
                 show_social_panel=False,
             )
@@ -319,25 +457,50 @@ class LocalLobbyFrame(ttk.Frame):
 
         if self.multiplayer.get():
             display_name = self.app._get_display_name()
+            opponent_username = random_username()
             game = GoGame(self.board_size.get())
+
+            if self.played_color.get() == Goban.BLACK:
+                black_player = Player(
+                    display_name,
+                    self.app.get_profile_photo(display_name.split(" ")[0]),
+                    color=Goban.BLACK,
+                    level=-3000,
+                )
+                white_player = Player(
+                    opponent_username,
+                    self.app._get_default_profile_photo(
+                        opponent_username.split(" ")[0]
+                    ),
+                    color=Goban.WHITE,
+                    level=-3000,
+                )
+
+            else:
+                white_player = Player(
+                    display_name,
+                    self.app.get_profile_photo(display_name.split(" ")[0]),
+                    color=Goban.WHITE,
+                    level=-3000,
+                )
+                black_player = Player(
+                    opponent_username,
+                    self.app._get_default_profile_photo(
+                        opponent_username.split(" ")[0]
+                    ),
+                    color=Goban.BLACK,
+                    level=-3000,
+                )
+
             self.app.show_frame(
                 lambda parent, app: GameFrame(
                     parent,
                     app,
                     self.board_size.get(),
-                    Player(
-                        display_name,
-                        self.app.get_profile_photo(display_name.split(" ")[0]),
-                        color=Goban.BLACK,
-                        level=-3000,
-                    ),
-                    Player(
-                        random_username(),
-                        self.app._get_default_profile_photo(),
-                        color=Goban.WHITE,
-                        level=-3000,
-                    ),
+                    black_player,
+                    white_player,
                     game,
+                    self.played_color.get(),
                 ),
                 show_social_panel=False,
             )
@@ -345,19 +508,35 @@ class LocalLobbyFrame(ttk.Frame):
         if not self.multiplayer.get():
             display_name = self.app._get_display_name()
             game = GoGame(self.board_size.get())
+
+            if self.played_color.get() == Goban.BLACK:
+                black_player = Player(
+                    display_name,
+                    self.app.get_profile_photo(display_name.split(" ")[0]),
+                    color=Goban.BLACK,
+                    level=-3000,
+                )
+                white_player = load_ai(self.ai, game, Goban.WHITE)
+
+            else:
+                white_player = Player(
+                    display_name,
+                    self.app.get_profile_photo(display_name.split(" ")[0]),
+                    color=Goban.WHITE,
+                    level=-3000,
+                )
+                black_player = load_ai(self.ai, game, Goban.BLACK)
+
+            # TODO: Implement AI selection and color selection in the lobby
             self.app.show_frame(
                 lambda parent, app: SingleplayerGameFrame(
                     parent,
                     app,
                     self.board_size.get(),
-                    KatagoAI("Test", game, Goban.BLACK, -1750),
-                    Player(
-                        display_name,
-                        self.app.get_profile_photo(display_name.split(" ")[0]),
-                        color=Goban.WHITE,
-                        level=-3000,
-                    ),
+                    black_player,
+                    white_player,
                     game,
+                    self.played_color.get(),
                 ),
                 show_social_panel=False,
             )

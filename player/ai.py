@@ -491,3 +491,32 @@ class Ada(KatagoAI):
             color=color,
             level=850,
         )
+
+
+def load_ai(name: str, game: GoGame, color: int) -> Player:
+    """
+    Factory function to create an AI player based on the given name.
+
+    Args:
+        name (str): The name of the AI to create.
+        game (GoGame): The current state of the Go board.
+        color (int): The color assigned to the AI (Goban.BLACK or Goban.WHITE).
+
+    Returns:
+        Player: An instance of the requested AI player.
+
+    Raises:
+        ValueError: If the provided name does not match any known AI.
+    """
+    ai_classes = {
+        "Martin": Martin,
+        "Amina": Amina,
+        "Léo": Leo,
+        "Sofia": Sofia,
+        "Ravi": Ravi,
+        "Ada": Ada,
+    }
+    ai_class = ai_classes.get(name)
+    if ai_class is None:
+        return KatagoAI(name=name, game=game, color=color, level=-1750)
+    return ai_class(game=game, color=color)

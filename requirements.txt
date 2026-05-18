@@ -7,3 +7,4 @@ pymysql==1.1.1
 pydantic==1.10.11
 python-multipart==0.0.6
 websocket-client==1.8.0
+random2==1.0.1

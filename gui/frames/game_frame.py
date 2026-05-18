@@ -50,6 +50,7 @@ class GameFrame(ttk.Frame):
         black_player: Player,
         white_player: Player,
         game: GoGame,
+        played_color: int,
     ):
         """
         Initialize the game frame.
@@ -59,6 +60,7 @@ class GameFrame(ttk.Frame):
             app (App): The main application instance.
             board_size (int): The size of the board (9, 13, or 19).
             game (GoGame, optional): An existing game instance to resume. Defaults to None.
+            played_color (int): The color of the player (Goban.BLACK or Goban.WHITE).
         """
 
         super().__init__(parent)
@@ -79,7 +81,13 @@ class GameFrame(ttk.Frame):
         self.game = game
         self.black_player = black_player
         self.white_player = white_player
-
+        self.played_color = played_color
+        self.game.played_color = played_color
+        self.game.opponent_username = (
+            self.white_player.name
+            if self.played_color == Goban.BLACK
+            else self.black_player.name
+        )
         # Load images
         self._load_images()
 
@@ -875,6 +883,7 @@ class GameFrame(ttk.Frame):
                     self.white_player,
                     self.black_player,
                     game,
+                    played_color=self.played_color,
                 )
             )
 
@@ -1053,7 +1062,7 @@ class SingleplayerGameFrame(GameFrame):
         black_player: Player,
         white_player: Player,
         game: GoGame,
-        player_color: int = Goban.WHITE,
+        played_color: int = Goban.WHITE,
     ):
         """
         Initialize the game frame.
@@ -1063,14 +1072,16 @@ class SingleplayerGameFrame(GameFrame):
             app (App): The main application instance.
             board_size (int): The size of the board (9, 13, or 19).
             game (GoGame, optional): An existing game instance to resume. Defaults to None.
-            player_color (int, optional): The color of the human player. Defaults to Goban.WHITE.
+            played_color (int, optional): The color of the human player. Defaults to Goban.WHITE.
         """
-        super().__init__(parent, app, board_size, black_player, white_player, game)
+        super().__init__(
+            parent, app, board_size, black_player, white_player, game, played_color
+        )
 
         self.game.set_singleplayer()
 
-        self.player_color = player_color
-        self.ai_color = Goban.BLACK if player_color == Goban.WHITE else Goban.WHITE
+        self.played_color = played_color
+        self.ai_color = Goban.BLACK if played_color == Goban.WHITE else Goban.WHITE
         self._ai_thinking = False
         self._ai_process = None
         self._ai_result_queue = None
@@ -1085,7 +1096,7 @@ class SingleplayerGameFrame(GameFrame):
             self.after(50, self._init_singleplayer_controls)
             return
 
-        if self.player_color == Goban.WHITE:
+        if self.played_color == Goban.WHITE:
             self.pass_button.config(state=tk.DISABLED)
             self.resign_button.config(state=tk.DISABLED)
             self.after(100, self._ai_choose_move_async)
@@ -1108,24 +1119,24 @@ class SingleplayerGameFrame(GameFrame):
         black_bowl_center = (
             (
                 bowl_size // 2
-                if self.player_color == Goban.WHITE
+                if self.played_color == Goban.WHITE
                 else canvas_width - bowl_size // 2
             ),
             (
                 bowl_size // 2
-                if self.player_color == Goban.WHITE
-                else canvas_width - bowl_size // 2
+                if self.played_color == Goban.WHITE
+                else canvas_height - bowl_size // 2
             ),
         )
         white_bowl_center = (
             (
                 canvas_width - bowl_size // 2
-                if self.player_color == Goban.WHITE
+                if self.played_color == Goban.WHITE
                 else bowl_size // 2
             ),
             (
                 canvas_height - bowl_size // 2
-                if self.player_color == Goban.WHITE
+                if self.played_color == Goban.WHITE
                 else bowl_size // 2
             ),
         )
@@ -1165,7 +1176,13 @@ class SingleplayerGameFrame(GameFrame):
             highlightthickness=0,
             bg="#224722",
         )
-        white_player_panel.grid(row=2, column=0, sticky="e", padx=10, pady=(0, 10))
+        white_player_panel.grid(
+            row=2 if self.played_color == Goban.WHITE else 0,
+            column=0,
+            sticky="e" if self.played_color == Goban.WHITE else "w",
+            padx=10,
+            pady=(0, 10) if self.played_color == Goban.WHITE else (10, 0),
+        )
 
         # Account info label
         tk.Label(
@@ -1176,21 +1193,32 @@ class SingleplayerGameFrame(GameFrame):
             highlightbackground="black",
             highlightcolor="black",
             relief=tk.SOLID,
-        ).pack(side=tk.RIGHT, padx=0)
+        ).pack(side=tk.RIGHT if self.played_color == Goban.WHITE else tk.LEFT, padx=0)
         self.white_name = ttk.Label(
             white_player_panel,
             background="#224722",
             foreground="grey",
-            text=f"{f"({self.white_player.level}EGF) " if self.white_player.level != -3000 else ""}{self.white_player.name}",
+            text=(
+                f"{f"({self.white_player.level}EGF) " if self.white_player.level != -3000 else ""}{self.white_player.name}"
+                if self.played_color == Goban.WHITE
+                else f"{self.white_player.name}{f" ({self.white_player.level}EGF)" if self.white_player.level != -3000 else ""}"
+            ),
         )
-        self.white_name.pack(side=tk.RIGHT, padx=(0, 10))
+        self.white_name.pack(
+            side=tk.RIGHT if self.played_color == Goban.WHITE else tk.LEFT,
+            padx=(0, 10) if self.played_color == Goban.WHITE else (10, 0),
+        )
         self.white_score_label = ttk.Label(
             white_player_panel,
             background="#224722",
             foreground="grey",
-            text="Score: 0  -  ",
+            text=(
+                "Score: 0  -  " if self.played_color == Goban.WHITE else "  -  Score: 0"
+            ),
         )
-        self.white_score_label.pack(side=tk.RIGHT)
+        self.white_score_label.pack(
+            side=tk.RIGHT if self.played_color == Goban.WHITE else tk.LEFT
+        )
 
         # Black player panel
         black_player_panel = tk.Frame(
@@ -1199,7 +1227,13 @@ class SingleplayerGameFrame(GameFrame):
             highlightthickness=0,
             bg="#224722",
         )
-        black_player_panel.grid(row=0, column=0, sticky="w", padx=10, pady=(10, 0))
+        black_player_panel.grid(
+            row=0 if self.played_color == Goban.WHITE else 2,
+            column=0,
+            sticky="w" if self.played_color == Goban.WHITE else "e",
+            padx=10,
+            pady=(10, 0) if self.played_color == Goban.WHITE else (0, 10),
+        )
 
         # Account info label
         tk.Label(
@@ -1210,19 +1244,30 @@ class SingleplayerGameFrame(GameFrame):
             highlightbackground="black",
             highlightcolor="black",
             relief=tk.SOLID,
-        ).pack(side=tk.LEFT, padx=0)
+        ).pack(side=tk.LEFT if self.played_color == Goban.WHITE else tk.RIGHT, padx=0)
         self.black_name = ttk.Label(
             black_player_panel,
             background="#224722",
-            text=f"{self.black_player.name}{f" ({self.black_player.level}EGF)" if self.black_player.level != -3000 else ""}",
+            text=(
+                f"{self.black_player.name}{f" ({self.black_player.level}EGF)" if self.black_player.level != -3000 else ""}"
+                if self.played_color == Goban.WHITE
+                else f"{f"({self.black_player.level}EGF) " if self.black_player.level != -3000 else ""}{self.black_player.name}"
+            ),
         )
-        self.black_name.pack(side=tk.LEFT, padx=(10, 0))
+        self.black_name.pack(
+            side=tk.LEFT if self.played_color == Goban.WHITE else tk.RIGHT,
+            padx=(10, 0) if self.played_color == Goban.WHITE else (0, 10),
+        )
         self.black_score_label = ttk.Label(
             black_player_panel,
             background="#224722",
-            text="  -  Score: 0",
+            text=(
+                "  -  Score: 0" if self.played_color == Goban.WHITE else "Score: 0  -  "
+            ),
         )
-        self.black_score_label.pack(side=tk.LEFT)
+        self.black_score_label.pack(
+            side=tk.LEFT if self.played_color == Goban.WHITE else tk.RIGHT
+        )
 
     def _on_pass(self) -> None:
         """
@@ -1231,7 +1276,7 @@ class SingleplayerGameFrame(GameFrame):
         Records a pass move and updates the display.
         """
 
-        if self.game.current_color == self.player_color:
+        if self.game.current_color == self.played_color:
             super()._on_pass()
 
             if not self.game.game_over():
@@ -1255,9 +1300,12 @@ class SingleplayerGameFrame(GameFrame):
                     parent,
                     app,
                     self.board_size,
-                    self.black_player,
                     self.white_player,
+                    self.black_player,
                     game,
+                    played_color=(
+                        Goban.BLACK if self.played_color == Goban.WHITE else Goban.WHITE
+                    ),
                 )
             )
 
@@ -1265,7 +1313,7 @@ class SingleplayerGameFrame(GameFrame):
         """
         Handle the Resign button click.
         """
-        if self.game.current_color == self.player_color:
+        if self.game.current_color == self.played_color:
             return super()._on_resign()
 
     def _on_board_click(self, event: tk.Event) -> None:
