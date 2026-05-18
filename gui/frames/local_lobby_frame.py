@@ -11,14 +11,16 @@ import tkinter.ttk as ttk
 
 from game.core import Goban
 from gui.frames.game_frame import GameFrame, SingleplayerGameFrame
+from gui.frames.ai_selector_frame import AISelectorFrame
 from gui.utils import random_username
-from player.ai import KatagoAI, Martin, Amina, Leo, Sofia, Ravi, Ada, Player, load_ai
+from player.ai import Player, load_ai
 from random import randint
 
 from game.core import GoGame
 
 if TYPE_CHECKING:
     from gui.app import App
+from gui.widgets import TopLevelWindow, TexturedButton
 
 
 class LocalLobbyFrame(ttk.Frame):
@@ -44,7 +46,6 @@ class LocalLobbyFrame(ttk.Frame):
 
         self.board_size = tk.IntVar(value=19)
         self.multiplayer = tk.BooleanVar(value=True)
-        self.ai = "Test"
         self.played_color = tk.IntVar(value=randint(Goban.BLACK, Goban.WHITE))
         self.after(0, self._build_step_1)
 
@@ -83,7 +84,7 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_player("multiplayer"),
             takefocus=False,
         )
-        self.multiplayer_button.pack(padx=30, pady=(20, 10), fill=tk.BOTH)
+        self.multiplayer_button.pack(padx=30, pady=(20, 10), fill=tk.X)
         self.singleplayer_button = self.app.Button(
             player_frame.content_frame,
             overlay_path=self.app.singleplayer_icon_path,
@@ -92,18 +93,22 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_player("singleplayer"),
             takefocus=False,
         )
-        self.singleplayer_button.pack(padx=30, pady=10, fill=tk.BOTH)
+        self.singleplayer_button.pack(padx=30, pady=10, fill=tk.X)
         self._select_player("multiplayer")
 
         # Button to select AI difficulty (only visible in singleplayer mode)
         self.ai_button = self.app.Button(
             player_frame.content_frame,
-            overlay_path=self.app.singleplayer_icon_path,
-            hover_overlay_path=self.app.hovered_singleplayer_icon_path,
-            text="Un joueur",
-            command=lambda: self._select_player("singleplayer"),
+            overlay_path=self.app.hovered_martin_icon_path,
+            hover_overlay_path=self.app.hovered_martin_icon_path,
+            text="Martin",
+            command=self._show_ai_selector_dialog,
             takefocus=False,
         )
+        if self.multiplayer.get():
+            self.ai_button.pack_forget()
+        else:
+            self.ai_button.pack(padx=30, pady=(10, 20), fill=tk.X)
 
         self.after(0, self._build_step_3)
 
@@ -233,6 +238,13 @@ class LocalLobbyFrame(ttk.Frame):
                 overlay_path=self.app.hovered_singleplayer_icon_path,
                 hover_overlay_path=self.app.hovered_singleplayer_icon_path,
             )
+
+            try:
+                if not self.ai_button.winfo_ismapped():
+                    self.ai_button.pack(padx=30, pady=(10, 20), fill=tk.X)
+            except:
+                pass
+
         elif mode == "multiplayer":
             self.multiplayer.set(True)
             self.multiplayer_button.configure(
@@ -243,6 +255,19 @@ class LocalLobbyFrame(ttk.Frame):
                 overlay_path=self.app.singleplayer_icon_path,
                 hover_overlay_path=self.app.hovered_singleplayer_icon_path,
             )
+
+            try:
+                if self.ai_button.winfo_ismapped():
+                    self.ai_button.pack_forget()
+            except:
+                pass
+
+    def _show_ai_selector_dialog(self) -> None:
+        """
+        Show the aiselector dialog (called after mainloop is active).
+        """
+
+        self.app.open_dialog(TopLevelWindow(self.app, width=400, height=700), AISelectorFrame, show_account_panel=False, ai_selector_button=self.ai_button)  # type: ignore
 
     def _select_size(self, size: int) -> None:
         """
@@ -508,6 +533,7 @@ class LocalLobbyFrame(ttk.Frame):
         if not self.multiplayer.get():
             display_name = self.app._get_display_name()
             game = GoGame(self.board_size.get())
+            print(self.ai_button.text)
 
             if self.played_color.get() == Goban.BLACK:
                 black_player = Player(
@@ -516,7 +542,7 @@ class LocalLobbyFrame(ttk.Frame):
                     color=Goban.BLACK,
                     level=-3000,
                 )
-                white_player = load_ai(self.ai, game, Goban.WHITE)
+                white_player = load_ai(self.ai_button.text, game, Goban.WHITE)
 
             else:
                 white_player = Player(
@@ -525,7 +551,7 @@ class LocalLobbyFrame(ttk.Frame):
                     color=Goban.WHITE,
                     level=-3000,
                 )
-                black_player = load_ai(self.ai, game, Goban.BLACK)
+                black_player = load_ai(self.ai_button.text, game, Goban.BLACK)
 
             # TODO: Implement AI selection and color selection in the lobby
             self.app.show_frame(

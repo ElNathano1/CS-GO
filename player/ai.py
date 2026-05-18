@@ -103,7 +103,7 @@ class Martin(Player):
             pass_probability (float): The probability for Martin to pass after the player have already passed.
         """
 
-        images_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "profiles"
+        images_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "profiles" / "ai"
         default_photo_path = images_dir / "martin_profile_photo.png"
 
         if default_photo_path.exists():
@@ -118,7 +118,7 @@ class Martin(Player):
             profile_photo = ImageTk.PhotoImage(blank_image)
 
         super().__init__(
-            name="Martin", color=color, profile_photo=profile_photo, level=-2950
+            name="Martin", color=color, profile_photo=profile_photo, level="coups aléatoires"  # type: ignore
         )
         self.game = game
 
@@ -207,7 +207,7 @@ class KatagoAI(Player):
             color (int): The color assigned to the TrueAI (Goban.BLACK or Goban.WHITE).
         """
 
-        images_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "profiles"
+        images_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "profiles" / "ai"
         default_photo_path = images_dir / f"{name.lower()}_profile_photo.png"
 
         if default_photo_path.exists():

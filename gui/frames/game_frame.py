@@ -8,7 +8,6 @@ board rendering, stone animations, and game controls.
 
 import re
 import threading
-import multiprocessing
 import queue
 from typing import TYPE_CHECKING
 import tkinter as tk
@@ -27,12 +26,6 @@ from config import BASE_FOLDER_PATH
 
 if TYPE_CHECKING:
     from gui.app import App
-
-
-def _ai_move_worker(ai: Martin | KatagoAI, out_queue) -> None:
-
-    move = ai.choose_move()
-    out_queue.put(move)
 
 
 class GameFrame(ttk.Frame):
@@ -1083,7 +1076,6 @@ class SingleplayerGameFrame(GameFrame):
         self.played_color = played_color
         self.ai_color = Goban.BLACK if played_color == Goban.WHITE else Goban.WHITE
         self._ai_thinking = False
-        self._ai_process = None
         self._ai_result_queue = None
         self._ai_thread = None
         self.after(0, self._init_singleplayer_controls)
@@ -1199,9 +1191,9 @@ class SingleplayerGameFrame(GameFrame):
             background="#224722",
             foreground="grey",
             text=(
-                f"{f"({self.white_player.level}EGF) " if self.white_player.level != -3000 else ""}{self.white_player.name}"
+                f"{f"({self.white_player.level}{'EGF' if isinstance(self.white_player.level, int) else ''}) " if self.white_player.level != -3000 else ""}{self.white_player.name}"
                 if self.played_color == Goban.WHITE
-                else f"{self.white_player.name}{f" ({self.white_player.level}EGF)" if self.white_player.level != -3000 else ""}"
+                else f"{self.white_player.name}{f" ({self.white_player.level}{'EGF' if isinstance(self.white_player.level, int) else ''})" if self.white_player.level != -3000 else ""}"
             ),
         )
         self.white_name.pack(
@@ -1249,9 +1241,9 @@ class SingleplayerGameFrame(GameFrame):
             black_player_panel,
             background="#224722",
             text=(
-                f"{self.black_player.name}{f" ({self.black_player.level}EGF)" if self.black_player.level != -3000 else ""}"
+                f"{self.black_player.name}{f" ({self.black_player.level}{'EGF' if isinstance(self.black_player.level, int) else ''})" if self.black_player.level != -3000 else ""}"
                 if self.played_color == Goban.WHITE
-                else f"{f"({self.black_player.level}EGF) " if self.black_player.level != -3000 else ""}{self.black_player.name}"
+                else f"{f"({self.black_player.level}{'EGF' if isinstance(self.black_player.level, int) else ''}) " if self.black_player.level != -3000 else ""}{self.black_player.name}"
             ),
         )
         self.black_name.pack(
@@ -1365,32 +1357,20 @@ class SingleplayerGameFrame(GameFrame):
         self._ai_thinking = True
 
         ai = self.black_player if self.ai_color == Goban.BLACK else self.white_player
-        ai_kind = type(ai).__name__
 
-        if isinstance(ai, KatagoAI):
-            result_queue = queue.Queue()
-            self._ai_result_queue = result_queue
+        # Use threads for both Martin and KatagoAI since they both access game state
+        result_queue = queue.Queue()
+        self._ai_result_queue = result_queue
 
-            def _katago_worker() -> None:
-                try:
-                    move = ai.choose_move()
-                except Exception:
-                    move = "pass"
-                result_queue.put(move)
+        def _ai_worker() -> None:
+            try:
+                move = ai.choose_move()
+            except Exception:
+                move = "pass"
+            result_queue.put(move)
 
-            self._ai_thread = threading.Thread(target=_katago_worker, daemon=True)
-            self._ai_thread.start()
-            self.after(50, self._poll_ai_result)
-            return
-
-        ctx = multiprocessing.get_context("spawn")
-        self._ai_result_queue = ctx.Queue()
-        self._ai_process = ctx.Process(
-            target=_ai_move_worker,
-            args=(ai, self._ai_result_queue),
-            daemon=True,
-        )
-        self._ai_process.start()
+        self._ai_thread = threading.Thread(target=_ai_worker, daemon=True)
+        self._ai_thread.start()
         self.after(50, self._poll_ai_result)
 
     def _poll_ai_result(self) -> None:
@@ -1400,16 +1380,12 @@ class SingleplayerGameFrame(GameFrame):
         try:
             move = self._ai_result_queue.get_nowait()
         except queue.Empty:
-            if self._ai_process is not None and self._ai_process.is_alive():
-                self.after(50, self._poll_ai_result)
-                return
             if self._ai_thread is not None and self._ai_thread.is_alive():
                 self.after(50, self._poll_ai_result)
                 return
             self._ai_thinking = False
             return
 
-        self._ai_process = None
         self._ai_thread = None
         self._ai_result_queue = None
         self._apply_ai_move(move)
@@ -1473,9 +1449,4 @@ class SingleplayerGameFrame(GameFrame):
             self._show_game_over_dialog(resigned_by=self.ai_color)
 
     def destroy(self) -> None:
-        if self._ai_process is not None and self._ai_process.is_alive():
-            try:
-                self._ai_process.terminate()
-            except Exception:
-                pass
         super().destroy()

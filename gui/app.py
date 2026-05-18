@@ -733,6 +733,107 @@ class App(tk.Tk):
                 )
                 self.wifi_signal_icons.append(wifi_icon)
 
+        # Load ai profile icons
+        profile_pictures_dir = (
+            Path(BASE_FOLDER_PATH) / "gui" / "images" / "profiles" / "ai"
+        )
+        self.martin_icon_path = profile_pictures_dir / "martin_profile_photo.png"
+        if self.martin_icon_path.exists():
+            self.martin_icon = ImageTk.PhotoImage(
+                Image.open(self.martin_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_martin_icon_path = (
+            profile_pictures_dir / "hovered_martin_profile_photo.png"
+        )
+        if self.hovered_martin_icon_path.exists():
+            self.hovered_martin_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_martin_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.amina_icon_path = profile_pictures_dir / "amina_profile_photo.png"
+        if self.amina_icon_path.exists():
+            self.amina_icon = ImageTk.PhotoImage(
+                Image.open(self.amina_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_amina_icon_path = (
+            profile_pictures_dir / "hovered_amina_profile_photo.png"
+        )
+        if self.hovered_amina_icon_path.exists():
+            self.hovered_amina_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_amina_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.leo_icon_path = profile_pictures_dir / "leo_profile_photo.png"
+        if self.leo_icon_path.exists():
+            self.leo_icon = ImageTk.PhotoImage(
+                Image.open(self.leo_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_leo_icon_path = (
+            profile_pictures_dir / "hovered_leo_profile_photo.png"
+        )
+        if self.hovered_leo_icon_path.exists():
+            self.hovered_leo_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_leo_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.sofia_icon_path = profile_pictures_dir / "sofia_profile_photo.png"
+        if self.sofia_icon_path.exists():
+            self.sofia_icon = ImageTk.PhotoImage(
+                Image.open(self.sofia_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_sofia_icon_path = (
+            profile_pictures_dir / "hovered_sofia_profile_photo.png"
+        )
+        if self.hovered_sofia_icon_path.exists():
+            self.hovered_sofia_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_sofia_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.ravi_icon_path = profile_pictures_dir / "ravi_profile_photo.png"
+        if self.ravi_icon_path.exists():
+            self.ravi_icon = ImageTk.PhotoImage(
+                Image.open(self.ravi_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_ravi_icon_path = (
+            profile_pictures_dir / "hovered_ravi_profile_photo.png"
+        )
+        if self.hovered_ravi_icon_path.exists():
+            self.hovered_ravi_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_ravi_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.ada_icon_path = profile_pictures_dir / "ada_profile_photo.png"
+        if self.ada_icon_path.exists():
+            self.ada_icon = ImageTk.PhotoImage(
+                Image.open(self.ada_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_ada_icon_path = (
+            profile_pictures_dir / "hovered_ada_profile_photo.png"
+        )
+        if self.hovered_ada_icon_path.exists():
+            self.hovered_ada_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_ada_icon_path).resize(
+                    (64, 64), Image.Resampling.LANCZOS
+                )
+            )
+
     def _load_textures(self) -> None:
         """
         Load textures for the widgets.
@@ -1273,6 +1374,7 @@ class App(tk.Tk):
         dialog: TopLevelWindow,
         frame_class: type[tk.Frame] | None = None,
         show_account_panel: bool = True,
+        **kwargs,
     ) -> None:
         """
         Open a dialog window and optionally mount a frame inside.
@@ -1284,7 +1386,7 @@ class App(tk.Tk):
         """
 
         if frame_class is not None:
-            frame = frame_class(dialog.body_frame, self)  # type: ignore
+            frame = frame_class(dialog.body_frame, self, **kwargs)  # type: ignore
             frame.pack(fill=tk.BOTH, expand=True)
 
         dialog_account_panel = None
