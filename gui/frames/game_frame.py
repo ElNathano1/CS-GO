@@ -910,7 +910,6 @@ class GameFrame(ttk.Frame):
         self.app.open_dialog(
             dialog=TopLevelWindow(self.app, width=400, height=600),
             frame_class=SettingsFrame,  # type: ignore
-            show_account_panel=False,
         )
 
     def _on_back_to_lobby(self) -> None:
@@ -1091,7 +1090,7 @@ class SingleplayerGameFrame(GameFrame):
         if self.played_color == Goban.WHITE:
             self.pass_button.config(state=tk.DISABLED)
             self.resign_button.config(state=tk.DISABLED)
-            self.after(100, self._ai_choose_move_async)
+            self.after(1500, self._ai_choose_move_async)
 
     def _create_bowls(self) -> None:
         """
@@ -1364,7 +1363,7 @@ class SingleplayerGameFrame(GameFrame):
 
         def _ai_worker() -> None:
             try:
-                move = ai.choose_move()
+                move = ai.choose_move()  # type: ignore
             except Exception:
                 move = "pass"
             result_queue.put(move)

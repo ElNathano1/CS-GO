@@ -831,6 +831,9 @@ class TopLevelWindow(tk.Toplevel):
             self.overlay_window = self._create_overlay(
                 master, overlay_color, overlay_alpha
             )
+            self.overlay_window.bind(
+                "<Button-1>", lambda e: self.close(None)
+            )  # Click on overlay to close
 
         super().__init__(**kwargs)
         self.master = master

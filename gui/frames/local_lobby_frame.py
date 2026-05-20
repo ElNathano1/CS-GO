@@ -267,7 +267,7 @@ class LocalLobbyFrame(ttk.Frame):
         Show the aiselector dialog (called after mainloop is active).
         """
 
-        self.app.open_dialog(TopLevelWindow(self.app, width=400, height=700), AISelectorFrame, show_account_panel=False, ai_selector_button=self.ai_button)  # type: ignore
+        self.app.open_dialog(TopLevelWindow(self.app, width=400, height=700), AISelectorFrame, ai_selector_button=self.ai_button)  # type: ignore
 
     def _select_size(self, size: int) -> None:
         """
@@ -533,7 +533,6 @@ class LocalLobbyFrame(ttk.Frame):
         if not self.multiplayer.get():
             display_name = self.app._get_display_name()
             game = GoGame(self.board_size.get())
-            print(self.ai_button.text)
 
             if self.played_color.get() == Goban.BLACK:
                 black_player = Player(
@@ -553,7 +552,6 @@ class LocalLobbyFrame(ttk.Frame):
                 )
                 black_player = load_ai(self.ai_button.text, game, Goban.BLACK)
 
-            # TODO: Implement AI selection and color selection in the lobby
             self.app.show_frame(
                 lambda parent, app: SingleplayerGameFrame(
                     parent,

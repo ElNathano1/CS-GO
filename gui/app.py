@@ -40,6 +40,7 @@ from gui.utils import (
 from gui.frames import LobbyFrame
 from gui.frames.login_dialog import LoginFrame
 from gui.frames.account_frame import AccountFrame
+from gui.frames.social_frame import MessageryFrame
 
 # Game logic imports
 from game.core import Goban, GoGame
@@ -1373,6 +1374,41 @@ class App(tk.Tk):
         self,
         dialog: TopLevelWindow,
         frame_class: type[tk.Frame] | None = None,
+        **kwargs,
+    ) -> None:
+        """
+        Open a dialog window and optionally mount a frame inside.
+
+        Args:
+            dialog: An initialized TopLevelWindow instance
+            frame_class: Optional frame class to display inside the dialog
+        """
+
+        if frame_class is not None:
+            frame = frame_class(dialog.body_frame, self, **kwargs)  # type: ignore
+            frame.pack(fill=tk.BOTH, expand=True)
+
+        # Otherwise, schedule to show it after dialog closes
+        def show_panel_on_close():
+            if dialog.winfo_exists():
+                # Dialog still exists, wait and check again
+                self.after(100, show_panel_on_close)
+            else:
+
+                # Dialog has closed, show the panel
+                self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+                self.account_panel.lift()
+                self.social_panel.place(relx=0.02, rely=0.04, anchor="nw")
+                self.social_panel.lift()
+
+            self.after(100, show_panel_on_close)
+
+        dialog.show(wait=False)
+
+    def open_account_dialog(
+        self,
+        dialog: TopLevelWindow,
+        frame_class: type[tk.Frame] | None = None,
         show_account_panel: bool = True,
         **kwargs,
     ) -> None:
@@ -1488,12 +1524,129 @@ class App(tk.Tk):
 
         dialog.show(wait=False)
 
+    def open_social_dialog(
+        self,
+        dialog: TopLevelWindow,
+        frame_class: type[tk.Frame] | None = None,
+        show_social_panel: bool = True,
+        **kwargs,
+    ) -> None:
+        """
+        Open a dialog window and optionally mount a frame inside.
+
+        Args:
+            dialog: An initialized TopLevelWindow instance
+            frame_class: Optional frame class to display inside the dialog
+            show_social_panel: Whether to display the social panel (default: True)
+        """
+
+        if frame_class is not None:
+            frame = frame_class(dialog.body_frame, self, **kwargs)  # type: ignore
+            frame.pack(fill=tk.BOTH, expand=True)
+
+        dialog_social_panel = None
+
+        # If social panel should be shown, display a dialog overlay panel
+        if show_social_panel:
+            dialog_social_panel = ttk.Frame(dialog)
+
+            self.social_button = ttk.Button(
+                dialog_social_panel,
+                image=self.hovered_add_friend_icon,
+                command=self._show_friends_dialog,
+                takefocus=False,
+                cursor="hand2",
+            )
+            self.social_button.pack(side=tk.RIGHT, padx=(0, 10))
+
+            # Message button (placeholder for future notifications)
+            self.message_button = ttk.Button(
+                dialog_social_panel,
+                image=self.message_icon,
+                command=self._show_messages_dialog,
+                takefocus=False,
+                cursor="hand2",
+            )
+            self.message_button.pack(side=tk.RIGHT, padx=(0, 10))
+
+            def _place_dialog_panel():
+                if not dialog.winfo_exists():
+                    return
+                self.update_idletasks()
+                dialog.update_idletasks()
+
+                panel_w = dialog_social_panel.winfo_reqwidth()
+                panel_h = dialog_social_panel.winfo_reqheight()
+
+                root_x = self.winfo_rootx()
+                root_y = self.winfo_rooty()
+                root_w = self.winfo_width()
+                root_h = self.winfo_height()
+
+                target_x_root = root_x + int(root_w * 0.02)  # - panel_w
+                target_y_root = root_y + int(root_h * 0.04)
+
+                dialog_x = dialog.winfo_rootx()
+                dialog_y = dialog.winfo_rooty()
+
+                target_x = target_x_root - dialog_x
+                target_y = target_y_root - dialog_y
+
+                dialog_social_panel.place(x=target_x, y=target_y)
+                dialog_social_panel.lift()
+
+            self.after(0, _place_dialog_panel)
+
+            def restore_panel_after_close():
+                if dialog.winfo_exists():
+                    self.after(100, restore_panel_after_close)
+                else:
+                    if dialog_social_panel is not None:
+                        try:
+                            dialog_social_panel.destroy()
+                        except tk.TclError:
+                            pass
+                    self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+                    self.account_panel.lift()
+                    self.social_panel.place(relx=0.02, rely=0.04, anchor="nw")
+                    self.social_panel.lift()
+
+            self.after(100, restore_panel_after_close)
+        else:
+            # Otherwise, schedule to show it after dialog closes
+            def show_panel_on_close():
+                if dialog.winfo_exists():
+                    # Dialog still exists, wait and check again
+                    self.after(100, show_panel_on_close)
+                else:
+                    # Dialog has closed, show the panel
+                    if dialog_social_panel is not None:
+                        try:
+                            dialog_social_panel.destroy()
+                        except tk.TclError:
+                            pass
+                    self.account_panel.place(relx=0.98, rely=0.04, anchor="ne")
+                    self.account_panel.lift()
+                    self.social_panel.place(relx=0.02, rely=0.04, anchor="nw")
+                    self.social_panel.lift()
+
+            self.after(100, show_panel_on_close)
+
+        dialog.show(wait=False)
+
     def _show_login_dialog(self) -> None:
         """
         Show the login dialog (called after mainloop is active).
         """
 
-        self.open_dialog(TopLevelWindow(self, width=400, height=700), LoginFrame, show_account_panel=False)  # type: ignore
+        if self.dialog and self.dialog[0] == "login":
+            return  # Login dialog is already open
+        self.open_account_dialog(TopLevelWindow(self, width=400, height=700), LoginFrame, show_account_panel=False)  # type: ignore
+        try:
+            self.dialog[1]._on_return()
+        except Exception:
+            pass
+        self.dialog = ("login", self.current_frame)
 
     def _show_login_dialog_if_needed(self) -> None:
         """
@@ -1524,7 +1677,7 @@ class App(tk.Tk):
         Show the friends list dialog (called when clicking on social button).
         """
 
-        # self.open_dialog(TopLevelWindow(self, width=400, height=700), FriendsFrame)  # type: ignore
+        self.open_social_dialog(TopLevelWindow(self, width=900, height=720, position="left"), FriendsFrame)  # type: ignore
         pass
 
     def _show_messages_dialog(self) -> None:
@@ -1532,7 +1685,7 @@ class App(tk.Tk):
         Show the messages dialog (placeholder for future notifications).
         """
 
-        # self.open_dialog(TopLevelWindow(self, width=400, height=700), MessagesFrame)  # type: ignore
+        self.open_social_dialog(TopLevelWindow(self, width=900, height=720, position="left"), MessageryFrame)  # type: ignore
         pass
 
     def _show_social_panel_if_visible(self) -> None:
@@ -1624,7 +1777,7 @@ class App(tk.Tk):
         Show the account dialog (called when clicking on profile photo).
         """
 
-        self.open_dialog(TopLevelWindow(self, width=450, height=720, position="right"), AccountFrame, show_account_panel=True)  # type: ignore
+        self.open_account_dialog(TopLevelWindow(self, width=450, height=720, position="right"), AccountFrame, show_account_panel=True)  # type: ignore
 
     def notify_username_updated(self) -> None:
         """

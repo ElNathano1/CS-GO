@@ -48,28 +48,55 @@ class MessageryFrame(ttk.Frame):
         self.app = app
         loading = self.app.show_loading("Chargement...")
 
+        # Content frame
+
+        content_frame = ttk.Frame(self)
+        content_frame.pack(fill=tk.BOTH, expand=True)
+        content_frame.grid_rowconfigure(0, weight=1)
+        content_frame.grid_columnconfigure(0, weight=1, uniform="column")
+        content_frame.grid_columnconfigure(1, weight=2, uniform="column")
+
+        # Left column with conversation list and search
+        left_column = ttk.Frame(content_frame)
+        left_column.grid(row=0, column=0, sticky="nsew")
+
         # Search conversation entry
-        entry_frame = ttk.Frame(self)
-        entry_frame.pack(pady=(30, 10), padx=20, fill=tk.X)
+        entry_frame = ttk.Frame(left_column)
+        entry_frame.pack(pady=(80, 0), padx=(20, 10), fill=tk.X)
+
+        entry_frame.grid_rowconfigure(0, weight=1)
+        entry_frame.grid_columnconfigure(1, weight=1)
 
         ttk.Label(
             entry_frame,
             image=self.app.search_icon,
-        ).pack(anchor=tk.W, pady=(0, 5))
+        ).grid(row=0, column=0, sticky="w", padx=(0, 5))
 
         self.conversation_var = tk.StringVar(value=self.app.name)
         self.conversation_entry = ttk.Entry(
             entry_frame,
+            width=18,
             textvariable=self.conversation_var,
             font=("Skranji", 14),
             takefocus=True,
         )
-        self.conversation_entry.pack(anchor=tk.E, pady=0, fill=tk.X)
+        self.conversation_entry.grid(row=0, column=1, sticky="ew", padx=0)
+
+        # Conversation list frame
+        main_canvas_frame_border = self.app.Frame(left_column, bg="black", bd=1)
+        main_canvas_frame_border.pack(fill=tk.BOTH, expand=True, padx=(20, 10), pady=20)
+        main_canvas_frame = self.app.Frame(main_canvas_frame_border)
+        main_canvas_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        canvas_frame = tk.Frame(
+            main_canvas_frame.content_frame,
+            bd=0,
+            highlightbackground="black",
+            highlightthickness=1,
+            bg="#1e1e1e",
+        )
+        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
 
         # Create canvas and scrollbar for scrollable content
-        canvas_frame = ttk.Frame(self)
-        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
-
         canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0)
         scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
@@ -101,15 +128,28 @@ class MessageryFrame(ttk.Frame):
 
         self._mousewheel_binding = self.bind_all("<MouseWheel>", _on_mousewheel)
 
-        # Conversation list frame
-        main_conversation_list_frame = self.app.Frame(
-            scrollable_frame, bg="black", bd=1
-        )
-        main_conversation_list_frame.pack(pady=(0, 20), fill=tk.BOTH, padx=20)
-        conversation_list_frame = self.app.Frame(main_conversation_list_frame)
-        conversation_list_frame.pack(pady=3, padx=3, fill=tk.BOTH)
+        self._build_conversation_list(scrollable_frame)
 
-        self._build_conversation_list(conversation_list_frame)
+        # Right column for conversation content
+        self.right_column = ttk.Frame(content_frame)
+        self.right_column.grid(row=0, column=1, sticky="nsew")
+
+        main_message_frame_border = self.app.Frame(self.right_column, bg="black", bd=1)
+        main_message_frame_border.pack(
+            fill=tk.BOTH, expand=True, padx=(10, 20), pady=20
+        )
+        main_message_frame = self.app.Frame(main_message_frame_border)
+        main_message_frame.pack(
+            pady=3, padx=3, ipady=5, ipadx=5, fill=tk.BOTH, expand=True
+        )
+        message_content_frame = tk.Frame(
+            main_message_frame.content_frame,
+            bd=0,
+            highlightbackground="black",
+            highlightthickness=1,
+            bg="#1e1e1e",
+        )
+        message_content_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
 
         # Return button
         self.return_button = self.app.Button(
@@ -120,7 +160,7 @@ class MessageryFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=(0, 20), padx=(20, 0), anchor=tk.S)
+        self.return_button.pack(pady=20, padx=20, anchor=tk.S)
 
         self.app.hide_loading(loading)
 
@@ -151,6 +191,22 @@ class MessageryFrame(ttk.Frame):
         """
         Build the list of conversations with buttons to access each conversation.
         """
+
+        conversations = self._fetch_conversations()
+        for widget in parent.winfo_children():
+            widget.destroy()
+
+        if conversations == []:
+            ttk.Label(
+                parent,
+                text="Aucune conversation trouvée.",
+                font=("Skranji", 12, "italic"),
+                background="#1e1e1e",
+                foreground="grey",
+                anchor=tk.CENTER,
+                wraplength=200,
+            ).pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+            return
 
     def _update_list(self, e):
         """

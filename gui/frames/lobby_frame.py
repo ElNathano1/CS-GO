@@ -187,7 +187,6 @@ class LobbyFrame(ttk.Frame):
         self.app.open_dialog(
             dialog=TopLevelWindow(self.app, width=400, height=600),
             frame_class=SettingsFrame,  # type: ignore
-            show_account_panel=False,
         )
 
     def _update_account_info(self) -> None:
