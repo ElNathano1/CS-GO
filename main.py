@@ -346,27 +346,35 @@ def add_game(game: GameCreate, repo: AccountRepository = Depends(get_repo)):
 
 @app.get("/messages/{username}")
 def get_messages(username: str, repo: AccountRepository = Depends(get_repo)):
+    account = repo.get_by_username(username)
+    if not account:
+        raise HTTPException(status_code=404, detail="User not found")
+
     messages = repo.get_messages(username)
     if not messages:
         raise HTTPException(status_code=404, detail="No messages found for user")
+
+    sent_messages = messages.get("sent") or []
+    received_messages = messages.get("received") or []
+
     return {
         "sent": [
             {
-                "recipient": repo.get_by_username(msg.recipient_id).username,  # type: ignore
+                "recipient": msg.recipient.username if msg.recipient else None,
                 "content": msg.content,
                 "timestamp": msg.timestamp,
                 "type": msg.type,
             }
-            for msg in messages["sent"]  # type: ignore
+            for msg in sent_messages
         ],
         "received": [
             {
-                "sender": repo.get_by_username(msg.sender_id).username,  # type: ignore
+                "sender": msg.sender.username if msg.sender else None,
                 "content": msg.content,
                 "timestamp": msg.timestamp,
                 "type": msg.type,
             }
-            for msg in messages["received"]  # type: ignore
+            for msg in received_messages
         ],
     }
 
