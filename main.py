@@ -40,7 +40,7 @@ import os
 from random import random
 import shutil
 import jwt
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from PIL import Image
 from io import BytesIO
@@ -128,14 +128,14 @@ class LevelUpdate(BaseModel):
 class GameCreate(BaseModel):
     black_player_username: str
     white_player_username: str
-    timestamp: str
+    timestamp: str | None = None
     result: str
     moves: str
 
 
 class MessageCreate(BaseModel):
     recipient_username: str
-    timestamp: str
+    timestamp: str | None = None
     content: str
     type: str  # "chat", "system message", "friend invite", etc.
 
@@ -322,7 +322,7 @@ def add_game(game: GameCreate, repo: AccountRepository = Depends(get_repo)):
         raise HTTPException(status_code=404, detail="White player not found")
 
     try:
-        parsed_timestamp = parse_game_timestamp(game.timestamp)
+        parsed_timestamp = parse_game_timestamp(str(datetime.now()))
     except ValueError:
         raise HTTPException(
             status_code=400,
@@ -379,6 +379,30 @@ def get_messages(username: str, repo: AccountRepository = Depends(get_repo)):
     }
 
 
+@app.get("/conversations/{username}")
+def get_conversations(username: str, repo: AccountRepository = Depends(get_repo)):
+    account = repo.get_by_username(username)
+    if not account:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    messages = repo.get_messages(username)
+    if not messages:
+        raise HTTPException(status_code=404, detail="No messages found for user")
+
+    conversations = {}
+    for message in (messages.get("sent") or []) + (messages.get("received") or []):
+        if message.recipient and message.recipient.username not in conversations:
+            conversations[message.recipient.username] = [message]
+        elif message.recipient:
+            conversations[message.recipient.username].append(message)
+        elif message.sender and message.sender.username not in conversations:
+            conversations[message.sender.username] = [message]
+        elif message.sender:
+            conversations[message.sender.username].append(message)
+
+    return conversations
+
+
 @app.post("/messages/{sender_username}")
 def send_message(
     sender_username: str,
@@ -391,7 +415,7 @@ def send_message(
         raise HTTPException(status_code=404, detail="Recipient not found")
 
     try:
-        parsed_timestamp = parse_message_timestamp(message.timestamp)
+        parsed_timestamp = parse_message_timestamp(str(datetime.now()))
     except ValueError:
         raise HTTPException(
             status_code=400,
