@@ -176,11 +176,45 @@ class MessageryFrame(ttk.Frame):
 
         try:
             response = requests.get(
-                f"{BASE_URL}/conversations/{self.app.username}",
+                f"{BASE_URL}/messages/{self.app.username}",
                 timeout=5,
             )
             if response.status_code == 200:
-                return response.json()
+                conversations = {}
+                for type in ["received", "sent"]:
+                    for message in response.json()[type]:
+                        if type == "sent":
+                            other_username = message.get("recipient")
+                        else:
+                            other_username = message.get("sender")
+                        try:
+                            other_user = requests.get(
+                                f"{BASE_URL}/users/{other_username}",
+                                timeout=5,
+                            ).json()
+                        except Exception:
+                            other_user = {"name": other_username, "connected": False}
+
+                        if other_username not in conversations:
+                            conversations[other_username] = {
+                                "name": other_user.get("name"),
+                                "username": other_username,
+                                "last_message": message.get("content"),
+                                "last_message_time": message.get("timestamp"),
+                                "is_connected": other_user.get("connected"),
+                            }
+                        else:
+                            if message.get("timestamp") > conversations[
+                                other_username
+                            ].get("last_message_time", ""):
+                                conversations[other_username]["last_message"] = (
+                                    message.get("content")
+                                )
+                                conversations[other_username]["last_message_time"] = (
+                                    message.get("timestamp")
+                                )
+                return list(conversations.values())
+
             else:
                 return []
 
@@ -193,6 +227,7 @@ class MessageryFrame(ttk.Frame):
         """
 
         conversations = self._fetch_conversations()
+        print(conversations)
         for widget in parent.winfo_children():
             widget.destroy()
 
@@ -207,6 +242,15 @@ class MessageryFrame(ttk.Frame):
                 wraplength=200,
             ).pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
             return
+
+        else:
+            for conversation in conversations:
+                conversation_frame = ttk.Frame(parent, padding=10)
+                conversation_frame.pack(fill=tk.X, expand=True)
+
+                self.profile_photo_path = self.app.get_profile_photo(
+                    conversation.get("username")
+                )
 
     def _update_list(self, e):
         """

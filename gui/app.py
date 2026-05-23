@@ -124,6 +124,7 @@ class App(tk.Tk):
 
         # Loading window holder
         self._loading_window = None
+        self.dialog = None
 
         # Show lobby frame on startup
         self.show_frame(LobbyFrame)
