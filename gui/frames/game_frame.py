@@ -99,9 +99,7 @@ class GameFrame(ttk.Frame):
         )
 
         # Left side: Game board
-        main_board = self.app.Frame(
-            self._main_frame, bg="black", bd=self.S(1), width=self.S(1000)
-        )
+        main_board = self.app.Frame(self._main_frame, bg="black", bd=1, width=1000)
         main_board.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         board = self.app.Frame(main_board)
         board.pack(pady=self.S(3), padx=self.S(3), fill=tk.BOTH, expand=True)
@@ -168,7 +166,7 @@ class GameFrame(ttk.Frame):
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(self.S(20), 0))
 
         # Control buttons frame
-        main_buttons_frame = self.app.Frame(right_frame, bg="black", bd=self.S(1))
+        main_buttons_frame = self.app.Frame(right_frame, bg="black", bd=1)
         main_buttons_frame.pack(fill=tk.X, pady=self.S((40, 10)))
         buttons_frame = self.app.Frame(main_buttons_frame)
         buttons_frame.pack(pady=self.S(3), padx=self.S(3), expand=True)
@@ -486,7 +484,7 @@ class GameFrame(ttk.Frame):
         main_frame.pack(fill=tk.BOTH, expand=True, padx=self.S(30), pady=self.S(40))
 
         # Left side: Game board
-        main_board = self.app.Frame(main_frame, bg="black", bd=1, width=self.S(1000))
+        main_board = self.app.Frame(main_frame, bg="black", bd=1, width=1000)
         main_board.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         board = self.app.Frame(main_board)
         board.pack(pady=self.S(3), padx=self.S(3), fill=tk.BOTH, expand=True)

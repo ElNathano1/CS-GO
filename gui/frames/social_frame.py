@@ -89,7 +89,7 @@ class MessageryFrame(ttk.Frame):
         self.conversation_entry.grid(row=0, column=1, sticky="ew", padx=0)
 
         # Conversation list frame
-        main_canvas_frame_border = self.app.Frame(left_column, bg="black", bd=self.S(1))
+        main_canvas_frame_border = self.app.Frame(left_column, bg="black", bd=1)
         main_canvas_frame_border.pack(
             fill=tk.BOTH,
             expand=True,

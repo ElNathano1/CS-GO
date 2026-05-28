@@ -44,10 +44,14 @@ class UIScaler:
         scale = min(ratio_w, ratio_h)
         self.scale = max(min_scale, min(max_scale, scale))
 
-    def px(self, value: int | float | None, min_value: int = 1) -> ScaledLength | None:
+    def px(
+        self, value: int | float | ScaledLength | None, min_value: int = 1
+    ) -> ScaledLength | None:
         """Scale a pixel value. Keeps None unchanged."""
         if value is None:
             return None
+        if isinstance(value, ScaledLength):
+            return value
         raw_value = float(value)
         scaled = int(round(raw_value * self.scale))
         if raw_value == 0:
@@ -74,6 +78,9 @@ class UIScaler:
         family = font_value[0]
         size = font_value[1]
         rest = font_value[2:]
+
+        if isinstance(size, ScaledLength):
+            return (family, int(size), *rest)
 
         if isinstance(size, Number):
             scaled_size = self.px(abs(float(size))) or 1  # type: ignore

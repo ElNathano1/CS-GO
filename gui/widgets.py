@@ -851,10 +851,14 @@ class TopLevelWindow(tk.Toplevel):
         self.geometry(f"{width}x{height}")
 
         # Create main container
+        frame_pad = 3
+        if scaler is not None:
+            frame_pad = scaler.px(frame_pad) or frame_pad
+
         main_container = self.master.Frame(self, bg="black", bd=1)
         main_container.pack(fill=tk.BOTH, expand=True)
         container = self.master.Frame(main_container)
-        container.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        container.pack(pady=frame_pad, padx=frame_pad, fill=tk.BOTH, expand=True)
         self.container = tk.Frame(
             container.content_frame,
             bd=0,
@@ -862,7 +866,7 @@ class TopLevelWindow(tk.Toplevel):
             highlightthickness=1,
             bg="#1e1e1e",
         )
-        self.container.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        self.container.pack(fill=tk.BOTH, expand=True, padx=frame_pad, pady=frame_pad)
 
         # Body frame (for content)
         self.body_frame = ttk.Frame(self.container)
@@ -1137,8 +1141,6 @@ class LoadingWindow(TopLevelWindow):
         **kwargs,
     ):
 
-        width = master.ui.px(width) or width
-        height = master.ui.px(height) or height
         size = master.ui.px(size) or size
 
         self._message = message

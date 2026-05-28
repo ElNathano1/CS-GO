@@ -50,7 +50,7 @@ class LoginFrame(ttk.Frame):
         title.pack(pady=self.S((20, 40)))
 
         # Login frame
-        main_login_frame = self.app.Frame(self, bg="black", bd=self.S(1))
+        main_login_frame = self.app.Frame(self, bg="black", bd=1)
         main_login_frame.pack(pady=self.S(20), fill=tk.X, padx=self.S(20))
         login_frame = self.app.Frame(main_login_frame)
         login_frame.pack(pady=self.S(3), padx=self.S(3), fill=tk.X)

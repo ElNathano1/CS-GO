@@ -199,7 +199,7 @@ class AccountFrame(ttk.Frame):
         main_statistics_frame = self.app.Frame(scrollable_frame, bg="black", bd=1)
         main_statistics_frame.pack(pady=self.S(20), fill=tk.X, padx=self.S(20))
         statistics_frame = self.app.Frame(main_statistics_frame)
-        statistics_frame.pack(pady=3, padx=3, fill=tk.X)
+        statistics_frame.pack(pady=self.S(3), padx=self.S(3), fill=tk.X)
         self.statistics_frame = statistics_frame
 
         statistics_frame.columnconfigure(0, weight=1)

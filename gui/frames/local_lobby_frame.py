@@ -54,7 +54,7 @@ class LocalLobbyFrame(ttk.Frame):
     def _build_step_1(self) -> None:
         # Title
         title = ttk.Label(self, text="Game Lobby", style="Title.TLabel")
-        title.pack(pady=40)
+        title.pack(pady=self.S(40))
 
         self.container = ttk.Frame(self)
         self.container.pack()
