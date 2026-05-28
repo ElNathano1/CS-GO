@@ -33,6 +33,7 @@ from gui.widgets import (
 )
 from gui.sound_manager import SoundManager
 from gui.game_canvas import StoneBowl
+from gui.responsive import UIScaler
 from gui.utils import (
     save_preferences as save_dictionnary,
     random_username,
@@ -78,6 +79,8 @@ class App(tk.Tk):
         """
 
         super().__init__()
+
+        self.ui = UIScaler(self.winfo_screenwidth(), self.winfo_screenheight())
 
         self.title(APP_NAME)
         self.resizable(False, False)
@@ -283,7 +286,7 @@ class App(tk.Tk):
         if self.cs_go_banner_path.exists():
             self.cs_go_banner = ImageTk.PhotoImage(
                 Image.open(self.cs_go_banner_path).resize(
-                    (600, 182), Image.Resampling.LANCZOS
+                    self.S((600, 182)), Image.Resampling.LANCZOS
                 )
             )
 
@@ -302,19 +305,21 @@ class App(tk.Tk):
         if self.icon_path.exists():
             self.iconbitmap(self.icon_path)
 
+        icon_size = self.ui.image_size((32, 32)) or (32, 32)
+
         # Load local icon
         self.local_icon_path = images_dir / "local.png"
         if self.local_icon_path.exists():
             self.local_icon = ImageTk.PhotoImage(
                 Image.open(self.local_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_local_icon_path = images_dir / "hovered_local.png"
         if self.hovered_local_icon_path.exists():
             self.hovered_local_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_local_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -323,14 +328,14 @@ class App(tk.Tk):
         if self.multiplayer_icon_path.exists():
             self.multiplayer_icon = ImageTk.PhotoImage(
                 Image.open(self.multiplayer_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_multiplayer_icon_path = images_dir / "hovered_multiplayer.png"
         if self.hovered_multiplayer_icon_path.exists():
             self.hovered_multiplayer_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_multiplayer_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -339,14 +344,14 @@ class App(tk.Tk):
         if self.online_icon_path.exists():
             self.online_icon = ImageTk.PhotoImage(
                 Image.open(self.online_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_online_icon_path = images_dir / "hovered_online.png"
         if self.hovered_online_icon_path.exists():
             self.hovered_online_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_online_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -355,14 +360,14 @@ class App(tk.Tk):
         if self.pass_icon_path.exists():
             self.pass_icon = ImageTk.PhotoImage(
                 Image.open(self.pass_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_pass_icon_path = images_dir / "hovered_pass.png"
         if self.hovered_pass_icon_path.exists():
             self.hovered_pass_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_pass_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -371,14 +376,14 @@ class App(tk.Tk):
         if self.prefs_icon_path.exists():
             self.prefs_icon = ImageTk.PhotoImage(
                 Image.open(self.prefs_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_prefs_icon_path = images_dir / "hovered_preferences.png"
         if self.hovered_prefs_icon_path.exists():
             self.hovered_prefs_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_prefs_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -387,14 +392,14 @@ class App(tk.Tk):
         if self.resign_icon_path.exists():
             self.resign_icon = ImageTk.PhotoImage(
                 Image.open(self.resign_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_resign_icon_path = images_dir / "hovered_resign.png"
         if self.hovered_resign_icon_path.exists():
             self.hovered_resign_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_resign_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -403,14 +408,14 @@ class App(tk.Tk):
         if self.return_icon_path.exists():
             self.return_icon = ImageTk.PhotoImage(
                 Image.open(self.return_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_return_icon_path = images_dir / "hovered_return.png"
         if self.hovered_return_icon_path.exists():
             self.hovered_return_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_return_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -419,14 +424,14 @@ class App(tk.Tk):
         if self.revenge_icon_path.exists():
             self.revenge_icon = ImageTk.PhotoImage(
                 Image.open(self.revenge_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_revenge_icon_path = images_dir / "hovered_revenge.png"
         if self.hovered_revenge_icon_path.exists():
             self.hovered_revenge_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_revenge_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -435,14 +440,14 @@ class App(tk.Tk):
         if self.rules_icon_path.exists():
             self.rules_icon = ImageTk.PhotoImage(
                 Image.open(self.rules_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_rules_icon_path = images_dir / "hovered_rules.png"
         if self.hovered_rules_icon_path.exists():
             self.hovered_rules_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_rules_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -451,14 +456,14 @@ class App(tk.Tk):
         if self.singleplayer_icon_path.exists():
             self.singleplayer_icon = ImageTk.PhotoImage(
                 Image.open(self.singleplayer_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_singleplayer_icon_path = images_dir / "hovered_singleplayer.png"
         if self.hovered_singleplayer_icon_path.exists():
             self.hovered_singleplayer_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_singleplayer_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -467,14 +472,14 @@ class App(tk.Tk):
         if self.login_icon_path.exists():
             self.login_icon = ImageTk.PhotoImage(
                 Image.open(self.login_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_login_icon_path = images_dir / "hovered_login.png"
         if self.hovered_login_icon_path.exists():
             self.hovered_login_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_login_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -483,14 +488,14 @@ class App(tk.Tk):
         if self.register_icon_path.exists():
             self.register_icon = ImageTk.PhotoImage(
                 Image.open(self.register_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_register_icon_path = images_dir / "hovered_register.png"
         if self.hovered_register_icon_path.exists():
             self.hovered_register_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_register_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -499,14 +504,14 @@ class App(tk.Tk):
         if self.logout_icon_path.exists():
             self.logout_icon = ImageTk.PhotoImage(
                 Image.open(self.logout_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_logout_icon_path = images_dir / "hovered_logout.png"
         if self.hovered_logout_icon_path.exists():
             self.hovered_logout_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_logout_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -515,14 +520,14 @@ class App(tk.Tk):
         if self.edit_icon_path.exists():
             self.edit_icon = ImageTk.PhotoImage(
                 Image.open(self.edit_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_edit_icon_path = images_dir / "hovered_edit.png"
         if self.hovered_edit_icon_path.exists():
             self.hovered_edit_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_edit_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -531,14 +536,14 @@ class App(tk.Tk):
         if self.save_icon_path.exists():
             self.save_icon = ImageTk.PhotoImage(
                 Image.open(self.save_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_save_icon_path = images_dir / "hovered_save.png"
         if self.hovered_save_icon_path.exists():
             self.hovered_save_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_save_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -547,14 +552,14 @@ class App(tk.Tk):
         if self.upload_icon_path.exists():
             self.upload_icon = ImageTk.PhotoImage(
                 Image.open(self.upload_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_upload_icon_path = images_dir / "hovered_upload.png"
         if self.hovered_upload_icon_path.exists():
             self.hovered_upload_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_upload_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -563,7 +568,7 @@ class App(tk.Tk):
         if self.search_icon_path.exists():
             self.search_icon = ImageTk.PhotoImage(
                 Image.open(self.search_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -572,14 +577,14 @@ class App(tk.Tk):
         if self.add_friend_icon_path.exists():
             self.add_friend_icon = ImageTk.PhotoImage(
                 Image.open(self.add_friend_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_add_friend_icon_path = images_dir / "hovered_add_friend.png"
         if self.hovered_add_friend_icon_path.exists():
             self.hovered_add_friend_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_add_friend_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -588,14 +593,14 @@ class App(tk.Tk):
         if self.message_icon_path.exists():
             self.message_icon = ImageTk.PhotoImage(
                 Image.open(self.message_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_message_icon_path = images_dir / "hovered_message.png"
         if self.hovered_message_icon_path.exists():
             self.hovered_message_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_message_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -605,28 +610,28 @@ class App(tk.Tk):
         if self.sound_icon_path.exists():
             self.sound_icon = ImageTk.PhotoImage(
                 Image.open(self.sound_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_sound_icon_path = images_dir / "hovered_sound.png"
         if self.hovered_sound_icon_path.exists():
             self.hovered_sound_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_sound_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.no_sound_icon_path = images_dir / "no_sound.png"
         if self.no_sound_icon_path.exists():
             self.no_sound_icon = ImageTk.PhotoImage(
                 Image.open(self.no_sound_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_no_sound_icon_path = images_dir / "hovered_no_sound.png"
         if self.hovered_no_sound_icon_path.exists():
             self.hovered_no_sound_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_no_sound_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -635,28 +640,28 @@ class App(tk.Tk):
         if self.music_icon_path.exists():
             self.music_icon = ImageTk.PhotoImage(
                 Image.open(self.music_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_music_icon_path = images_dir / "hovered_music.png"
         if self.hovered_music_icon_path.exists():
             self.hovered_music_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_music_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.no_music_icon_path = images_dir / "no_music.png"
         if self.no_music_icon_path.exists():
             self.no_music_icon = ImageTk.PhotoImage(
                 Image.open(self.no_music_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_no_music_icon_path = images_dir / "hovered_no_music.png"
         if self.hovered_no_music_icon_path.exists():
             self.hovered_no_music_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_no_music_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -665,7 +670,7 @@ class App(tk.Tk):
         if self.toggle_icon_path.exists():
             self.toggle_icon = ImageTk.PhotoImage(
                 Image.open(self.toggle_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -673,7 +678,7 @@ class App(tk.Tk):
         if self.hovered_toggle_icon_path.exists():
             self.hovered_toggle_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_toggle_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -681,7 +686,7 @@ class App(tk.Tk):
         if self.untoggle_icon_path.exists():
             self.untoggle_icon = ImageTk.PhotoImage(
                 Image.open(self.untoggle_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -689,7 +694,7 @@ class App(tk.Tk):
         if self.hovered_untoggle_icon_path.exists():
             self.hovered_untoggle_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_untoggle_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -698,28 +703,28 @@ class App(tk.Tk):
         if self.effects_icon_path.exists():
             self.effects_icon = ImageTk.PhotoImage(
                 Image.open(self.effects_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_effects_icon_path = images_dir / "hovered_effects.png"
         if self.hovered_effects_icon_path.exists():
             self.hovered_effects_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_effects_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.no_effects_icon_path = images_dir / "no_effects.png"
         if self.no_effects_icon_path.exists():
             self.no_effects_icon = ImageTk.PhotoImage(
                 Image.open(self.no_effects_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_no_effects_icon_path = images_dir / "hovered_no_effects.png"
         if self.hovered_no_effects_icon_path.exists():
             self.hovered_no_effects_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_no_effects_icon_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    icon_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -730,7 +735,7 @@ class App(tk.Tk):
             if wifi_icon_path.exists():
                 wifi_icon = ImageTk.PhotoImage(
                     Image.open(wifi_icon_path).resize(
-                        (32, 32), Image.Resampling.LANCZOS
+                        icon_size, Image.Resampling.LANCZOS
                     )
                 )
                 self.wifi_signal_icons.append(wifi_icon)
@@ -739,11 +744,14 @@ class App(tk.Tk):
         profile_pictures_dir = (
             Path(BASE_FOLDER_PATH) / "gui" / "images" / "profiles" / "ai"
         )
+
+        profile_photo_size = self.ui.image_size((64, 64)) or (64, 64)
+
         self.martin_icon_path = profile_pictures_dir / "martin_profile_photo.png"
         if self.martin_icon_path.exists():
             self.martin_icon = ImageTk.PhotoImage(
                 Image.open(self.martin_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_martin_icon_path = (
@@ -752,14 +760,14 @@ class App(tk.Tk):
         if self.hovered_martin_icon_path.exists():
             self.hovered_martin_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_martin_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.amina_icon_path = profile_pictures_dir / "amina_profile_photo.png"
         if self.amina_icon_path.exists():
             self.amina_icon = ImageTk.PhotoImage(
                 Image.open(self.amina_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_amina_icon_path = (
@@ -768,14 +776,14 @@ class App(tk.Tk):
         if self.hovered_amina_icon_path.exists():
             self.hovered_amina_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_amina_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.leo_icon_path = profile_pictures_dir / "leo_profile_photo.png"
         if self.leo_icon_path.exists():
             self.leo_icon = ImageTk.PhotoImage(
                 Image.open(self.leo_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_leo_icon_path = (
@@ -784,14 +792,14 @@ class App(tk.Tk):
         if self.hovered_leo_icon_path.exists():
             self.hovered_leo_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_leo_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.sofia_icon_path = profile_pictures_dir / "sofia_profile_photo.png"
         if self.sofia_icon_path.exists():
             self.sofia_icon = ImageTk.PhotoImage(
                 Image.open(self.sofia_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_sofia_icon_path = (
@@ -800,14 +808,14 @@ class App(tk.Tk):
         if self.hovered_sofia_icon_path.exists():
             self.hovered_sofia_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_sofia_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.ravi_icon_path = profile_pictures_dir / "ravi_profile_photo.png"
         if self.ravi_icon_path.exists():
             self.ravi_icon = ImageTk.PhotoImage(
                 Image.open(self.ravi_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_ravi_icon_path = (
@@ -816,14 +824,14 @@ class App(tk.Tk):
         if self.hovered_ravi_icon_path.exists():
             self.hovered_ravi_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_ravi_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.ada_icon_path = profile_pictures_dir / "ada_profile_photo.png"
         if self.ada_icon_path.exists():
             self.ada_icon = ImageTk.PhotoImage(
                 Image.open(self.ada_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         self.hovered_ada_icon_path = (
@@ -832,7 +840,7 @@ class App(tk.Tk):
         if self.hovered_ada_icon_path.exists():
             self.hovered_ada_icon = ImageTk.PhotoImage(
                 Image.open(self.hovered_ada_icon_path).resize(
-                    (64, 64), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -1024,6 +1032,13 @@ class App(tk.Tk):
             TexturedButton: Default texture button for the app.
         """
 
+        width = self.S(width) or width
+        height = self.S(height) or height
+        overlay_padding = self.S(overlay_padding) or overlay_padding
+        bd = self.S(bd) or bd
+        highlightthickness = self.S(highlightthickness) or highlightthickness
+        font = self.ui.font(font)
+
         return TexturedButton(
             parent=parent,
             texture_path=texture_path,
@@ -1070,6 +1085,13 @@ class App(tk.Tk):
             TexturedFrame: Default texture frame for the app.
         """
 
+        width = self.S(width) if width is not None else None
+        height = self.S(height) if height is not None else None
+        bd = self.S(bd) or bd
+        padx = self.S(padx) or padx
+        pady = self.S(pady) or pady
+        highlightthickness = self.S(highlightthickness) or highlightthickness
+
         return TexturedFrame(
             parent=parent,
             texture_path=texture_path,
@@ -1106,6 +1128,12 @@ class App(tk.Tk):
             TransparentLabel: Transparent label with text and/or image rendered via PIL.
         """
 
+        font = self.ui.font(font)
+        padding = self.S(padding) or padding
+        width = self.S(width) if width is not None else None
+        height = self.S(height) if height is not None else None
+        image_size = self.ui.image_size(image_size)
+
         return TransparentLabel(
             parent=parent,
             text=text,
@@ -1120,6 +1148,10 @@ class App(tk.Tk):
             height=height,
             **kwargs,
         )
+
+    def S(self, value):
+        """Scale a raw pixel value for direct Tk widgets/layout calls."""
+        return self.ui.maybe(value)
 
     def show_frame(
         self,
@@ -1644,7 +1676,7 @@ class App(tk.Tk):
             return  # Login dialog is already open
         self.open_account_dialog(TopLevelWindow(self, width=400, height=700), LoginFrame, show_account_panel=False)  # type: ignore
         try:
-            self.dialog[1]._on_return()
+            self.dialog[1]._on_return()  # type: ignore
         except Exception:
             pass
         self.dialog = ("login", self.current_frame)
@@ -1712,11 +1744,14 @@ class App(tk.Tk):
             ImageTk.PhotoImage: The profile photo image.
         """
 
+        if username is None:
+            username = self.username
+
         # Try to load user's profile photo from the web API
-        if self.username:
+        if username:
             try:
                 response = requests.get(
-                    f"{BASE_URL}/users/{self.username}/profile-picture/thumb",
+                    f"{BASE_URL}/users/{username}/profile-picture/thumb",
                     timeout=10,
                 )
                 if response.status_code == 200:

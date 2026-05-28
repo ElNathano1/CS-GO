@@ -62,7 +62,11 @@ class MessageryFrame(ttk.Frame):
 
         # Search conversation entry
         entry_frame = ttk.Frame(left_column)
-        entry_frame.pack(pady=(80, 0), padx=(20, 10), fill=tk.X)
+        entry_frame.pack(
+            pady=self.app.S((80, 0)),
+            padx=self.app.S((20, 10)),
+            fill=tk.X,
+        )
 
         entry_frame.grid_rowconfigure(0, weight=1)
         entry_frame.grid_columnconfigure(1, weight=1)
@@ -70,23 +74,33 @@ class MessageryFrame(ttk.Frame):
         ttk.Label(
             entry_frame,
             image=self.app.search_icon,
-        ).grid(row=0, column=0, sticky="w", padx=(0, 5))
+        ).grid(row=0, column=0, sticky="w", padx=self.app.S((0, 5)))
 
         self.conversation_var = tk.StringVar(value=self.app.name)
         self.conversation_entry = ttk.Entry(
             entry_frame,
             width=18,
             textvariable=self.conversation_var,
-            font=("Skranji", 14),
+            font=self.app.ui.font(("Skranji", 14)) or ("Skranji", 14),
             takefocus=True,
         )
         self.conversation_entry.grid(row=0, column=1, sticky="ew", padx=0)
 
         # Conversation list frame
         main_canvas_frame_border = self.app.Frame(left_column, bg="black", bd=1)
-        main_canvas_frame_border.pack(fill=tk.BOTH, expand=True, padx=(20, 10), pady=20)
+        main_canvas_frame_border.pack(
+            fill=tk.BOTH,
+            expand=True,
+            padx=self.app.S((20, 10)),
+            pady=self.app.S(20),
+        )
         main_canvas_frame = self.app.Frame(main_canvas_frame_border)
-        main_canvas_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        main_canvas_frame.pack(
+            pady=self.app.S(3),
+            padx=self.app.S(3),
+            fill=tk.BOTH,
+            expand=True,
+        )
         canvas_frame = tk.Frame(
             main_canvas_frame.content_frame,
             bd=0,
@@ -94,7 +108,12 @@ class MessageryFrame(ttk.Frame):
             highlightthickness=1,
             bg="#1e1e1e",
         )
-        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        canvas_frame.pack(
+            fill=tk.BOTH,
+            expand=True,
+            padx=self.app.S(3),
+            pady=self.app.S(3),
+        )
 
         # Create canvas and scrollbar for scrollable content
         canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0)
@@ -136,11 +155,19 @@ class MessageryFrame(ttk.Frame):
 
         main_message_frame_border = self.app.Frame(self.right_column, bg="black", bd=1)
         main_message_frame_border.pack(
-            fill=tk.BOTH, expand=True, padx=(10, 20), pady=20
+            fill=tk.BOTH,
+            expand=True,
+            padx=self.app.S((10, 20)),
+            pady=self.app.S(20),
         )
         main_message_frame = self.app.Frame(main_message_frame_border)
         main_message_frame.pack(
-            pady=3, padx=3, ipady=5, ipadx=5, fill=tk.BOTH, expand=True
+            pady=self.app.S(3),
+            padx=self.app.S(3),
+            ipady=self.app.S(5),
+            ipadx=self.app.S(5),
+            fill=tk.BOTH,
+            expand=True,
         )
         message_content_frame = tk.Frame(
             main_message_frame.content_frame,
@@ -149,7 +176,12 @@ class MessageryFrame(ttk.Frame):
             highlightthickness=1,
             bg="#1e1e1e",
         )
-        message_content_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        message_content_frame.pack(
+            fill=tk.BOTH,
+            expand=True,
+            padx=self.app.S(3),
+            pady=self.app.S(3),
+        )
 
         # Return button
         self.return_button = self.app.Button(
@@ -160,7 +192,11 @@ class MessageryFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=20, padx=20, anchor=tk.S)
+        self.return_button.pack(
+            pady=self.app.S(20),
+            padx=self.app.S(20),
+            anchor=tk.S,
+        )
 
         self.app.hide_loading(loading)
 
@@ -235,12 +271,18 @@ class MessageryFrame(ttk.Frame):
             ttk.Label(
                 parent,
                 text="Aucune conversation trouvée.",
-                font=("Skranji", 12, "italic"),
+                font=self.app.ui.font(("Skranji", 12, "italic"))
+                or ("Skranji", 12, "italic"),
                 background="#1e1e1e",
                 foreground="grey",
                 anchor=tk.CENTER,
-                wraplength=200,
-            ).pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+                wraplength=self.app.S(200),
+            ).pack(
+                fill=tk.BOTH,
+                expand=True,
+                padx=self.app.S(20),
+                pady=self.app.S(20),
+            )
             return
 
         else:
@@ -248,9 +290,13 @@ class MessageryFrame(ttk.Frame):
                 conversation_frame = ttk.Frame(parent, padding=10)
                 conversation_frame.pack(fill=tk.X, expand=True)
 
-                self.profile_photo_path = self.app.get_profile_photo(
-                    conversation.get("username")
+                profile_photo = self.app.get_profile_photo(conversation.get("username"))
+                label = ttk.Label(
+                    conversation_frame,
+                    image=profile_photo,
                 )
+                label.image = profile_photo  # type: ignore
+                label.pack(side=tk.LEFT, padx=(0, 10))
 
     def _update_list(self, e):
         """

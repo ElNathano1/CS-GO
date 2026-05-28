@@ -827,6 +827,10 @@ class TopLevelWindow(tk.Toplevel):
 
         # Create overlay window first (before the dialog)
         self.overlay_window = None
+        scaler = getattr(master, "ui", None)
+        if scaler is not None:
+            width = scaler.px(width) or width
+            height = scaler.px(height) or height
         if overlay:
             self.overlay_window = self._create_overlay(
                 master, overlay_color, overlay_alpha
@@ -866,7 +870,15 @@ class TopLevelWindow(tk.Toplevel):
 
         # Button frame (at bottom)
         self.button_frame = ttk.Frame(self.container)
-        self.button_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
+        button_pad = 10
+        if scaler is not None:
+            button_pad = scaler.px(button_pad) or button_pad
+        self.button_frame.pack(
+            side=tk.BOTTOM,
+            fill=tk.X,
+            padx=button_pad,
+            pady=button_pad,
+        )
 
         # Keyboard shortcuts
         self.bind("<Escape>", lambda e: self.close(None))
@@ -1014,6 +1026,10 @@ class TopLevelWindow(tk.Toplevel):
             tk.Label: The icon label widget
         """
         icons = {"info": "ℹ️", "warning": "⚠️", "error": "❌", "question": "❓"}
+
+        scaler = getattr(self.master, "ui", None)
+        if scaler is not None:
+            size = scaler.px(size) or size
 
         icon_text = icons.get(icon_type, "ℹ️")
         icon_label = tk.Label(

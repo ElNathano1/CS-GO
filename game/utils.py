@@ -8,7 +8,7 @@ allowing games to be saved and resumed later.
 import json
 import numpy as np
 from math import exp
-from pyparsing import Literal
+from typing import Literal
 
 from game.core import GoGame
 
