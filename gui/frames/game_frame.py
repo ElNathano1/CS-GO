@@ -55,6 +55,8 @@ class GameFrame(ttk.Frame):
             game (GoGame, optional): An existing game instance to resume. Defaults to None.
             played_color (int): The color of the player (Goban.BLACK or Goban.WHITE).
         """
+        self.ui = app.ui
+        self.S = app.S
 
         super().__init__(parent)
 
@@ -62,7 +64,7 @@ class GameFrame(ttk.Frame):
         self._loading = self.app.show_loading("Chargement de la partie...")
         self.board_size = board_size
         self.sound_manager = app.sound_manager
-        self.cell_size = 50
+        self.cell_size = self.S(50)
         self.stone_size = self.cell_size // 2 - 2
         self.last_move = None
         self.border_pixels_resized = 0  # Will be set in _load_images()
@@ -92,21 +94,25 @@ class GameFrame(ttk.Frame):
         Build main container and board frame.
         """
         self._main_frame = ttk.Frame(self)
-        self._main_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=40)
+        self._main_frame.pack(
+            fill=tk.BOTH, expand=True, padx=self.S(30), pady=self.S(40)
+        )
 
         # Left side: Game board
-        main_board = self.app.Frame(self._main_frame, bg="black", bd=1, width=1000)
+        main_board = self.app.Frame(
+            self._main_frame, bg="black", bd=self.S(1), width=self.S(1000)
+        )
         main_board.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         board = self.app.Frame(main_board)
-        board.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        board.pack(pady=self.S(3), padx=self.S(3), fill=tk.BOTH, expand=True)
         self.board_frame = tk.Frame(
             board.content_frame,
             bd=0,
             highlightbackground="black",
-            highlightthickness=1,
+            highlightthickness=self.S(1),
             bg="#224722",
         )
-        self.board_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        self.board_frame.pack(fill=tk.BOTH, expand=True, padx=self.S(3), pady=self.S(3))
 
         self.board_frame.grid_columnconfigure(0, weight=1)
         self.board_frame.grid_rowconfigure(0, weight=0)
@@ -127,7 +133,7 @@ class GameFrame(ttk.Frame):
         board_width = int(self.image_total_size * self.scale_ratio)
         board_height = int(self.image_total_size * self.scale_ratio)
         bowl_size = int(board_width / 4)
-        margin = bowl_size + 20
+        margin = bowl_size + self.S(20)
 
         canvas_width = board_width + margin * 2
         canvas_height = board_height
@@ -141,7 +147,7 @@ class GameFrame(ttk.Frame):
             highlightthickness=0,  # Remove canvas border highlight
             bg="#224722",
         )
-        self.canvas.grid(row=1, column=0, padx=20, pady=20)
+        self.canvas.grid(row=1, column=0, padx=self.S(20), pady=self.S(20))
         self.canvas.bind("<Button-1>", self._on_board_click)
 
         # Origin for drawing the board
@@ -159,13 +165,13 @@ class GameFrame(ttk.Frame):
         """
         # Right side: Controls and info panel
         right_frame = ttk.Frame(self._main_frame)
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(20, 0))
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(self.S(20), 0))
 
         # Control buttons frame
-        main_buttons_frame = self.app.Frame(right_frame, bg="black", bd=1)
-        main_buttons_frame.pack(fill=tk.X, pady=(40, 10))
+        main_buttons_frame = self.app.Frame(right_frame, bg="black", bd=self.S(1))
+        main_buttons_frame.pack(fill=tk.X, pady=self.S((40, 10)))
         buttons_frame = self.app.Frame(main_buttons_frame)
-        buttons_frame.pack(pady=3, padx=3, expand=True)
+        buttons_frame.pack(pady=self.S(3), padx=self.S(3), expand=True)
 
         # Pass button
         self.pass_button = self.app.Button(
@@ -176,7 +182,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_pass(),
             takefocus=False,
         )
-        self.pass_button.pack(fill=tk.X, pady=(20, 10), padx=30)
+        self.pass_button.pack(fill=tk.X, pady=self.S((20, 10)), padx=self.S(30))
 
         # Resign button
         self.resign_button = self.app.Button(
@@ -187,7 +193,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_resign(),
             takefocus=False,
         )
-        self.resign_button.pack(fill=tk.X, pady=10, padx=30)
+        self.resign_button.pack(fill=tk.X, pady=self.S(10), padx=self.S(30))
 
         # New game button
         self.new_game_button = self.app.Button(
@@ -198,7 +204,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_new_game(),
             takefocus=False,
         )
-        self.new_game_button.pack(fill=tk.X, pady=10, padx=30)
+        self.new_game_button.pack(fill=tk.X, pady=self.S(10), padx=self.S(30))
 
         # Settings button
         self.app.Button(
@@ -208,7 +214,7 @@ class GameFrame(ttk.Frame):
             text="Paramètres",
             command=lambda: self._open_settings(),
             takefocus=False,
-        ).pack(pady=10, fill=tk.X, padx=30)
+        ).pack(pady=self.S(10), fill=tk.X, padx=self.S(30))
 
         # Back to Lobby button
         self.back_button = self.app.Button(
@@ -219,7 +225,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_back_to_lobby(),
             takefocus=False,
         )
-        self.back_button.pack(fill=tk.X, pady=(10, 20), padx=30)
+        self.back_button.pack(fill=tk.X, pady=self.S((10, 20)), padx=self.S(30))
 
         # Draw the initial board state
         self._draw_board()
@@ -248,17 +254,23 @@ class GameFrame(ttk.Frame):
         images_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "board"
 
         # Original image dimensions and border
-        self.border_pixels_original = 105  # 100-pixel border on the original image
-        self.image_grid_size = 1800  # The grid on the image is 1800 pixels
-        self.image_total_size = 2010  # Total image size (border + grid + border)
+        self.border_pixels_original = self.S(
+            105
+        )  # 100-pixel border on the original image
+        self.image_grid_size = self.S(1800)  # The grid on the image is 1800 pixels
+        self.image_total_size = self.S(
+            2010
+        )  # Total image size (border + grid + border)
 
         # Get available window width and height
         self.app.update_idletasks()
-        right_frame_width = 446  # Measured width of the right control panel
+        right_frame_width = self.S(446)  # Measured width of the right control panel
         available_width = (
-            self.app.winfo_width() - right_frame_width - 112
+            self.app.winfo_width() - right_frame_width - self.S(112)
         )  # Subtract right frame width and padding
-        available_height = self.app.winfo_height() - 238  # Leave space for padding
+        available_height = self.app.winfo_height() - self.S(
+            238
+        )  # Leave space for padding
 
         # Fixed board size: calculate based on available space
         # The full image is 2010x2010 pixels (105 border + 1800 grid + 105 border)
@@ -266,7 +278,7 @@ class GameFrame(ttk.Frame):
         max_board_size = min(available_width, available_height)
 
         # Use a reasonable minimum/maximum
-        board_size_px = max(300, min(522, max_board_size))
+        board_size_px = max(self.S(300), min(self.S(522), max_board_size))
 
         # Now calculate cell_size based on board_size and the grid size (1800 pixels)
         # The grid has (board_size - 1) cells
@@ -351,7 +363,7 @@ class GameFrame(ttk.Frame):
         board_height = int(self.image_total_size * self.scale_ratio)
 
         bowl_size = int(board_width / 4)
-        margin = bowl_size + 20
+        margin = bowl_size + self.S(20)
 
         canvas_width = board_width + margin * 2
         canvas_height = board_height
@@ -401,14 +413,16 @@ class GameFrame(ttk.Frame):
             highlightthickness=0,
             bg="#224722",
         )
-        black_player_panel.grid(row=2, column=0, sticky="e", padx=10, pady=(0, 10))
+        black_player_panel.grid(
+            row=2, column=0, sticky="e", padx=self.S(10), pady=self.S((0, 10))
+        )
 
         # Account info label
         tk.Label(
             black_player_panel,
             background="#224722",
             image=self.black_player.profile_photo,
-            highlightthickness=1,
+            highlightthickness=self.S(1),
             highlightbackground="black",
             highlightcolor="black",
             relief=tk.SOLID,
@@ -418,7 +432,7 @@ class GameFrame(ttk.Frame):
             background="#224722",
             text=f"{f"({self.black_player.level}EGF) " if self.black_player.level != -3000 else ""}{self.black_player.name}",
         )
-        self.black_name.pack(side=tk.RIGHT, padx=(0, 10))
+        self.black_name.pack(side=tk.RIGHT, padx=self.S((0, 10)))
         self.black_score_label = ttk.Label(
             black_player_panel,
             background="#224722",
@@ -433,14 +447,16 @@ class GameFrame(ttk.Frame):
             highlightthickness=0,
             bg="#224722",
         )
-        white_player_panel.grid(row=0, column=0, sticky="w", padx=10, pady=(10, 0))
+        white_player_panel.grid(
+            row=0, column=0, sticky="w", padx=self.S(10), pady=self.S((10, 0))
+        )
 
         # Account info label
         tk.Label(
             white_player_panel,
             background="#224722",
             image=self.white_player.profile_photo,
-            highlightthickness=1,
+            highlightthickness=self.S(1),
             highlightbackground="black",
             highlightcolor="black",
             relief=tk.SOLID,
@@ -451,7 +467,7 @@ class GameFrame(ttk.Frame):
             foreground="grey",
             text=f"{self.white_player.name}{f" ({self.white_player.level}EGF)" if self.white_player.level != -3000 else ""}",
         )
-        self.white_name.pack(side=tk.LEFT, padx=(10, 0))
+        self.white_name.pack(side=tk.LEFT, padx=self.S((10, 0)))
         self.white_score_label = ttk.Label(
             white_player_panel,
             background="#224722",
@@ -467,21 +483,21 @@ class GameFrame(ttk.Frame):
 
         # Main container
         main_frame = ttk.Frame(self)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=30, pady=40)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=self.S(30), pady=self.S(40))
 
         # Left side: Game board
-        main_board = self.app.Frame(main_frame, bg="black", bd=1, width=1000)
+        main_board = self.app.Frame(main_frame, bg="black", bd=1, width=self.S(1000))
         main_board.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         board = self.app.Frame(main_board)
-        board.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        board.pack(pady=self.S(3), padx=self.S(3), fill=tk.BOTH, expand=True)
         self.board_frame = tk.Frame(
             board.content_frame,
             bd=0,
             highlightbackground="black",
-            highlightthickness=1,
+            highlightthickness=self.S(1),
             bg="#224722",
         )
-        self.board_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        self.board_frame.pack(fill=tk.BOTH, expand=True, padx=self.S(3), pady=self.S(3))
 
         self.board_frame.grid_columnconfigure(0, weight=1)
         self.board_frame.grid_rowconfigure(0, weight=0)
@@ -496,7 +512,7 @@ class GameFrame(ttk.Frame):
         board_width = int(self.image_total_size * self.scale_ratio)
         board_height = int(self.image_total_size * self.scale_ratio)
         bowl_size = int(board_width / 4)
-        margin = bowl_size + 20
+        margin = bowl_size + self.S(20)
 
         canvas_width = board_width + margin * 2
         canvas_height = board_height
@@ -510,7 +526,7 @@ class GameFrame(ttk.Frame):
             highlightthickness=0,  # Remove canvas border highlight
             bg="#224722",
         )
-        self.canvas.grid(row=1, column=0, padx=20, pady=20)
+        self.canvas.grid(row=1, column=0, padx=self.S(20), pady=self.S(20))
         self.canvas.bind("<Button-1>", self._on_board_click)
 
         # Origin for drawing the board
@@ -522,25 +538,13 @@ class GameFrame(ttk.Frame):
 
         # Right side: Controls and info panel
         right_frame = ttk.Frame(main_frame)
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(20, 0))
-
-        # # Game status frame
-        # status_frame = ttk.Frame(right_frame, style="Framed.TFrame", padding=20)
-        # status_frame.pack(fill=tk.X, pady=(0, 10))
-
-        # # Current player display
-        # self.player_label = ttk.Label(status_frame, text=self._get_player_text())
-        # self.player_label.pack(pady=5)
-
-        # # Move count display
-        # self.moves_label = ttk.Label(status_frame, text="Aucun coup joué")
-        # self.moves_label.pack(pady=5)
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=self.S((20, 0)))
 
         # Control buttons frame
         main_buttons_frame = self.app.Frame(right_frame, bg="black", bd=1)
-        main_buttons_frame.pack(fill=tk.X, pady=(40, 10))
+        main_buttons_frame.pack(fill=tk.X, pady=self.S((40, 10)))
         buttons_frame = self.app.Frame(main_buttons_frame)
-        buttons_frame.pack(pady=3, padx=3, expand=True)
+        buttons_frame.pack(pady=self.S(3), padx=self.S(3), expand=True)
 
         # Pass button
         self.pass_button = self.app.Button(
@@ -551,7 +555,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_pass(),
             takefocus=False,
         )
-        self.pass_button.pack(fill=tk.X, pady=(20, 10), padx=30)
+        self.pass_button.pack(fill=tk.X, pady=self.S((20, 10)), padx=self.S(30))
 
         # Resign button
         self.resign_button = self.app.Button(
@@ -562,7 +566,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_resign(),
             takefocus=False,
         )
-        self.resign_button.pack(fill=tk.X, pady=10, padx=30)
+        self.resign_button.pack(fill=tk.X, pady=self.S((10, 10)), padx=self.S(30))
 
         # New game button
         self.new_game_button = self.app.Button(
@@ -573,7 +577,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_new_game(),
             takefocus=False,
         )
-        self.new_game_button.pack(fill=tk.X, pady=10, padx=30)
+        self.new_game_button.pack(fill=tk.X, pady=self.S((10, 10)), padx=self.S(30))
 
         # Settings button
         self.app.Button(
@@ -583,7 +587,7 @@ class GameFrame(ttk.Frame):
             text="Paramètres",
             command=lambda: self._open_settings(),
             takefocus=False,
-        ).pack(pady=10, fill=tk.X, padx=30)
+        ).pack(pady=self.S((10, 10)), fill=tk.X, padx=self.S(30))
 
         # Back to Lobby button
         self.back_button = self.app.Button(
@@ -594,7 +598,7 @@ class GameFrame(ttk.Frame):
             command=lambda: self._on_back_to_lobby(),
             takefocus=False,
         )
-        self.back_button.pack(fill=tk.X, pady=(10, 20), padx=30)
+        self.back_button.pack(fill=tk.X, pady=self.S((10, 20)), padx=self.S(30))
 
         # Draw the initial board state
         self._draw_board()
@@ -826,7 +830,7 @@ class GameFrame(ttk.Frame):
                     self.last_move = (x, y)
                     self._animate_stone(item, target, capture=capture)
                 else:
-                    self._draw_stone(x, y, self.game.goban.board[x, y])
+                    self._draw_stone(x, y, self.game.goban.board[x, y])  # type: ignore
                     if capture:
                         self._draw_board()
                         self.sound_manager.play_exclusive("capture_effect")
@@ -1101,7 +1105,7 @@ class SingleplayerGameFrame(GameFrame):
         board_height = int(self.image_total_size * self.scale_ratio)
 
         bowl_size = int(board_width / 4)
-        margin = bowl_size + 20
+        margin = bowl_size + self.S(20)
 
         canvas_width = board_width + margin * 2
         canvas_height = board_height
@@ -1171,8 +1175,10 @@ class SingleplayerGameFrame(GameFrame):
             row=2 if self.played_color == Goban.WHITE else 0,
             column=0,
             sticky="e" if self.played_color == Goban.WHITE else "w",
-            padx=10,
-            pady=(0, 10) if self.played_color == Goban.WHITE else (10, 0),
+            padx=self.S(10),
+            pady=(
+                self.S((0, 10)) if self.played_color == Goban.WHITE else self.S((10, 0))
+            ),
         )
 
         # Account info label
@@ -1197,7 +1203,9 @@ class SingleplayerGameFrame(GameFrame):
         )
         self.white_name.pack(
             side=tk.RIGHT if self.played_color == Goban.WHITE else tk.LEFT,
-            padx=(0, 10) if self.played_color == Goban.WHITE else (10, 0),
+            padx=(
+                self.S((0, 10)) if self.played_color == Goban.WHITE else self.S((10, 0))
+            ),
         )
         self.white_score_label = ttk.Label(
             white_player_panel,
@@ -1222,8 +1230,10 @@ class SingleplayerGameFrame(GameFrame):
             row=0 if self.played_color == Goban.WHITE else 2,
             column=0,
             sticky="w" if self.played_color == Goban.WHITE else "e",
-            padx=10,
-            pady=(10, 0) if self.played_color == Goban.WHITE else (0, 10),
+            padx=self.S(10),
+            pady=(
+                self.S((10, 0)) if self.played_color == Goban.WHITE else self.S((0, 10))
+            ),
         )
 
         # Account info label
@@ -1247,7 +1257,9 @@ class SingleplayerGameFrame(GameFrame):
         )
         self.black_name.pack(
             side=tk.LEFT if self.played_color == Goban.WHITE else tk.RIGHT,
-            padx=(10, 0) if self.played_color == Goban.WHITE else (0, 10),
+            padx=(
+                self.S((10, 0)) if self.played_color == Goban.WHITE else self.S((0, 10))
+            ),
         )
         self.black_score_label = ttk.Label(
             black_player_panel,

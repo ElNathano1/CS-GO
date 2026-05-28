@@ -281,12 +281,14 @@ class App(tk.Tk):
 
         banner_dir = Path(BASE_FOLDER_PATH) / "gui" / "images" / "banners"
 
+        banner_size = self.ui.image_size((600, 182)) or (600, 182)
+
         # Load welcome banner
         self.cs_go_banner_path = banner_dir / "cs_go_banner.png"
         if self.cs_go_banner_path.exists():
             self.cs_go_banner = ImageTk.PhotoImage(
                 Image.open(self.cs_go_banner_path).resize(
-                    self.S((600, 182)), Image.Resampling.LANCZOS
+                    banner_size, Image.Resampling.LANCZOS
                 )
             )
 
@@ -882,17 +884,17 @@ class App(tk.Tk):
         style.configure(
             "Framed.TFrame",
             background="#1e1e1e",
-            ipadx=10,
-            ipady=10,
+            ipadx=self.S(10) or 10,
+            ipady=self.S(10) or 10,
             relief=tk.RIDGE,
-            borderwidth=2,
+            borderwidth=self.S(2) or 2,
             bordercolor="#f6a90d",
         )
 
         # Configure button style
         style.configure(
             "TButton",
-            font=("Skranji", 14, "bold"),
+            font=self.ui.font(("Skranji", 14, "bold")),
             background="#1e1e1e",
             foreground="white",
             borderwidth=0,
@@ -907,10 +909,10 @@ class App(tk.Tk):
         # Configure account button style
         style.configure(
             "Account.TButton",
-            font=("Skranji", 14, "bold"),
+            font=self.ui.font(("Skranji", 14, "bold")),
             background="#1e1e1e",
             foreground="white",
-            padding=5,
+            padding=self.S(5) or 5,
             borderwidth=0,
             relief=tk.FLAT,
         )
@@ -923,7 +925,7 @@ class App(tk.Tk):
         # Configure label style
         style.configure(
             "TLabel",
-            font=("Skranji", 14, "bold"),
+            font=self.ui.font(("Skranji", 14, "bold")),
             background="#1e1e1e",
             foreground="white",
         )
@@ -931,13 +933,13 @@ class App(tk.Tk):
         # Configure title label style
         style.configure(
             "Title.TLabel",
-            font=("Spell of Asia", 30, "bold"),
+            font=self.ui.font(("Spell of Asia", 30, "bold")),
             background="#1e1e1e",
             foreground="white",
         )
         style.configure(
             "SubTitle.TLabel",
-            font=("Spell of Asia", 20, "bold"),
+            font=self.ui.font(("Spell of Asia", 20, "bold")),
             background="#1e1e1e",
             foreground="white",
         )
@@ -945,7 +947,7 @@ class App(tk.Tk):
         # Configure account label style
         style.configure(
             "Account.TLabel",
-            font=("Skranji-Bold", 12),
+            font=self.ui.font(("Skranji-Bold", 12)),
             background="#1e1e1e",
             foreground="white",
         )
@@ -953,7 +955,7 @@ class App(tk.Tk):
         # Configure error label style
         style.configure(
             "Error.TLabel",
-            font=("Skranji", 8),
+            font=self.ui.font(("Skranji", 8)),
             background="#1e1e1e",
             foreground="red",
         )
@@ -964,12 +966,12 @@ class App(tk.Tk):
             background="#1e1e1e",
             foreground="white",
             fieldbackground="#1e1e1e",
-            borderwidth=2,
+            borderwidth=self.S(2) or 2,
             relief=tk.SOLID,
             bordercolor="black",
-            padding=2,
+            padding=self.S(2) or 2,
             insertcolor="white",
-            font=("Skranji", 14),
+            font=self.ui.font(("Skranji", 14)),
         )
         style.map(
             "TEntry",
@@ -978,7 +980,7 @@ class App(tk.Tk):
             fieldbackground=[("disabled", "#1e1e1e"), ("!disabled", "#1e1e1e")],
             insertcolor=[("disabled", "gray"), ("!disabled", "white")],
             lightcolor=[("focus", "white"), ("!focus", "black")],
-            lightthickness=[("focus", 2), ("!focus", 2)],
+            lightthickness=[("focus", self.S(2) or 2), ("!focus", self.S(2) or 2)],
             bordercolor=[("focus", "white"), ("!focus", "black")],
         )
 
@@ -987,16 +989,16 @@ class App(tk.Tk):
             "Error.TEntry",
             foreground="white",
             fieldbackground="#1e1e1e",
-            borderwidth=2,
+            borderwidth=self.S(2) or 2,
             relief=tk.SOLID,
             bordercolor="red",
-            padding=2,
+            padding=self.S(2) or 2,
             insertcolor="white",
         )
         style.map(
             "Error.TEntry",
             lightcolor=[("focus", "red"), ("!focus", "red")],
-            lightthickness=[("focus", 2), ("!focus", 2)],
+            lightthickness=[("focus", self.S(2) or 2), ("!focus", self.S(2) or 2)],
             bordercolor=[("focus", "red"), ("!focus", "red")],
         )
 
@@ -1199,7 +1201,7 @@ class App(tk.Tk):
             style="Account.TLabel",
             takefocus=False,
         )
-        self.wifi_signal.pack(side=tk.RIGHT, padx=(5, 0))
+        self.wifi_signal.pack(side=tk.RIGHT, padx=(self.S(5) or 5, 0))
 
         # Account info button
         name = self._get_display_name()
@@ -1243,7 +1245,7 @@ class App(tk.Tk):
             takefocus=False,
             cursor="hand2",
         )
-        self.social_button.pack(side=tk.RIGHT, padx=(0, 10))
+        self.social_button.pack(side=tk.RIGHT, padx=(0, self.S(10) or 10))
 
         # Message button (placeholder for future notifications)
         self.message_button = ttk.Button(
@@ -1254,7 +1256,7 @@ class App(tk.Tk):
             takefocus=False,
             cursor="hand2",
         )
-        self.message_button.pack(side=tk.RIGHT, padx=(0, 10))
+        self.message_button.pack(side=tk.RIGHT, padx=(0, self.S(10) or 10))
 
     def _get_display_name(self) -> str:
         if self.name:
@@ -1590,7 +1592,7 @@ class App(tk.Tk):
                 takefocus=False,
                 cursor="hand2",
             )
-            self.social_button.pack(side=tk.RIGHT, padx=(0, 10))
+            self.social_button.pack(side=tk.RIGHT, padx=(0, self.S(10) or 10))
 
             # Message button (placeholder for future notifications)
             self.message_button = ttk.Button(
@@ -1600,7 +1602,7 @@ class App(tk.Tk):
                 takefocus=False,
                 cursor="hand2",
             )
-            self.message_button.pack(side=tk.RIGHT, padx=(0, 10))
+            self.message_button.pack(side=tk.RIGHT, padx=(0, self.S(10) or 10))
 
             def _place_dialog_panel():
                 if not dialog.winfo_exists():
@@ -1756,12 +1758,10 @@ class App(tk.Tk):
                 )
                 if response.status_code == 200:
                     image_data = response.content
-                    if size:
-                        image = Image.open(BytesIO(image_data)).resize(
-                            (size, size), Image.Resampling.LANCZOS
-                        )
-                    else:
-                        image = Image.open(BytesIO(image_data))
+                    image = Image.open(BytesIO(image_data)).resize(
+                        self.ui.image_size((size, size)) or (size, size),
+                        Image.Resampling.LANCZOS,
+                    )
                     return ImageTk.PhotoImage(image)
 
             except Exception as e:
@@ -1791,21 +1791,23 @@ class App(tk.Tk):
             else None
         )
 
+        profile_photo_size = self.ui.image_size((32, 32)) or (32, 32)
+
         if username_photo_path and username_photo_path.exists():
             return ImageTk.PhotoImage(
                 Image.open(username_photo_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         elif default_photo_path.exists():
             return ImageTk.PhotoImage(
                 Image.open(default_photo_path).resize(
-                    (32, 32), Image.Resampling.LANCZOS
+                    profile_photo_size, Image.Resampling.LANCZOS
                 )
             )
         else:
             # Create a blank image if default not found
-            blank_image = Image.new("RGBA", (32, 32), (255, 255, 255, 0))
+            blank_image = Image.new("RGBA", profile_photo_size, (255, 255, 255, 0))
             return ImageTk.PhotoImage(blank_image)
 
     def _show_account_dialog(self) -> None:

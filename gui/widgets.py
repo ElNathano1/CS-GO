@@ -1136,6 +1136,11 @@ class LoadingWindow(TopLevelWindow):
         rotation_delay: int = 30,
         **kwargs,
     ):
+
+        width = master.ui.px(width) or width
+        height = master.ui.px(height) or height
+        size = master.ui.px(size) or size
+
         self._message = message
         self._size = size
         self._rotation_step = rotation_step

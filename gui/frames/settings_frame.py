@@ -31,6 +31,8 @@ class SettingsFrame(ttk.Frame):
             parent (ttk.Frame): The parent frame.
             app (App): The main application instance.
         """
+        self.ui = app.ui
+        self.S = app.S
 
         super().__init__(parent)
 
@@ -39,7 +41,7 @@ class SettingsFrame(ttk.Frame):
 
         # Title
         title = ttk.Label(self, text="Paramètres", style="Title.TLabel")
-        title.pack(pady=(20, 40))
+        title.pack(pady=self.S((20, 40)))
 
         self.container = ttk.Frame(self)
         self.container.pack()
@@ -50,9 +52,9 @@ class SettingsFrame(ttk.Frame):
 
         # Sound options frame
         main_option_frame = self.app.Frame(self.container, bg="black", bd=1)
-        main_option_frame.pack(pady=20, fill=tk.X)
+        main_option_frame.pack(pady=self.S(20), fill=tk.X)
         option_frame = self.app.Frame(main_option_frame)
-        option_frame.pack(pady=3, padx=3, fill=tk.X)
+        option_frame.pack(pady=self.S(3), padx=self.S(3), fill=tk.X)
 
         option_frame.content_frame.grid_columnconfigure(0, weight=0)
         option_frame.content_frame.grid_columnconfigure(1, weight=1)
@@ -68,7 +70,7 @@ class SettingsFrame(ttk.Frame):
             image_size=(32, 32),
         )
         self.master_volume_label.grid(
-            row=0, column=0, padx=(30, 10), pady=(20, 10), sticky="w"
+            row=0, column=0, padx=self.S((30, 10)), pady=self.S((20, 10)), sticky="w"
         )
         self.master_volume_slider = ttk.Scale(
             option_frame.content_frame,
@@ -79,7 +81,7 @@ class SettingsFrame(ttk.Frame):
             takefocus=False,
         )
         self.master_volume_slider.grid(
-            row=0, column=1, padx=(10, 30), pady=10, sticky="ew"
+            row=0, column=1, padx=self.S((10, 30)), pady=self.S(10), sticky="ew"
         )
 
         self.music_volume_label = self.app.Label(
@@ -88,7 +90,7 @@ class SettingsFrame(ttk.Frame):
             image_size=(32, 32),
         )
         self.music_volume_label.grid(
-            row=1, column=0, padx=(30, 10), pady=10, sticky="w"
+            row=1, column=0, padx=self.S((30, 10)), pady=self.S(10), sticky="w"
         )
         self.music_volume_slider = ttk.Scale(
             option_frame.content_frame,
@@ -99,7 +101,7 @@ class SettingsFrame(ttk.Frame):
             takefocus=False,
         )
         self.music_volume_slider.grid(
-            row=1, column=1, padx=(10, 30), pady=10, sticky="ew"
+            row=1, column=1, padx=self.S((10, 30)), pady=self.S(10), sticky="ew"
         )
 
         self.effects_volume_label = self.app.Label(
@@ -108,7 +110,7 @@ class SettingsFrame(ttk.Frame):
             image_size=(32, 32),
         )
         self.effects_volume_label.grid(
-            row=2, column=0, padx=(30, 10), pady=(10, 20), sticky="w"
+            row=2, column=0, padx=self.S((30, 10)), pady=self.S((10, 20)), sticky="w"
         )
         self.effects_volume_slider = ttk.Scale(
             option_frame.content_frame,
@@ -119,7 +121,7 @@ class SettingsFrame(ttk.Frame):
             takefocus=False,
         )
         self.effects_volume_slider.grid(
-            row=2, column=1, padx=(10, 30), pady=(10, 20), sticky="ew"
+            row=2, column=1, padx=self.S((10, 30)), pady=self.S((10, 20)), sticky="ew"
         )
 
         # Store previous volume values for comparison
@@ -137,7 +139,7 @@ class SettingsFrame(ttk.Frame):
             text="Règles du jeu",
             command=lambda: self._open_rules(),
             takefocus=False,
-        ).pack(pady=(20, 10), padx=20)
+        ).pack(pady=self.S((20, 10)), padx=self.S(20))
 
         # Return to Lobby button
         self.app.Button(
@@ -147,7 +149,7 @@ class SettingsFrame(ttk.Frame):
             hover_overlay_path=self.app.hovered_return_icon_path,
             command=self._on_return,
             takefocus=False,
-        ).pack(pady=(20, 20), padx=20)
+        ).pack(pady=self.S((20, 20)), padx=self.S(20))
 
         # Save settings when sliders or checkbox are changed
         self.master_volume_slider.config(command=lambda e: self._save_settings())

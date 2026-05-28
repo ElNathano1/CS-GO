@@ -44,6 +44,9 @@ class AccountFrame(ttk.Frame):
             app (App): The main application instance.
         """
 
+        self.ui = app.ui
+        self.S = app.S
+
         super().__init__(parent)
         self.app = app
         loading = self.app.show_loading("Chargement...")
@@ -56,11 +59,13 @@ class AccountFrame(ttk.Frame):
             takefocus=False,
             cursor="hand2",
         )
-        self.logout_button.pack(pady=(18, 0), padx=20, anchor=tk.NW)
+        self.logout_button.pack(pady=self.S((18, 0)), padx=self.S(20), anchor=tk.NW)
 
         # Create canvas and scrollbar for scrollable content
         canvas_frame = ttk.Frame(self)
-        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(30, 20))
+        canvas_frame.pack(
+            fill=tk.BOTH, expand=True, padx=self.S(20), pady=self.S((30, 20))
+        )
 
         canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0)
         scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
@@ -101,9 +106,9 @@ class AccountFrame(ttk.Frame):
 
         # Account management frame
         main_account_frame = self.app.Frame(scrollable_frame, bg="black", bd=1)
-        main_account_frame.pack(pady=20, fill=tk.X, padx=20)
+        main_account_frame.pack(pady=self.S(20), fill=tk.X, padx=self.S(20))
         account_frame = self.app.Frame(main_account_frame)
-        account_frame.pack(pady=3, padx=3, fill=tk.X)
+        account_frame.pack(pady=self.S(3), padx=self.S(3), fill=tk.X)
 
         self.download_profile_picture()
 
@@ -114,21 +119,21 @@ class AccountFrame(ttk.Frame):
             hover_overlay_path=self.app.edit_picture_banner_path,
             overlay_padding=0,
             command=self._on_change_profile_picture,
-            width=240,
-            height=240,
-            bd=2,
+            width=self.S(240),
+            height=self.S(240),
+            bd=self.S(2),
             relief=tk.FLAT,
             bg="black",
             takefocus=False,
         )
-        self.change_profile_picture_button.pack(pady=(20, 10), padx=10)
+        self.change_profile_picture_button.pack(pady=self.S((20, 10)), padx=self.S(10))
 
         # Change name entry
         self.name_var = tk.StringVar(value=self.app.name)
         self.app.Label(
             account_frame,
             text="Changer le nom d'affichage",
-        ).pack(pady=(10, 5), padx=20)
+        ).pack(pady=self.S((10, 5)), padx=self.S(20))
         self.name_entry = ttk.Entry(
             account_frame,
             textvariable=self.name_var,
@@ -136,7 +141,7 @@ class AccountFrame(ttk.Frame):
             takefocus=True,
             state=tk.NORMAL if self.app.password else tk.DISABLED,
         )
-        self.name_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.name_entry.pack(pady=self.S((0, 10)), padx=self.S(20), fill=tk.X)
 
         # Change password entry
         self.password_var = tk.StringVar(
@@ -145,16 +150,16 @@ class AccountFrame(ttk.Frame):
         self.app.Label(
             account_frame,
             text="Changer le mot de passe",
-        ).pack(pady=(10, 5), padx=20)
+        ).pack(pady=self.S((10, 5)), padx=self.S(20))
         self.password_entry = ttk.Entry(
             account_frame,
             textvariable=self.password_var,
             takefocus=True,
-            font=("Skranji", 14),
+            font=self.ui.font(("Skranji", 14)),  # type: ignore
             show="*",
             state=tk.NORMAL if self.app.password else tk.DISABLED,
         )
-        self.password_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.password_entry.pack(pady=self.S((0, 10)), padx=self.S(20), fill=tk.X)
 
         # Edit account button
         self.edit_account_button = self.app.Button(
@@ -182,7 +187,7 @@ class AccountFrame(ttk.Frame):
                 else tk.NORMAL
             ),
         )
-        self.edit_account_button.pack(pady=(10, 20), padx=20)
+        self.edit_account_button.pack(pady=self.S((10, 20)), padx=self.S(20))
 
         # Account statistics
         title = ttk.Label(
@@ -192,7 +197,7 @@ class AccountFrame(ttk.Frame):
 
         # Account statistics frame
         main_statistics_frame = self.app.Frame(scrollable_frame, bg="black", bd=1)
-        main_statistics_frame.pack(pady=20, fill=tk.X, padx=20)
+        main_statistics_frame.pack(pady=self.S(20), fill=tk.X, padx=self.S(20))
         statistics_frame = self.app.Frame(main_statistics_frame)
         statistics_frame.pack(pady=3, padx=3, fill=tk.X)
         self.statistics_frame = statistics_frame
@@ -210,13 +215,13 @@ class AccountFrame(ttk.Frame):
         self.app.Label(
             statistics_frame,
             text="Nombre de parties jouées",
-        ).grid(row=0, column=0, pady=10, padx=20, sticky="nw")
+        ).grid(row=0, column=0, pady=self.S(10), padx=self.S(20), sticky="nw")
         self.games_played_label = self.app.Label(
             statistics_frame,
             text=self.account_statistics.get("games_played", "0"),
         )
         self.games_played_label.grid(
-            row=0, column=1, pady=10, padx=(0, 20), sticky="ne"
+            row=0, column=1, pady=self.S(10), padx=self.S((0, 20)), sticky="ne"
         )
 
         # View of the 3 last games played with the result and the opponent's name
@@ -226,13 +231,15 @@ class AccountFrame(ttk.Frame):
         self.app.Label(
             statistics_frame,
             text="Nombre de victoires",
-        ).grid(row=1, column=0, pady=(10, 20), padx=(20, 0), sticky="nw")
+        ).grid(
+            row=1, column=0, pady=self.S((10, 20)), padx=self.S((20, 0)), sticky="nw"
+        )
         self.games_won_label = self.app.Label(
             statistics_frame,
             text=self.account_statistics.get("games_won", "0"),
         )
         self.games_won_label.grid(
-            row=1, column=1, pady=(10, 20), padx=(0, 20), sticky="ne"
+            row=1, column=1, pady=self.S((10, 20)), padx=self.S((0, 20)), sticky="ne"
         )
 
         # Return button
@@ -244,7 +251,7 @@ class AccountFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=(0, 20), padx=(20, 0), anchor=tk.S)
+        self.return_button.pack(pady=self.S((0, 20)), padx=self.S((20, 0)), anchor=tk.S)
 
         # Bind Enter key to login
         self.bind("<Return>", lambda event: self._on_edit_account())
@@ -356,7 +363,7 @@ class AccountFrame(ttk.Frame):
             / "profiles"
             / "default_profile_photo.png"
         )
-        target_size = (236, 236)
+        target_size = self.ui.image_size((236, 236)) or (236, 236)
 
         try:
             response = requests.get(
@@ -510,17 +517,24 @@ class AccountFrame(ttk.Frame):
                 foreground="white" if color == "noirs" else "black",
                 anchor=tk.CENTER,
             )
-            game_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=2, ipadx=5, ipady=5)
+            game_label.pack(
+                fill=tk.BOTH,
+                expand=True,
+                padx=self.S(2),
+                pady=self.S(2),
+                ipadx=self.S(5),
+                ipady=self.S(5),
+            )
             frame.grid(
                 row=2 + i,
                 column=0,
                 columnspan=2,
                 sticky="ew",
-                padx=20,
+                padx=self.S(20),
                 pady=(
-                    (0, 20)
+                    self.S((0, 20))
                     if i == len(self.account_statistics.get("recent_games", [])) - 1
-                    else (0, 10)
+                    else self.S((0, 10))
                 ),
             )
 
@@ -568,6 +582,8 @@ class UploadProfilePictureFrame(ttk.Frame):
             parent: The container in which this frame is placed (e.g., dialog body)
             app (App): The main application instance.
         """
+        self.ui = app.ui
+        self.S = app.S
 
         super().__init__(parent)
         self.app = app
@@ -578,8 +594,8 @@ class UploadProfilePictureFrame(ttk.Frame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.crop_size = 496
-        self.canvas_size = 500
+        self.crop_size = self.S(496)
+        self.canvas_size = self.S(500)
         self._drag_start: tuple[int, int] | None = None
 
         self.canvas = tk.Canvas(
@@ -589,13 +605,15 @@ class UploadProfilePictureFrame(ttk.Frame):
             bg="#1e1e1e",
             highlightthickness=0,
         )
-        self.canvas.grid(row=0, column=0, pady=20, padx=20, sticky="news")
+        self.canvas.grid(
+            row=0, column=0, pady=self.S(20), padx=self.S(20), sticky="news"
+        )
 
         button_row = ttk.Frame(self)
-        button_row.grid(row=0, column=1, pady=20, padx=20, sticky="n")
+        button_row.grid(row=0, column=1, pady=self.S(20), padx=self.S(20), sticky="n")
 
         self.error_label = ttk.Label(button_row, text="", style="Error.TLabel")
-        self.error_label.pack(pady=(0, 10))
+        self.error_label.pack(pady=self.S((0, 10)))
 
         self.upload_button = self.app.Button(
             button_row,
@@ -605,7 +623,7 @@ class UploadProfilePictureFrame(ttk.Frame):
             command=self._on_upload,
             takefocus=False,
         )
-        self.upload_button.pack(pady=(10, 0))
+        self.upload_button.pack(pady=self.S((10, 0)))
 
         self.change_picture_button = self.app.Button(
             button_row,
@@ -615,7 +633,7 @@ class UploadProfilePictureFrame(ttk.Frame):
             command=self._on_change_picture,
             takefocus=False,
         )
-        self.change_picture_button.pack(pady=(10, 0))
+        self.change_picture_button.pack(pady=self.S((10, 0)))
 
         self.cancel_button = self.app.Button(
             button_row,
@@ -625,7 +643,7 @@ class UploadProfilePictureFrame(ttk.Frame):
             command=self._on_cancel,
             takefocus=False,
         )
-        self.cancel_button.pack(pady=10)
+        self.cancel_button.pack(pady=self.S(10))
 
         self._init_canvas_image()
 
