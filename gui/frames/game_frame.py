@@ -20,7 +20,7 @@ from gui.game_canvas import StoneBowl
 from game.core import Goban, GoGame
 from gui.frames.settings_frame import SettingsFrame
 from gui.widgets import TopLevelWindow
-from player.ai import KatagoAI, Martin, Amina, Leo, Sofia, Ravi, Ada, Player
+from player.ai import KatagoAI, Martin, Amina, Leo, Sofia, Ravi, Ada, Player, load_ai
 
 from config import BASE_FOLDER_PATH
 
@@ -1296,17 +1296,45 @@ class SingleplayerGameFrame(GameFrame):
         )
         if result:
             game = GoGame(self.board_size)
+            next_played_color = (
+                Goban.BLACK if self.played_color == Goban.WHITE else Goban.WHITE
+            )
+
+            # Recreate the AI with the new game state to avoid stale references.
+            ai_player = (
+                self.black_player
+                if isinstance(self.black_player, (Martin, KatagoAI))
+                else self.white_player
+            )
+            human_player = (
+                self.white_player
+                if ai_player is self.black_player
+                else self.black_player
+            )
+
+            if next_played_color == Goban.BLACK:
+                ai_color = Goban.WHITE
+                human_color = Goban.BLACK
+                black_player = human_player
+                white_player = load_ai(ai_player.name, game, ai_color)
+            else:
+                ai_color = Goban.BLACK
+                human_color = Goban.WHITE
+                white_player = human_player
+                black_player = load_ai(ai_player.name, game, ai_color)
+
+            human_player.color = human_color
+            human_player.opponent_color = ai_color
+
             self.app.show_frame(
                 lambda parent, app: SingleplayerGameFrame(
                     parent,
                     app,
                     self.board_size,
-                    self.white_player,
-                    self.black_player,
+                    black_player,
+                    white_player,
                     game,
-                    played_color=(
-                        Goban.BLACK if self.played_color == Goban.WHITE else Goban.WHITE
-                    ),
+                    played_color=next_played_color,
                 )
             )
 
@@ -1419,9 +1447,7 @@ class SingleplayerGameFrame(GameFrame):
 
                 # Get the bowl corresponding to the color that JUST played (before color switch)
                 bowl = (
-                    self.white_bowl
-                    if self.game.current_color == self.ai_color
-                    else self.black_bowl
+                    self.white_bowl if self.ai_color == Goban.WHITE else self.black_bowl
                 )
                 item = bowl.pop_stone_item()
 
@@ -1442,6 +1468,7 @@ class SingleplayerGameFrame(GameFrame):
                 if self.game.game_over():
                     self._show_game_over_dialog()
             else:
+                print(x, y)
                 # Play invalid move sound
                 self.sound_manager.play_exclusive("invalid_move_effect")
 

@@ -1757,7 +1757,7 @@ class App(tk.Tk):
 
             try:
                 response = requests.get(
-                    f"{BASE_URL}/users/{username}/profile-picture/thumb",
+                    f"{BASE_URL}/users/{self.username}/profile-picture/thumb",
                     timeout=10,
                 )
                 if response.status_code == 200:

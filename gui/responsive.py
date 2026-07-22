@@ -34,11 +34,12 @@ class UIScaler:
         self,
         screen_width: int,
         screen_height: int,
-        base_width: int = 1920,
-        base_height: int = 1080,
+        base_width: int = 1280,
+        base_height: int = 720,
         min_scale: float = 0.75,
         max_scale: float = 1.35,
     ) -> None:
+        print(f"Screen resolution: {screen_width}x{screen_height}")
         ratio_w = screen_width / float(base_width)
         ratio_h = screen_height / float(base_height)
         scale = min(ratio_w, ratio_h)
