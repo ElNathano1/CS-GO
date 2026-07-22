@@ -46,6 +46,7 @@ class MessageryFrame(ttk.Frame):
 
         super().__init__(parent)
         self.app = app
+        self._conversation_profile_images: list[ImageTk.PhotoImage] = []
         loading = self.app.show_loading("Chargement...")
 
         # Content frame
@@ -72,7 +73,7 @@ class MessageryFrame(ttk.Frame):
             image=self.app.search_icon,
         ).grid(row=0, column=0, sticky="w", padx=(0, 5))
 
-        self.conversation_var = tk.StringVar(value=self.app.name)
+        self.conversation_var = tk.StringVar(value="")
         self.conversation_entry = ttk.Entry(
             entry_frame,
             width=18,
@@ -175,45 +176,41 @@ class MessageryFrame(ttk.Frame):
         """
 
         try:
+            print(self.app.username)
             response = requests.get(
-                f"{BASE_URL}/messages/{self.app.username}",
+                f"{BASE_URL}/conversations/{self.app.username}",
                 timeout=5,
             )
             if response.status_code == 200:
-                conversations = {}
-                for type in ["received", "sent"]:
-                    for message in response.json()[type]:
-                        if type == "sent":
-                            other_username = message.get("recipient")
-                        else:
-                            other_username = message.get("sender")
-                        try:
-                            other_user = requests.get(
-                                f"{BASE_URL}/users/{other_username}",
-                                timeout=5,
-                            ).json()
-                        except Exception:
-                            other_user = {"name": other_username, "connected": False}
+                conversations = []
 
-                        if other_username not in conversations:
-                            conversations[other_username] = {
-                                "name": other_user.get("name"),
-                                "username": other_username,
-                                "last_message": message.get("content"),
-                                "last_message_time": message.get("timestamp"),
-                                "is_connected": other_user.get("connected"),
-                            }
-                        else:
-                            if message.get("timestamp") > conversations[
-                                other_username
-                            ].get("last_message_time", ""):
-                                conversations[other_username]["last_message"] = (
-                                    message.get("content")
-                                )
-                                conversations[other_username]["last_message_time"] = (
-                                    message.get("timestamp")
-                                )
-                return list(conversations.values())
+                print(response.json())
+
+                for username in response.json().keys():
+
+                    user = requests.get(
+                        f"{BASE_URL}/users/{username}", timeout=5
+                    ).json()
+                    conversation = {
+                        "username": username,
+                        "name": user.get("name", username),
+                        "connected": user.get("connected", False),
+                        "last_message": "",
+                        "timestamp": "",
+                        "messages": [],
+                    }
+                    for message in response.json()[username]:
+                        conversation["messages"].append(message)
+                        if message.get("timestamp", "") > conversation["timestamp"]:
+                            conversation["last_message"] = message.get("content", "")
+                            conversation["timestamp"] = message.get("timestamp", "")
+                    conversations.append(conversation)
+
+                return sorted(
+                    conversations,
+                    key=lambda c: c.get("timestamp", ""),
+                    reverse=True,
+                )
 
             else:
                 return []
@@ -227,11 +224,14 @@ class MessageryFrame(ttk.Frame):
         """
 
         conversations = self._fetch_conversations()
-        print(conversations)
+
         for widget in parent.winfo_children():
             widget.destroy()
 
-        if conversations == []:
+        # Keep strong references to PhotoImage objects used in conversation labels.
+        self._conversation_profile_images.clear()
+
+        if not conversations:
             ttk.Label(
                 parent,
                 text="Aucune conversation trouvée.",
@@ -245,12 +245,24 @@ class MessageryFrame(ttk.Frame):
 
         else:
             for conversation in conversations:
-                conversation_frame = ttk.Frame(parent, padding=10)
-                conversation_frame.pack(fill=tk.X, expand=True)
+                print(conversation)
+                print(conversation.get("username"))
 
-                self.profile_photo_path = self.app.get_profile_photo(
-                    conversation.get("username")
+                conversation_frame = ttk.Frame(parent)
+                conversation_frame.pack(fill=tk.BOTH, expand=True)
+
+                profile_photo = self.app.get_profile_photo(
+                    conversation.get("username"), for_current_player=False
                 )
+
+                profile_photo_label = ttk.Label(
+                    conversation_frame,
+                    image=profile_photo,
+                    takefocus=False,
+                    style="Account.TLabel",
+                )
+                self._conversation_profile_images.append(profile_photo)
+                profile_photo_label.pack(side=tk.LEFT, padx=(5, 10), pady=5)
 
     def _update_list(self, e):
         """
@@ -258,66 +270,6 @@ class MessageryFrame(ttk.Frame):
         """
 
         pass
-
-    def _on_edit_account(self):
-        """
-        Give permission to modify the information of the account.
-        Check if the user logged in manually or automatically. If automatically,
-        open login dialog to login manually.
-        """
-
-        if self.app.password:
-            self._on_save_account()
-
-        else:
-            self.app._show_login_dialog()
-            self._on_return()
-
-    def _on_save_account(self):
-        """
-        Save the new account information (name and password) to the backend API.
-        """
-
-        try:
-            response = requests.post(
-                f"{BASE_URL}/users/{self.app.username}/change_name",
-                params={"new_name": self.name_entry.get()},
-                timeout=5,
-            )
-            print(response)
-            if response.status_code == 200:
-                messagebox.showinfo(
-                    "Succès", "Informations du compte mises à jour avec succès."
-                )
-                self.app.name = self.name_entry.get()  # type: ignore
-            else:
-                messagebox.showerror(
-                    "Erreur", "Échec de la mise à jour des informations du compte."
-                )
-
-            response = requests.post(
-                f"{BASE_URL}/users/{self.app.username}/change_password",
-                params={
-                    "old_password": self.app.password,
-                    "new_password": self.password_entry.get(),
-                },
-                timeout=5,
-            )
-            if response.status_code == 200:
-                messagebox.showinfo(
-                    "Succès", "Informations du compte mises à jour avec succès."
-                )
-                self.app.password = self.password_entry.get()  # type: ignore
-            else:
-                messagebox.showerror(
-                    "Erreur", "Échec de la mise à jour des informations du compte."
-                )
-
-        except Exception as e:
-            messagebox.showerror(
-                "Erreur",
-                "Une erreur est survenue lors de la mise à jour des informations du compte.",
-            )
 
     def download_profile_picture(self) -> None:
         """

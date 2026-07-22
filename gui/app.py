@@ -1703,7 +1703,10 @@ class App(tk.Tk):
                 self.social_panel.lift()
 
     def get_profile_photo(
-        self, username: str | None = None, size: int = 32
+        self,
+        username: str | None = None,
+        size: int = 32,
+        for_current_player: bool = True,
     ) -> ImageTk.PhotoImage:
         """
         Get the user's profile photo as a PhotoImage.
@@ -1713,7 +1716,8 @@ class App(tk.Tk):
         """
 
         # Try to load user's profile photo from the web API
-        if self.username:
+        if for_current_player and self.username:
+
             try:
                 response = requests.get(
                     f"{BASE_URL}/users/{self.username}/profile-picture/thumb",
@@ -1729,6 +1733,25 @@ class App(tk.Tk):
                         image = Image.open(BytesIO(image_data))
                     return ImageTk.PhotoImage(image)
 
+            except Exception as e:
+                pass
+
+        else:
+
+            try:
+                response = requests.get(
+                    f"{BASE_URL}/users/{username}/profile-picture/thumb",
+                    timeout=10,
+                )
+                if response.status_code == 200:
+                    image_data = response.content
+                    if size:
+                        image = Image.open(BytesIO(image_data)).resize(
+                            (size, size), Image.Resampling.LANCZOS
+                        )
+                    else:
+                        image = Image.open(BytesIO(image_data))
+                    return ImageTk.PhotoImage(image)
             except Exception as e:
                 pass
 
