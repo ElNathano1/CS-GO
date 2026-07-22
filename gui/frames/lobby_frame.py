@@ -36,6 +36,9 @@ class LobbyFrame(ttk.Frame):
             parent (ttk.Frame): The parent frame.
             app (App): The main application instance.
         """
+        self.ui = app.ui
+        self.S = app.S
+
         super().__init__(parent)
 
         self.app = app
@@ -77,8 +80,8 @@ class LobbyFrame(ttk.Frame):
         # Title
         title = tk.Canvas(
             self,
-            width=600,
-            height=182,
+            width=self.S(600),
+            height=self.S(182),
             relief=tk.FLAT,
             bd=0,
             highlightthickness=0,
@@ -90,7 +93,7 @@ class LobbyFrame(ttk.Frame):
             image=self.app.cs_go_banner,
             anchor="nw",
         )
-        title.pack(pady=40)
+        title.pack(pady=self.S(40))
 
         self.after(0, self._build_step_3)
 
@@ -101,9 +104,9 @@ class LobbyFrame(ttk.Frame):
 
         # Menu frame
         main_menu_frame = self.app.Frame(self, bg="black", bd=1)
-        main_menu_frame.pack(pady=20, padx=30)
+        main_menu_frame.pack(pady=self.S(20), padx=self.S(30))
         self._menu_frame = self.app.Frame(main_menu_frame)
-        self._menu_frame.pack(pady=3, padx=3)
+        self._menu_frame.pack(pady=self.S(3), padx=self.S(3))
 
         self._menu_build_steps = [
             self._build_local_button,
@@ -130,7 +133,7 @@ class LobbyFrame(ttk.Frame):
             text="Partie locale",
             command=lambda: self._open_local_game(),
             takefocus=False,
-        ).pack(pady=(20, 10), fill=tk.X, padx=30)
+        ).pack(pady=self.S((20, 10)), fill=tk.X, padx=self.S(30))
 
     def _build_online_button(self) -> None:
         self.online_button = self.app.Button(
@@ -142,7 +145,7 @@ class LobbyFrame(ttk.Frame):
             command=lambda: self._open_online_game(),
             takefocus=False,
         )
-        self.online_button.pack(pady=10, fill=tk.X, padx=30)
+        self.online_button.pack(pady=self.S(10), fill=tk.X, padx=self.S(30))
 
     def _build_settings_button(self) -> None:
         self.app.Button(
@@ -152,7 +155,7 @@ class LobbyFrame(ttk.Frame):
             text="Paramètres",
             command=lambda: self._open_settings(),
             takefocus=False,
-        ).pack(pady=10, fill=tk.X, padx=30)
+        ).pack(pady=self.S(10), fill=tk.X, padx=self.S(30))
 
     def _build_return_button(self) -> None:
         self.app.Button(
@@ -162,7 +165,7 @@ class LobbyFrame(ttk.Frame):
             text="Retour au bureau",
             command=lambda: self.app.return_to_desktop(),
             takefocus=False,
-        ).pack(pady=(10, 20), fill=tk.X, padx=30)
+        ).pack(pady=self.S((10, 20)), fill=tk.X, padx=self.S(30))
 
     def _open_local_game(self) -> None:
         """

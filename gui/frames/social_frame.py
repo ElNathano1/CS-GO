@@ -43,6 +43,8 @@ class MessageryFrame(ttk.Frame):
             parent: The container in which this frame is placed (e.g., dialog body)
             app (App): The main application instance.
         """
+        self.ui = app.ui
+        self.S = app.S
 
         super().__init__(parent)
         self.app = app
@@ -63,7 +65,11 @@ class MessageryFrame(ttk.Frame):
 
         # Search conversation entry
         entry_frame = ttk.Frame(left_column)
-        entry_frame.pack(pady=(80, 0), padx=(20, 10), fill=tk.X)
+        entry_frame.pack(
+            pady=self.S((80, 0)),
+            padx=self.S((20, 10)),
+            fill=tk.X,
+        )
 
         entry_frame.grid_rowconfigure(0, weight=1)
         entry_frame.grid_columnconfigure(1, weight=1)
@@ -71,31 +77,46 @@ class MessageryFrame(ttk.Frame):
         ttk.Label(
             entry_frame,
             image=self.app.search_icon,
-        ).grid(row=0, column=0, sticky="w", padx=(0, 5))
+        ).grid(row=0, column=0, sticky="w", padx=self.S((0, 5)))
 
         self.conversation_var = tk.StringVar(value="")
         self.conversation_entry = ttk.Entry(
             entry_frame,
-            width=18,
+            width=self.S(18),
             textvariable=self.conversation_var,
-            font=("Skranji", 14),
+            font=self.ui.font(("Skranji", 14)) or ("Skranji", 14),
             takefocus=True,
         )
         self.conversation_entry.grid(row=0, column=1, sticky="ew", padx=0)
 
         # Conversation list frame
         main_canvas_frame_border = self.app.Frame(left_column, bg="black", bd=1)
-        main_canvas_frame_border.pack(fill=tk.BOTH, expand=True, padx=(20, 10), pady=20)
+        main_canvas_frame_border.pack(
+            fill=tk.BOTH,
+            expand=True,
+            padx=self.S((20, 10)),
+            pady=self.S(20),
+        )
         main_canvas_frame = self.app.Frame(main_canvas_frame_border)
-        main_canvas_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        main_canvas_frame.pack(
+            pady=self.S(3),
+            padx=self.S(3),
+            fill=tk.BOTH,
+            expand=True,
+        )
         canvas_frame = tk.Frame(
             main_canvas_frame.content_frame,
             bd=0,
             highlightbackground="black",
-            highlightthickness=1,
+            highlightthickness=self.S(1),
             bg="#1e1e1e",
         )
-        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        canvas_frame.pack(
+            fill=tk.BOTH,
+            expand=True,
+            padx=self.S(3),
+            pady=self.S(3),
+        )
 
         # Create canvas and scrollbar for scrollable content
         canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0)
@@ -135,22 +156,37 @@ class MessageryFrame(ttk.Frame):
         self.right_column = ttk.Frame(content_frame)
         self.right_column.grid(row=0, column=1, sticky="nsew")
 
-        main_message_frame_border = self.app.Frame(self.right_column, bg="black", bd=1)
+        main_message_frame_border = self.app.Frame(
+            self.right_column, bg="black", bd=self.S(1)
+        )
         main_message_frame_border.pack(
-            fill=tk.BOTH, expand=True, padx=(10, 20), pady=20
+            fill=tk.BOTH,
+            expand=True,
+            padx=self.S((10, 20)),
+            pady=self.S(20),
         )
         main_message_frame = self.app.Frame(main_message_frame_border)
         main_message_frame.pack(
-            pady=3, padx=3, ipady=5, ipadx=5, fill=tk.BOTH, expand=True
+            pady=self.S(3),
+            padx=self.S(3),
+            ipady=self.S(5),
+            ipadx=self.S(5),
+            fill=tk.BOTH,
+            expand=True,
         )
         message_content_frame = tk.Frame(
             main_message_frame.content_frame,
             bd=0,
             highlightbackground="black",
-            highlightthickness=1,
+            highlightthickness=self.S(1),
             bg="#1e1e1e",
         )
-        message_content_frame.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        message_content_frame.pack(
+            fill=tk.BOTH,
+            expand=True,
+            padx=self.S(3),
+            pady=self.S(3),
+        )
 
         # Return button
         self.return_button = self.app.Button(
@@ -161,7 +197,11 @@ class MessageryFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=20, padx=20, anchor=tk.S)
+        self.return_button.pack(
+            pady=self.S(20),
+            padx=self.S(20),
+            anchor=tk.S,
+        )
 
         self.app.hide_loading(loading)
 
@@ -235,12 +275,18 @@ class MessageryFrame(ttk.Frame):
             ttk.Label(
                 parent,
                 text="Aucune conversation trouvée.",
-                font=("Skranji", 12, "italic"),
+                font=self.app.ui.font(("Skranji", 12, "italic"))
+                or ("Skranji", 12, "italic"),
                 background="#1e1e1e",
                 foreground="grey",
                 anchor=tk.CENTER,
-                wraplength=200,
-            ).pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+                wraplength=self.S(200),
+            ).pack(
+                fill=tk.BOTH,
+                expand=True,
+                padx=self.S(20),
+                pady=self.S(20),
+            )
             return
 
         else:
@@ -475,333 +521,3 @@ class MessageryFrame(ttk.Frame):
         dialog = self.winfo_toplevel()
         if isinstance(dialog, TopLevelWindow):
             dialog.close()
-
-
-class UploadProfilePictureFrame(ttk.Frame):
-    """
-    Frame to upload a new profile picture for the user.
-    Allows users to select an image file from their computer and upload it as their new profile picture.
-
-    Allows users to:
-    - Select an image file from their computer.
-    - Crop and preview the selected image.
-    - Upload the new profile picture to the backend API.
-    """
-
-    def __init__(
-        self,
-        parent: tk.Widget,
-        app: "App",
-        picture: Image.Image,
-        on_complete: Callable[[Path], None] | None = None,
-    ):
-        """
-        Initializes the upload profile picture frame.
-
-        Args:
-            parent: The container in which this frame is placed (e.g., dialog body)
-            app (App): The main application instance.
-        """
-
-        super().__init__(parent)
-        self.app = app
-        self.original_image = picture.convert("RGBA")
-        self.on_complete = on_complete
-
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_rowconfigure(0, weight=1)
-
-        self.crop_size = 496
-        self.canvas_size = 500
-        self._drag_start: tuple[int, int] | None = None
-
-        self.canvas = tk.Canvas(
-            self,
-            width=self.canvas_size,
-            height=self.canvas_size,
-            bg="#1e1e1e",
-            highlightthickness=0,
-        )
-        self.canvas.grid(row=0, column=0, pady=20, padx=20, sticky="news")
-
-        button_row = ttk.Frame(self)
-        button_row.grid(row=0, column=1, pady=20, padx=20, sticky="n")
-
-        self.error_label = ttk.Label(button_row, text="", style="Error.TLabel")
-        self.error_label.pack(pady=(0, 10))
-
-        self.upload_button = self.app.Button(
-            button_row,
-            text="Importer",
-            overlay_path=self.app.save_icon_path,
-            hover_overlay_path=self.app.hovered_save_icon_path,
-            command=self._on_upload,
-            takefocus=False,
-        )
-        self.upload_button.pack(pady=(10, 0))
-
-        self.change_picture_button = self.app.Button(
-            button_row,
-            text="Changer de photo",
-            overlay_path=self.app.upload_icon_path,
-            hover_overlay_path=self.app.hovered_upload_icon_path,
-            command=self._on_change_picture,
-            takefocus=False,
-        )
-        self.change_picture_button.pack(pady=(10, 0))
-
-        self.cancel_button = self.app.Button(
-            button_row,
-            text="Annuler",
-            overlay_path=self.app.return_icon_path,
-            hover_overlay_path=self.app.hovered_return_icon_path,
-            command=self._on_cancel,
-            takefocus=False,
-        )
-        self.cancel_button.pack(pady=10)
-
-        self._init_canvas_image()
-
-        self.canvas.bind("<ButtonPress-1>", self._start_drag)
-        self.canvas.bind("<B1-Motion>", self._on_drag)
-        self.canvas.bind("<ButtonRelease-1>", self._end_drag)
-        self.canvas.bind("<MouseWheel>", self._on_zoom)
-
-    def _init_canvas_image(self) -> None:
-        """
-        Prepare the canvas image and crop overlay.
-        """
-
-        min_scale = max(
-            self.crop_size / self.original_image.width,
-            self.crop_size / self.original_image.height,
-        )
-        self._min_scale = min_scale
-        self._max_scale = min_scale * 4
-        self._scale = min_scale
-
-        self.crop_left = (self.canvas_size - self.crop_size) / 2
-        self.crop_top = (self.canvas_size - self.crop_size) / 2
-        self.crop_right = self.crop_left + self.crop_size
-        self.crop_bottom = self.crop_top + self.crop_size
-
-        self._display_size = (0, 0)
-        self._image_id: int | None = None
-        self._render_image(center=(self.canvas_size / 2, self.canvas_size / 2))
-
-        self.crop_rect = self.canvas.create_rectangle(
-            self.crop_left,
-            self.crop_top,
-            self.crop_right,
-            self.crop_bottom,
-            outline="white",
-            width=2,
-        )
-
-    def _render_image(self, center: tuple[float, float] | None = None) -> None:
-        """
-        Render the scaled image in the canvas.
-        """
-
-        display_width = max(1, int(self.original_image.width * self._scale))
-        display_height = max(1, int(self.original_image.height * self._scale))
-        self._display_size = (display_width, display_height)
-        resized = self.original_image.resize(
-            (display_width, display_height), Image.Resampling.LANCZOS
-        )
-        self._photo = ImageTk.PhotoImage(resized)
-
-        if center is None and self._image_id is not None:
-            coords = self.canvas.coords(self._image_id)
-            center = (coords[0], coords[1])
-        elif center is None:
-            center = (self.canvas_size / 2, self.canvas_size / 2)
-
-        center = self._clamp_center(center[0], center[1])
-
-        if self._image_id is None:
-            self._image_id = self.canvas.create_image(
-                center[0], center[1], image=self._photo
-            )
-        else:
-            self.canvas.itemconfig(self._image_id, image=self._photo)
-            self.canvas.coords(self._image_id, center[0], center[1])
-
-        self.canvas.image = self._photo  # type: ignore
-        if hasattr(self, "crop_rect"):
-            self.canvas.tag_raise(self.crop_rect)
-
-    def _clamp_center(self, cx: float, cy: float) -> tuple[float, float]:
-        """
-        Keep the image covering the crop square.
-        """
-
-        half_w = self._display_size[0] / 2
-        half_h = self._display_size[1] / 2
-
-        min_cx = self.crop_right - half_w
-        max_cx = self.crop_left + half_w
-        if min_cx > max_cx:
-            min_cx = max_cx = (min_cx + max_cx) / 2
-
-        min_cy = self.crop_bottom - half_h
-        max_cy = self.crop_top + half_h
-        if min_cy > max_cy:
-            min_cy = max_cy = (min_cy + max_cy) / 2
-
-        cx = min(max(cx, min_cx), max_cx)
-        cy = min(max(cy, min_cy), max_cy)
-        return cx, cy
-
-    def _start_drag(self, event) -> None:
-        self._drag_start = (event.x, event.y)
-
-    def _on_drag(self, event) -> None:
-        if not self._drag_start or self._image_id is None:
-            return
-
-        dx = event.x - self._drag_start[0]
-        dy = event.y - self._drag_start[1]
-        cx, cy = self.canvas.coords(self._image_id)
-        cx, cy = self._clamp_center(cx + dx, cy + dy)
-        self.canvas.coords(self._image_id, cx, cy)
-        self._drag_start = (event.x, event.y)
-
-    def _end_drag(self, event) -> None:
-        self._drag_start = None
-
-    def _on_zoom(self, event) -> None:
-        if self._image_id is None:
-            return
-
-        direction = 1 if event.delta > 0 else -1
-        factor = 1.08 if direction > 0 else 0.92
-        new_scale = min(max(self._scale * factor, self._min_scale), self._max_scale)
-        if new_scale == self._scale:
-            return
-        self._scale = new_scale
-        self._render_image()
-
-    def _on_cancel(self) -> None:
-        dialog = self.winfo_toplevel()
-        if isinstance(dialog, TopLevelWindow):
-            dialog.close()
-
-    def _on_upload(self) -> None:
-        if getattr(self, "_uploading", False):
-            return
-        self._set_upload_state(True)
-        thread = threading.Thread(target=self._upload_worker, daemon=True)
-        thread.start()
-
-    def _set_upload_state(self, uploading: bool) -> None:
-        self._uploading = uploading
-        state = tk.DISABLED if uploading else tk.NORMAL
-        self.upload_button.config(state=state)
-        self.cancel_button.config(state=state)
-        if uploading:
-            self.error_label.config(text="Envoi en cours...")
-
-    def _upload_worker(self) -> None:
-        try:
-            if not self.app.username:
-                raise ValueError("Utilisateur non connecté.")
-
-            cropped = self._get_cropped_image()
-            buffer = BytesIO()
-            cropped.save(buffer, format="WEBP")
-            buffer.seek(0)
-
-            response = requests.post(
-                f"{BASE_URL}/users/{self.app.username}/profile-picture",
-                files={
-                    "file": (
-                        "profile_picture.webp",
-                        buffer.getvalue(),
-                        "image/webp",
-                    )
-                },
-                timeout=10,
-            )
-
-            if response.status_code not in (200, 201):
-                raise ValueError("Erreur lors de l'envoi de l'image.")
-
-            output_path = (
-                Path(BASE_FOLDER_PATH)
-                / "gui"
-                / "images"
-                / "profiles"
-                / "current_profile_picture.webp"
-            )
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            cropped.save(output_path, format="WEBP")
-
-            self.app.after(0, lambda: self._on_upload_success(output_path))
-
-        except Exception as exc:
-            self.app.after(0, lambda: self._on_upload_error(str(exc)))
-
-    def _on_upload_success(self, output_path: Path) -> None:
-        self._set_upload_state(False)
-        if self.on_complete:
-            self.on_complete(output_path)
-        dialog = self.winfo_toplevel()
-        if isinstance(dialog, TopLevelWindow):
-            dialog.close()
-
-    def _on_upload_error(self, message: str) -> None:
-        self._set_upload_state(False)
-        self.error_label.config(text=message)
-
-    def _get_cropped_image(self) -> Image.Image:
-        if self._image_id is None:
-            return self.original_image
-
-        cx, cy = self.canvas.coords(self._image_id)
-        display_w, display_h = self._display_size
-        display_left = cx - display_w / 2
-        display_top = cy - display_h / 2
-
-        crop_left = (self.crop_left - display_left) / self._scale
-        crop_top = (self.crop_top - display_top) / self._scale
-        crop_right = (self.crop_right - display_left) / self._scale
-        crop_bottom = (self.crop_bottom - display_top) / self._scale
-
-        crop_left = max(0, min(self.original_image.width, crop_left))
-        crop_top = max(0, min(self.original_image.height, crop_top))
-        crop_right = max(0, min(self.original_image.width, crop_right))
-        crop_bottom = max(0, min(self.original_image.height, crop_bottom))
-
-        cropped = self.original_image.crop(
-            (
-                int(round(crop_left)),
-                int(round(crop_top)),
-                int(round(crop_right)),
-                int(round(crop_bottom)),
-            )
-        )
-        return cropped.resize(
-            (self.crop_size, self.crop_size), Image.Resampling.LANCZOS
-        )
-
-    def _on_change_picture(self) -> None:
-        """
-        Change the picture file to edit
-        """
-
-        new_profile_picture = filedialog.askopenfilename(
-            title="Sélectionner une nouvelle photo de profil",
-            filetypes=[("Image files", "*.png *.jpg *.jpeg *.webp")],
-        )
-        if not new_profile_picture:
-            return
-
-        try:
-            picture = Image.open(new_profile_picture).convert("RGBA")
-        except Exception:
-            return
-
-        self.original_image = picture.convert("RGBA")
-        self._init_canvas_image()

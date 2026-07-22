@@ -38,6 +38,8 @@ class LocalLobbyFrame(ttk.Frame):
             parent (ttk.Frame): The parent frame.
             app (App): The main application instance.
         """
+        self.ui = app.ui
+        self.S = app.S
 
         super().__init__(parent)
 
@@ -52,7 +54,7 @@ class LocalLobbyFrame(ttk.Frame):
     def _build_step_1(self) -> None:
         # Title
         title = ttk.Label(self, text="Game Lobby", style="Title.TLabel")
-        title.pack(pady=40)
+        title.pack(pady=self.S(40))
 
         self.container = ttk.Frame(self)
         self.container.pack()
@@ -71,9 +73,11 @@ class LocalLobbyFrame(ttk.Frame):
     def _build_step_2(self) -> None:
         # Number of players selection frame
         main_player_frame = self.app.Frame(self.container, bg="black", bd=1)
-        main_player_frame.grid(row=0, column=0, pady=20, padx=5, sticky="nes")
+        main_player_frame.grid(
+            row=0, column=0, pady=self.S(20), padx=self.S(5), sticky="nes"
+        )
         player_frame = self.app.Frame(main_player_frame)
-        player_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        player_frame.pack(pady=self.S(3), padx=self.S(3), fill=tk.BOTH, expand=True)
 
         # Buttons for number of players
         self.multiplayer_button = self.app.Button(
@@ -84,7 +88,7 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_player("multiplayer"),
             takefocus=False,
         )
-        self.multiplayer_button.pack(padx=30, pady=(20, 10), fill=tk.X)
+        self.multiplayer_button.pack(padx=self.S(30), pady=self.S((20, 10)), fill=tk.X)
         self.singleplayer_button = self.app.Button(
             player_frame.content_frame,
             overlay_path=self.app.singleplayer_icon_path,
@@ -93,7 +97,7 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_player("singleplayer"),
             takefocus=False,
         )
-        self.singleplayer_button.pack(padx=30, pady=10, fill=tk.X)
+        self.singleplayer_button.pack(padx=self.S(30), pady=self.S(10), fill=tk.X)
         self._select_player("multiplayer")
 
         # Button to select AI difficulty (only visible in singleplayer mode)
@@ -108,16 +112,18 @@ class LocalLobbyFrame(ttk.Frame):
         if self.multiplayer.get():
             self.ai_button.pack_forget()
         else:
-            self.ai_button.pack(padx=30, pady=(10, 20), fill=tk.X)
+            self.ai_button.pack(padx=self.S(30), pady=self.S((10, 20)), fill=tk.X)
 
         self.after(0, self._build_step_3)
 
     def _build_step_3(self) -> None:
         # Board size selection frame
         main_size_frame = self.app.Frame(self.container, bg="black", bd=1)
-        main_size_frame.grid(row=0, column=1, pady=20, padx=5, sticky="nws")
+        main_size_frame.grid(
+            row=0, column=1, pady=self.S(20), padx=self.S(5), sticky="nws"
+        )
         size_frame = self.app.Frame(main_size_frame)
-        size_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        size_frame.pack(pady=self.S(3), padx=self.S(3), fill=tk.BOTH, expand=True)
 
         # Buttons for different board sizes
         self.nine_button = self.app.Button(
@@ -129,7 +135,7 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_size(9),
             takefocus=False,
         )
-        self.nine_button.pack(padx=30, pady=(20, 10), fill=tk.X)
+        self.nine_button.pack(padx=self.S(30), pady=self.S((20, 10)), fill=tk.X)
         self.thirteen_button = self.app.Button(
             size_frame.content_frame,
             overlay_path=self.app.untoggle_icon_path,
@@ -139,7 +145,7 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_size(13),
             takefocus=False,
         )
-        self.thirteen_button.pack(padx=30, pady=10, fill=tk.X)
+        self.thirteen_button.pack(padx=self.S(30), pady=self.S(10), fill=tk.X)
         self.nineteen_button = self.app.Button(
             size_frame.content_frame,
             overlay_path=self.app.toggle_icon_path,
@@ -149,16 +155,18 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_size(19),
             takefocus=False,
         )
-        self.nineteen_button.pack(padx=30, pady=(10, 20), fill=tk.X)
+        self.nineteen_button.pack(padx=self.S(30), pady=self.S((10, 20)), fill=tk.X)
 
         self.after(0, self._build_step_4)
 
     def _build_step_4(self) -> None:
         # Color selection frame
         main_color_frame = self.app.Frame(self.container, bg="black", bd=1)
-        main_color_frame.grid(row=0, column=2, pady=20, padx=5, sticky="nws")
+        main_color_frame.grid(
+            row=0, column=2, pady=self.S(20), padx=self.S(5), sticky="nws"
+        )
         color_frame = self.app.Frame(main_color_frame)
-        color_frame.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        color_frame.pack(pady=self.S(3), padx=self.S(3), fill=tk.BOTH, expand=True)
 
         # Buttons for different board sizes
         self.black_button = self.app.Button(
@@ -169,7 +177,7 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_color(Goban.BLACK),
             takefocus=False,
         )
-        self.black_button.pack(padx=30, pady=(20, 10), fill=tk.X)
+        self.black_button.pack(padx=self.S(30), pady=self.S((20, 10)), fill=tk.X)
         self.white_button = self.app.Button(
             color_frame.content_frame,
             overlay_path=self.app.untoggle_icon_path,
@@ -178,7 +186,7 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_color(Goban.WHITE),
             takefocus=False,
         )
-        self.white_button.pack(padx=30, pady=10, fill=tk.X)
+        self.white_button.pack(padx=self.S(30), pady=self.S(10), fill=tk.X)
         self.indifferent_button = self.app.Button(
             color_frame.content_frame,
             overlay_path=self.app.toggle_icon_path,
@@ -187,7 +195,7 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._select_color(3),
             takefocus=False,
         )
-        self.indifferent_button.pack(padx=30, pady=(10, 20), fill=tk.X)
+        self.indifferent_button.pack(padx=self.S(30), pady=self.S((10, 20)), fill=tk.X)
 
         self.after(0, self._build_step_5)
 
@@ -198,7 +206,7 @@ class LocalLobbyFrame(ttk.Frame):
             command=lambda: self._resume_game(game=self.app.current_game),  # type: ignore
             state=tk.DISABLED if self.app.current_game is None else tk.NORMAL,
             takefocus=False,
-        ).pack(pady=(20, 10))
+        ).pack(pady=self.S((20, 10)))
 
         # Start Game button
         self.app.Button(
@@ -206,7 +214,7 @@ class LocalLobbyFrame(ttk.Frame):
             text="Démarrer la partie",
             command=self._start_game,
             takefocus=False,
-        ).pack(pady=10)
+        ).pack(pady=self.S(10))
 
         # Return to Lobby button
         self.app.Button(
@@ -216,7 +224,7 @@ class LocalLobbyFrame(ttk.Frame):
             hover_overlay_path=self.app.hovered_return_icon_path,
             command=self._return_to_lobby,
             takefocus=False,
-        ).pack(pady=(10, 20))
+        ).pack(pady=self.S((10, 20)))
 
         self.app.hide_loading(self._loading)
 
@@ -241,7 +249,9 @@ class LocalLobbyFrame(ttk.Frame):
 
             try:
                 if not self.ai_button.winfo_ismapped():
-                    self.ai_button.pack(padx=30, pady=(10, 20), fill=tk.X)
+                    self.ai_button.pack(
+                        padx=self.S(30), pady=self.S((10, 20)), fill=tk.X
+                    )
             except:
                 pass
 

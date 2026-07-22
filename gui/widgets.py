@@ -827,6 +827,10 @@ class TopLevelWindow(tk.Toplevel):
 
         # Create overlay window first (before the dialog)
         self.overlay_window = None
+        scaler = getattr(master, "ui", None)
+        if scaler is not None:
+            width = scaler.px(width) or width
+            height = scaler.px(height) or height
         if overlay:
             self.overlay_window = self._create_overlay(
                 master, overlay_color, overlay_alpha
@@ -847,10 +851,14 @@ class TopLevelWindow(tk.Toplevel):
         self.geometry(f"{width}x{height}")
 
         # Create main container
+        frame_pad = 3
+        if scaler is not None:
+            frame_pad = scaler.px(frame_pad) or frame_pad
+
         main_container = self.master.Frame(self, bg="black", bd=1)
         main_container.pack(fill=tk.BOTH, expand=True)
         container = self.master.Frame(main_container)
-        container.pack(pady=3, padx=3, fill=tk.BOTH, expand=True)
+        container.pack(pady=frame_pad, padx=frame_pad, fill=tk.BOTH, expand=True)
         self.container = tk.Frame(
             container.content_frame,
             bd=0,
@@ -858,7 +866,7 @@ class TopLevelWindow(tk.Toplevel):
             highlightthickness=1,
             bg="#1e1e1e",
         )
-        self.container.pack(fill=tk.BOTH, expand=True, padx=3, pady=3)
+        self.container.pack(fill=tk.BOTH, expand=True, padx=frame_pad, pady=frame_pad)
 
         # Body frame (for content)
         self.body_frame = ttk.Frame(self.container)
@@ -866,7 +874,15 @@ class TopLevelWindow(tk.Toplevel):
 
         # Button frame (at bottom)
         self.button_frame = ttk.Frame(self.container)
-        self.button_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10)
+        button_pad = 10
+        if scaler is not None:
+            button_pad = scaler.px(button_pad) or button_pad
+        self.button_frame.pack(
+            side=tk.BOTTOM,
+            fill=tk.X,
+            padx=button_pad,
+            pady=button_pad,
+        )
 
         # Keyboard shortcuts
         self.bind("<Escape>", lambda e: self.close(None))
@@ -1015,6 +1031,10 @@ class TopLevelWindow(tk.Toplevel):
         """
         icons = {"info": "ℹ️", "warning": "⚠️", "error": "❌", "question": "❓"}
 
+        scaler = getattr(self.master, "ui", None)
+        if scaler is not None:
+            size = scaler.px(size) or size
+
         icon_text = icons.get(icon_type, "ℹ️")
         icon_label = tk.Label(
             self.body_frame,
@@ -1120,6 +1140,9 @@ class LoadingWindow(TopLevelWindow):
         rotation_delay: int = 30,
         **kwargs,
     ):
+
+        size = master.ui.px(size) or size
+
         self._message = message
         self._size = size
         self._rotation_step = rotation_step

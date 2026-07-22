@@ -37,6 +37,8 @@ class LoginFrame(ttk.Frame):
             parent: The container in which this frame is placed (e.g., dialog body)
             app (App): The main application instance.
         """
+        self.ui = app.ui
+        self.S = app.S
 
         super().__init__(parent)
         self.app = app
@@ -45,42 +47,42 @@ class LoginFrame(ttk.Frame):
 
         # Title
         title = ttk.Label(self, text="Connexion", style="Title.TLabel")
-        title.pack(pady=(20, 40))
+        title.pack(pady=self.S((20, 40)))
 
         # Login frame
         main_login_frame = self.app.Frame(self, bg="black", bd=1)
-        main_login_frame.pack(pady=20, fill=tk.X, padx=20)
+        main_login_frame.pack(pady=self.S(20), fill=tk.X, padx=self.S(20))
         login_frame = self.app.Frame(main_login_frame)
-        login_frame.pack(pady=3, padx=3, fill=tk.X)
+        login_frame.pack(pady=self.S(3), padx=self.S(3), fill=tk.X)
 
         # Username entry
         self.username_var = tk.StringVar()
         self.app.Label(
             login_frame,
             text="Nom d'utilisateur",
-        ).pack(pady=(20, 5), padx=20)
+        ).pack(pady=self.S((20, 5)), padx=self.S(20))
         self.username_entry = ttk.Entry(
             login_frame,
             textvariable=self.username_var,
-            font=("Skranji", 14),
+            font=self.ui.font(("Skranji", 14)),  # type: ignore
             takefocus=True,
         )
-        self.username_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.username_entry.pack(pady=self.S((0, 10)), padx=self.S(20), fill=tk.X)
 
         # Password entry
         self.password_var = tk.StringVar()
         self.app.Label(
             login_frame,
             text="Mot de passe",
-        ).pack(pady=(10, 5), padx=20)
+        ).pack(pady=self.S((10, 5)), padx=self.S(20))
         self.password_entry = ttk.Entry(
             login_frame,
             textvariable=self.password_var,
-            font=("Skranji", 14),
+            font=self.ui.font(("Skranji", 14)),  # type: ignore
             takefocus=True,
             show="*",
         )
-        self.password_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.password_entry.pack(pady=self.S((0, 10)), padx=self.S(20), fill=tk.X)
 
         # Login button
         self.login_button = self.app.Button(
@@ -91,7 +93,7 @@ class LoginFrame(ttk.Frame):
             command=self._login,
             takefocus=False,
         )
-        self.login_button.pack(pady=(10, 20), padx=20)
+        self.login_button.pack(pady=self.S((10, 20)), padx=self.S(20))
 
         # Error label
         self.error_label = ttk.Label(
@@ -99,7 +101,7 @@ class LoginFrame(ttk.Frame):
             text="",
             style="Error.TLabel",
         )
-        self.error_label.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.error_label.pack(pady=self.S((0, 10)), padx=self.S(20), fill=tk.X)
 
         # Register button
         self.register_button = ttk.Button(
@@ -110,7 +112,7 @@ class LoginFrame(ttk.Frame):
             cursor="hand2",
             padding=0,
         )
-        self.register_button.pack(pady=10)
+        self.register_button.pack(pady=self.S(10))
 
         # Reset password button
         self.reset_password = ttk.Button(
@@ -121,7 +123,7 @@ class LoginFrame(ttk.Frame):
             cursor="hand2",
             padding=0,
         )
-        self.reset_password.pack(pady=10)
+        self.reset_password.pack(pady=self.S(10))
 
         # Return button
         self.return_button = self.app.Button(
@@ -132,7 +134,7 @@ class LoginFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=(10, 20), padx=20, side=tk.BOTTOM)
+        self.return_button.pack(pady=self.S((10, 20)), padx=self.S(20), side=tk.BOTTOM)
 
         # Bind Enter key to login
         self.bind("<Return>", lambda event: self._login())
@@ -354,6 +356,8 @@ class RegisterFrame(ttk.Frame):
             parent: The container in which this frame is placed (e.g., dialog body)
             app (App): The main application instance.
         """
+        self.ui = app.ui
+        self.S = app.S
 
         super().__init__(parent)
         self.app = app
@@ -362,11 +366,13 @@ class RegisterFrame(ttk.Frame):
 
         # Title
         title = ttk.Label(self, text="Inscription", style="Title.TLabel")
-        title.pack(pady=(20, 40))
+        title.pack(pady=self.S((20, 40)))
 
         # Create canvas and scrollbar for scrollable content
         canvas_frame = ttk.Frame(self)
-        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
+        canvas_frame.pack(
+            fill=tk.BOTH, expand=True, padx=self.S(20), pady=self.S((0, 20))
+        )
 
         canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0)
         scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
@@ -394,44 +400,44 @@ class RegisterFrame(ttk.Frame):
 
         # Register frame
         main_register_frame = self.app.Frame(scrollable_frame, bg="black", bd=1)
-        main_register_frame.pack(pady=20, fill=tk.X, padx=20)
+        main_register_frame.pack(pady=self.S(20), fill=tk.X, padx=self.S(20))
         register_frame = self.app.Frame(main_register_frame)
-        register_frame.pack(pady=3, padx=3, fill=tk.X)
+        register_frame.pack(pady=self.S(3), padx=self.S(3), fill=tk.X)
 
         # Username entry
         self.username_var = tk.StringVar()
         self.app.Label(
             register_frame,
             text="Nom d'utilisateur",
-        ).pack(pady=(20, 5), padx=20)
+        ).pack(pady=self.S((20, 5)), padx=self.S(20))
         self.username_entry = ttk.Entry(
             register_frame,
             textvariable=self.username_var,
-            font=("Skranji", 14),
+            font=self.ui.font(("Skranji", 14)),  # type: ignore
             takefocus=True,
         )
-        self.username_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.username_entry.pack(pady=self.S((0, 10)), padx=self.S(20), fill=tk.X)
 
         # Name entry
         self.name_var = tk.StringVar()
         self.app.Label(
             register_frame,
             text="Nom d'affichage",
-        ).pack(pady=(20, 5), padx=20)
+        ).pack(pady=self.S((20, 5)), padx=self.S(20))
         self.name_entry = ttk.Entry(
             register_frame,
             textvariable=self.name_var,
-            font=("Skranji", 14),
+            font=self.ui.font(("Skranji", 14)),  # type: ignore
             takefocus=True,
         )
-        self.name_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.name_entry.pack(pady=self.S((0, 10)), padx=self.S(20), fill=tk.X)
 
         # Password entry
         self.password_var = tk.StringVar()
         self.app.Label(
             register_frame,
             text="Mot de passe",
-        ).pack(pady=(10, 5), padx=20)
+        ).pack(pady=self.S((10, 5)), padx=self.S(20))
         self.password_entry = ttk.Entry(
             register_frame,
             textvariable=self.password_var,
@@ -439,22 +445,24 @@ class RegisterFrame(ttk.Frame):
             takefocus=True,
             show="*",
         )
-        self.password_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.password_entry.pack(pady=self.S((0, 10)), padx=self.S(20), fill=tk.X)
 
         # Confirm password entry
         self.confirm_password_var = tk.StringVar()
         self.app.Label(
             register_frame,
             text="Confirmer le mot de passe",
-        ).pack(pady=(10, 5), padx=20)
+        ).pack(pady=self.S((10, 5)), padx=self.S(20))
         self.confirm_password_entry = ttk.Entry(
             register_frame,
             textvariable=self.confirm_password_var,
-            font=("Skranji", 14),
+            font=self.ui.font(("Skranji", 14)),  # type: ignore
             takefocus=True,
             show="*",
         )
-        self.confirm_password_entry.pack(pady=(0, 10), padx=20, fill=tk.X)
+        self.confirm_password_entry.pack(
+            pady=self.S((0, 10)), padx=self.S(20), fill=tk.X
+        )
 
         # Register button
         self.register_button = self.app.Button(
@@ -465,11 +473,11 @@ class RegisterFrame(ttk.Frame):
             command=self._handle_register,
             takefocus=False,
         )
-        self.register_button.pack(pady=(10, 20), padx=20)
+        self.register_button.pack(pady=self.S((10, 20)), padx=self.S(20))
 
         # Bottom section (outside scrollable area)
         bottom_frame = ttk.Frame(self)
-        bottom_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
+        bottom_frame.pack(fill=tk.X, padx=self.S(20), pady=self.S((0, 20)))
 
         # Error label
         self.error_label = ttk.Label(
@@ -477,7 +485,7 @@ class RegisterFrame(ttk.Frame):
             text="",
             style="Error.TLabel",
         )
-        self.error_label.pack(pady=(0, 10), fill=tk.X)
+        self.error_label.pack(pady=self.S((0, 10)), fill=tk.X)
 
         # Login button
         self.login_button = ttk.Button(
@@ -488,7 +496,7 @@ class RegisterFrame(ttk.Frame):
             cursor="hand2",
             padding=0,
         )
-        self.login_button.pack(pady=10)
+        self.login_button.pack(pady=self.S(10))
 
         # Return button
         self.return_button = self.app.Button(
@@ -499,7 +507,7 @@ class RegisterFrame(ttk.Frame):
             command=self._on_return,
             takefocus=False,
         )
-        self.return_button.pack(pady=10, padx=20, side=tk.BOTTOM)
+        self.return_button.pack(pady=self.S(10), padx=self.S(20), side=tk.BOTTOM)
 
         # Bind Enter key to register
         self.bind("<Return>", lambda event: self._handle_register())
