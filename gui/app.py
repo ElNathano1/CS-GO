@@ -1788,25 +1788,6 @@ class App(tk.Tk):
             except Exception as e:
                 pass
 
-        else:
-
-            try:
-                response = requests.get(
-                    f"{BASE_URL}/users/{username}/profile-picture/thumb",
-                    timeout=10,
-                )
-                if response.status_code == 200:
-                    image_data = response.content
-                    if size:
-                        image = Image.open(BytesIO(image_data)).resize(
-                            (size, size), Image.Resampling.LANCZOS
-                        )
-                    else:
-                        image = Image.open(BytesIO(image_data))
-                    return ImageTk.PhotoImage(image)
-            except Exception as e:
-                pass
-
         return self._get_default_profile_photo(username)
 
     def _get_default_profile_photo(
