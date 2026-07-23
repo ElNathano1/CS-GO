@@ -392,7 +392,7 @@ def ensure_schema() -> None:
             with engine.begin() as connection:
                 connection.execute(
                     text(
-                        "ALTER TABLE messages ADD COLUMN read INTEGER NOT NULL DEFAULT 0"
+                        "ALTER TABLE `messages` ADD COLUMN `read` INTEGER NOT NULL DEFAULT 0"
                     )
                 )
 
