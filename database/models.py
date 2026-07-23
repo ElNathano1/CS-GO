@@ -388,6 +388,13 @@ def ensure_schema() -> None:
                         "ALTER TABLE messages ADD COLUMN type VARCHAR(20) NOT NULL DEFAULT 'message'"
                     )
                 )
+        if "read" not in message_columns:
+            with engine.begin() as connection:
+                connection.execute(
+                    text(
+                        "ALTER TABLE messages ADD COLUMN read INTEGER NOT NULL DEFAULT 0"
+                    )
+                )
 
 
 def get_session() -> Session:

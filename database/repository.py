@@ -9,7 +9,7 @@ Classes:
 - AccountRepository: Repository pattern implementation for User data access
 """
 
-from sqlalchemy import String, cast
+from sqlalchemy import String, cast, inspect
 from sqlalchemy.orm import Session, aliased
 from database.models import User, Friendship, Game, Message
 from database.account import Account
@@ -528,9 +528,7 @@ class AccountRepository:
 
         return games_as_black + games_as_white
 
-    def get_messages(
-        self, username: str
-    ) -> dict[str, list[dict[str, str | int | bool | None]]]:
+    def get_messages(self, username: str) -> dict[str, list[Message] | None]:
         """
         Retrieve all messages sent to or received by a specific user.
 
@@ -543,69 +541,28 @@ class AccountRepository:
         if not user:
             return {}
 
-        sender_user = aliased(User)
-        recipient_user = aliased(User)
+        sent_messages = (
+            self.session.query(Message).filter((Message.sender_id == user.id)).all()
+        )
+        received_messages = (
+            self.session.query(Message).filter((Message.recipient_id == user.id)).all()
+        )
 
-        try:
-            rows = (
-                self.session.query(
-                    Message.sender_id,
-                    Message.recipient_id,
-                    sender_user.username.label("sender_username"),
-                    recipient_user.username.label("recipient_username"),
-                    Message.content,
-                    cast(Message.timestamp, String).label("timestamp"),
-                    Message.type,
-                    Message.read,
-                )
-                .join(sender_user, Message.sender_id == sender_user.id)
-                .join(recipient_user, Message.recipient_id == recipient_user.id)
-                .filter((Message.sender_id == user.id) | (Message.recipient_id == user.id))
-                .all()
+        messages = {}
+
+        for message in sent_messages + received_messages:
+            correspondent_id = (
+                message.recipient_id
+                if message.sender_id == user.id  # type: ignore
+                else message.sender_id
             )
-            include_type = True
-        except Exception:
-            # Backward compatibility for legacy schemas where `messages.type` is missing.
-            rows = (
-                self.session.query(
-                    Message.sender_id,
-                    Message.recipient_id,
-                    sender_user.username.label("sender_username"),
-                    recipient_user.username.label("recipient_username"),
-                    Message.content,
-                    cast(Message.timestamp, String).label("timestamp"),
-                    Message.read,
-                )
-                .join(sender_user, Message.sender_id == sender_user.id)
-                .join(recipient_user, Message.recipient_id == recipient_user.id)
-                .filter((Message.sender_id == user.id) | (Message.recipient_id == user.id))
-                .all()
+            correspondent = (
+                self.session.query(User).filter_by(id=correspondent_id).first()
             )
-            include_type = False
-
-        messages: dict[str, list[dict[str, str | int | bool | None]]] = {}
-
-        for row in rows:
-            correspondent_username = (
-                row.recipient_username if row.sender_id == user.id else row.sender_username
-            )
-            if not correspondent_username:
-                continue
-
-            if correspondent_username not in messages:
-                messages[correspondent_username] = []
-
-            message_type = row.type if include_type else "message"
-            messages[correspondent_username].append(
-                {
-                    "send": row.sender_id == user.id,
-                    "received": row.recipient_id == user.id,
-                    "content": row.content,
-                    "timestamp": row.timestamp,
-                    "type": message_type,
-                    "read": row.read,
-                }
-            )
+            if correspondent:
+                if correspondent.username not in messages:
+                    messages[correspondent.username] = []
+                messages[correspondent.username].append(message)
 
         return messages
 

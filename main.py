@@ -354,7 +354,23 @@ def get_messages(username: str, repo: AccountRepository = Depends(get_repo)):
     if not messages:
         raise HTTPException(status_code=404, detail="No messages found for user")
 
-    return messages
+    res_messages = {}
+    for correspondent_username, msgs in messages.items():
+        res_messages[correspondent_username] = [
+            {
+                "send": msg.sender.username == username if msg.sender else None,
+                "received": (
+                    msg.recipient.username == username if msg.recipient else None
+                ),
+                "content": msg.content,
+                "timestamp": msg.timestamp,
+                "type": msg.type,
+                "read": msg.read,
+            }
+            for msg in msgs  # type: ignore
+        ]
+
+    return res_messages
 
 
 @app.post("/messages/{sender_username}")
