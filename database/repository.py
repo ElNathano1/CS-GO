@@ -541,28 +541,33 @@ class AccountRepository:
         if not user:
             return {}
 
-        sent_messages = (
-            self.session.query(Message).filter((Message.sender_id == user.id)).all()
-        )
-        received_messages = (
-            self.session.query(Message).filter((Message.recipient_id == user.id)).all()
+        sender_user = aliased(User)
+        recipient_user = aliased(User)
+
+        all_messages = (
+            self.session.query(Message)
+            .join(sender_user, Message.sender_id == sender_user.id)
+            .join(recipient_user, Message.recipient_id == recipient_user.id)
+            .filter((Message.sender_id == user.id) | (Message.recipient_id == user.id))
+            .order_by(Message.timestamp.asc(), Message.id.asc())
+            .all()
         )
 
         messages = {}
 
-        for message in sent_messages + received_messages:
-            correspondent_id = (
-                message.recipient_id
-                if message.sender_id == user.id  # type: ignore
-                else message.sender_id
-            )
-            correspondent = (
-                self.session.query(User).filter_by(id=correspondent_id).first()
-            )
-            if correspondent:
-                if correspondent.username not in messages:
-                    messages[correspondent.username] = []
-                messages[correspondent.username].append(message)
+        for message in all_messages:
+            correspondent_username = None
+            if message.sender_id == user.id and message.recipient:  # type: ignore
+                correspondent_username = message.recipient.username
+            elif message.recipient_id == user.id and message.sender:  # type: ignore
+                correspondent_username = message.sender.username
+
+            if not correspondent_username:
+                continue
+
+            if correspondent_username not in messages:
+                messages[correspondent_username] = []
+            messages[correspondent_username].append(message)
 
         return messages
 

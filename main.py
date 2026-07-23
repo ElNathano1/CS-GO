@@ -373,6 +373,42 @@ def get_messages(username: str, repo: AccountRepository = Depends(get_repo)):
     return res_messages
 
 
+@app.get("/messages/{username}/conversations")
+def get_conversations(username: str, repo: AccountRepository = Depends(get_repo)):
+    account = repo.get_by_username(username)
+    if not account:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    messages = repo.get_messages(username)
+    if not messages:
+        raise HTTPException(status_code=404, detail="No messages found for user")
+
+    conversations = {}
+    for correspondent_username, msgs in messages.items():
+        last_message = max(msgs, key=lambda msg: msg.timestamp)  # type: ignore
+        unread_count = sum(1 for msg in msgs if msg.recipient.username == username and msg.read == 0)  # type: ignore
+        conversations[correspondent_username] = {
+            "last_message": {
+                "send": (
+                    last_message.sender.username == username
+                    if last_message.sender
+                    else None
+                ),
+                "received": (
+                    last_message.recipient.username == username
+                    if last_message.recipient
+                    else None
+                ),
+                "content": last_message.content,
+                "timestamp": last_message.timestamp,
+                "type": last_message.type,
+                "read": last_message.read,
+            },
+            "unread_count": unread_count,
+        }
+    return conversations
+
+
 @app.post("/messages/{sender_username}")
 def send_message(
     sender_username: str,
