@@ -400,4 +400,5 @@ def get_session() -> Session:
     return Session(engine)
 
 
+init_db()
 ensure_schema()
