@@ -49,6 +49,7 @@ class MessageryFrame(ttk.Frame):
         super().__init__(parent)
         self.app = app
         self._conversation_profile_images: list[ImageTk.PhotoImage] = []
+        self._can_scroll_conversations = False
         loading = self.app.show_loading("Chargement...")
 
         # Content frame
@@ -118,39 +119,79 @@ class MessageryFrame(ttk.Frame):
             pady=self.S(3),
         )
 
+        # Add a button to start a new conversation
+        self.new_conversation_button = self.app.Button(
+            canvas_frame,
+            text="Nouvelle conversation",
+        )
+        self.new_conversation_button.pack(
+            pady=self.S(10),
+            padx=self.S(10),
+            anchor=tk.N,
+        )
+
         # Create canvas and scrollbar for scrollable content
-        canvas = tk.Canvas(canvas_frame, bg="#1e1e1e", highlightthickness=0)
-        scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
+        self.conversations_viewport_frame = ttk.Frame(canvas_frame)
+        self.conversations_viewport_frame.pack(fill=tk.BOTH, expand=True)
 
-        scrollable_frame.bind(
-            "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        self.conversations_canvas = tk.Canvas(
+            self.conversations_viewport_frame,
+            bg="#1e1e1e",
+            highlightthickness=0,
+        )
+        self.conversations_scrollbar = ttk.Scrollbar(
+            self.conversations_viewport_frame,
+            orient="vertical",
+            command=self.conversations_canvas.yview,
+        )
+        self.scrollable_conversations_list_frame = ttk.Frame(self.conversations_canvas)
+
+        self.scrollable_conversations_list_frame.bind(
+            "<Configure>",
+            lambda e: self._refresh_conversation_canvas_layout(),
         )
 
-        scrollable_window = canvas.create_window(
-            (0, 0), window=scrollable_frame, anchor="n"
+        self._scrollable_window = self.conversations_canvas.create_window(
+            (0, 0), window=self.scrollable_conversations_list_frame, anchor="n"
         )
-        canvas.configure(yscrollcommand=scrollbar.set)
+        self.conversations_canvas.configure(
+            yscrollcommand=self.conversations_scrollbar.set
+        )
 
         def _on_canvas_configure(event):
-            canvas.itemconfig(scrollable_window, width=event.width)
-            canvas.coords(scrollable_window, event.width / 2, 0)
+            self.conversations_canvas.itemconfig(
+                self._scrollable_window, width=event.width
+            )
+            self.conversations_canvas.coords(
+                self._scrollable_window, event.width / 2, 0
+            )
+            self._refresh_conversation_canvas_layout()
 
-        canvas.bind("<Configure>", _on_canvas_configure)
+        self.conversations_canvas.bind("<Configure>", _on_canvas_configure)
+        self.conversations_viewport_frame.bind(
+            "<Configure>", lambda e: self._refresh_conversation_canvas_layout()
+        )
 
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.conversations_canvas.pack(
+            side=tk.LEFT, fill=tk.X, expand=False, anchor=tk.N
+        )
 
         # Enable mouse wheel scrolling
         def _on_mousewheel(event):
+            if not self._can_scroll_conversations:
+                return
             try:
-                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+                self.conversations_canvas.yview_scroll(
+                    int(-1 * (event.delta / 120)), "units"
+                )
             except tk.TclError:
                 # Canvas has been destroyed, binding will be cleaned up
                 pass
 
         self._mousewheel_binding = self.bind_all("<MouseWheel>", _on_mousewheel)
 
-        self._build_conversation_list(scrollable_frame)
+        self._build_conversation_list(self.scrollable_conversations_list_frame)
+        self.after(0, self._refresh_conversation_canvas_layout)
 
         # Right column for conversation content
         self.right_column = ttk.Frame(content_frame)
@@ -216,34 +257,44 @@ class MessageryFrame(ttk.Frame):
         """
 
         try:
-            print(self.app.username)
             response = requests.get(
-                f"{BASE_URL}/conversations/{self.app.username}",
+                f"{BASE_URL}/messages/{self.app.username}/conversations",
                 timeout=5,
             )
             if response.status_code == 200:
                 conversations = []
-
-                print(response.json())
 
                 for username in response.json().keys():
 
                     user = requests.get(
                         f"{BASE_URL}/users/{username}", timeout=5
                     ).json()
+
+                    if (
+                        self.conversation_entry.get().strip()
+                        and not username.startswith(
+                            self.conversation_entry.get().strip().lower()
+                        )
+                        and not user.get("name", username)
+                        .lower()
+                        .startswith(self.conversation_entry.get().strip().lower())
+                    ):
+                        continue
+
                     conversation = {
                         "username": username,
                         "name": user.get("name", username),
                         "connected": user.get("connected", False),
-                        "last_message": "",
-                        "timestamp": "",
-                        "messages": [],
+                        "last_message": response.json()[username]
+                        .get("last_message", "")
+                        .get("content", ""),
+                        "timestamp": response.json()[username]
+                        .get("last_message", "")
+                        .get("timestamp", ""),
+                        "unread_count": response.json()[username].get(
+                            "unread_count", 0
+                        ),
                     }
-                    for message in response.json()[username]:
-                        conversation["messages"].append(message)
-                        if message.get("timestamp", "") > conversation["timestamp"]:
-                            conversation["last_message"] = message.get("content", "")
-                            conversation["timestamp"] = message.get("timestamp", "")
                     conversations.append(conversation)
 
                 return sorted(
@@ -291,11 +342,9 @@ class MessageryFrame(ttk.Frame):
 
         else:
             for conversation in conversations:
-                print(conversation)
-                print(conversation.get("username"))
 
                 conversation_frame = ttk.Frame(parent)
-                conversation_frame.pack(fill=tk.BOTH, expand=True)
+                conversation_frame.pack(fill=tk.X, expand=False)
 
                 profile_photo = self.app.get_profile_photo(
                     conversation.get("username"), for_current_player=False
@@ -305,17 +354,73 @@ class MessageryFrame(ttk.Frame):
                     conversation_frame,
                     image=profile_photo,
                     takefocus=False,
-                    style="Account.TLabel",
                 )
                 self._conversation_profile_images.append(profile_photo)
-                profile_photo_label.pack(side=tk.LEFT, padx=(5, 10), pady=5)
+                profile_photo_label.pack(side=tk.LEFT, padx=(10, 10), pady=5)
+                profile_name_label = ttk.Label(
+                    conversation_frame,
+                    text=conversation.get("name", conversation.get("username")),  # type: ignore
+                    takefocus=False,
+                )
+                profile_name_label.pack(side=tk.LEFT, padx=(0, 10), pady=5)
+                last_message_label = ttk.Label(
+                    conversation_frame,
+                    text=conversation.get("last_message", ""),
+                    takefocus=False,
+                )
+                last_message_label.pack(side=tk.LEFT, padx=(0, 10), pady=5)
+                unread_count = conversation.get("unread_count", 0)
+                if unread_count > 0:
+                    unread_count_label = ttk.Label(
+                        conversation_frame,
+                        text=f"{unread_count} non lu(s)",
+                        foreground="red",
+                        takefocus=False,
+                    )
+                    unread_count_label.pack(side=tk.LEFT, padx=(0, 10), pady=5)
 
     def _update_list(self, e):
         """
         Update the list of conversations of which the username starts with the text in the search entry.
         """
 
-        pass
+        self._build_conversation_list(self.scrollable_conversations_list_frame)
+
+    def _refresh_conversation_canvas_layout(self) -> None:
+        """Resize conversations canvas to content and toggle scrolling only on overflow."""
+        if not self.winfo_exists():
+            return
+
+        try:
+            self.update_idletasks()
+        except tk.TclError:
+            return
+
+        max_height = self.conversations_viewport_frame.winfo_height()
+        content_height = self.scrollable_conversations_list_frame.winfo_reqheight()
+
+        if max_height <= 1:
+            return
+
+        target_height = min(content_height, max_height)
+        target_height = max(1, target_height)
+        self.conversations_canvas.configure(height=target_height)
+        self.conversations_canvas.configure(
+            scrollregion=self.conversations_canvas.bbox("all")
+        )
+
+        self._can_scroll_conversations = content_height > max_height
+        if self._can_scroll_conversations:
+            if not self.conversations_scrollbar.winfo_ismapped():
+                self.conversations_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            self.conversations_canvas.configure(
+                yscrollcommand=self.conversations_scrollbar.set
+            )
+        else:
+            if self.conversations_scrollbar.winfo_ismapped():
+                self.conversations_scrollbar.pack_forget()
+            self.conversations_canvas.yview_moveto(0)
+            self.conversations_canvas.configure(yscrollcommand=None)
 
     def download_profile_picture(self) -> None:
         """

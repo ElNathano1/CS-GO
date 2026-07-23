@@ -829,8 +829,8 @@ class TopLevelWindow(tk.Toplevel):
         self.overlay_window = None
         scaler = getattr(master, "ui", None)
         if scaler is not None:
-            width = scaler.px(width) or width
-            height = scaler.px(height) or height
+            width = scaler.px_w(width) or width
+            height = scaler.px_h(height) or height
         if overlay:
             self.overlay_window = self._create_overlay(
                 master, overlay_color, overlay_alpha

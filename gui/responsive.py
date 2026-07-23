@@ -37,13 +37,11 @@ class UIScaler:
         base_width: int = 1280,
         base_height: int = 720,
         min_scale: float = 0.75,
-        max_scale: float = 1.35,
     ) -> None:
         print(f"Screen resolution: {screen_width}x{screen_height}")
-        ratio_w = screen_width / float(base_width)
-        ratio_h = screen_height / float(base_height)
-        scale = min(ratio_w, ratio_h)
-        self.scale = max(min_scale, min(max_scale, scale))
+        self.scale_w = max(min_scale, screen_width / float(base_width))
+        self.scale_h = max(min_scale, screen_height / float(base_height))
+        self.scale = min(self.scale_w, self.scale_h)
 
     def px(
         self, value: int | float | ScaledLength | None, min_value: int = 1
@@ -58,6 +56,34 @@ class UIScaler:
         if raw_value == 0:
             return ScaledLength(0, raw_value, self.scale)
         return ScaledLength(max(min_value, scaled), raw_value, self.scale)
+
+    def px_w(
+        self, value: int | float | ScaledLength | None, min_value: int = 1
+    ) -> ScaledLength | None:
+        """Scale a width value using horizontal screen ratio."""
+        if value is None:
+            return None
+        if isinstance(value, ScaledLength):
+            return value
+        raw_value = float(value)
+        scaled = int(round(raw_value * self.scale_w))
+        if raw_value == 0:
+            return ScaledLength(0, raw_value, self.scale_w)
+        return ScaledLength(max(min_value, scaled), raw_value, self.scale_w)
+
+    def px_h(
+        self, value: int | float | ScaledLength | None, min_value: int = 1
+    ) -> ScaledLength | None:
+        """Scale a height value using vertical screen ratio."""
+        if value is None:
+            return None
+        if isinstance(value, ScaledLength):
+            return value
+        raw_value = float(value)
+        scaled = int(round(raw_value * self.scale_h))
+        if raw_value == 0:
+            return ScaledLength(0, raw_value, self.scale_h)
+        return ScaledLength(max(min_value, scaled), raw_value, self.scale_h)
 
     def maybe(self, value: Any) -> Any:
         """Scale ints/floats recursively inside tuples/lists."""
