@@ -14,11 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # === Etape 5 : Creer un dossier pour les uploads ===
 RUN mkdir -p /data/uploads
 
-# === Etape 6 : Definir un volume persistant ===
-VOLUME /data/uploads
-
-# === Etape 7 : Exposer le port FastAPI ===
+# === Etape 6 : Exposer le port FastAPI ===
 EXPOSE 8000
 
-# === Etape 8 : Lancer l'application ===
+# === Etape 7 : Lancer l'application ===
 CMD sh -c "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
