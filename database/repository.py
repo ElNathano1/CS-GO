@@ -534,11 +534,11 @@ class AccountRepository:
         Args:
             username: The username of the account
         Returns:
-            Dictionary with keys "sent" and "received" containing lists of Message objects, or None if no messages found
+            Dictionary with keys "username" being the sender/recipient and values being lists of Message objects, or empty dict if no messages found
         """
         user = self.session.query(User).filter_by(username=username).first()
         if not user:
-            return {"sent": None, "received": None}
+            return {}
 
         sent_messages = (
             self.session.query(Message).filter((Message.sender_id == user.id)).all()
@@ -547,7 +547,23 @@ class AccountRepository:
             self.session.query(Message).filter((Message.recipient_id == user.id)).all()
         )
 
-        return {"sent": sent_messages, "received": received_messages}
+        messages = {}
+
+        for message in sent_messages + received_messages:
+            correspondent_id = (
+                message.recipient_id
+                if message.sender_id == user.id  # type: ignore
+                else message.sender_id
+            )
+            correspondent = (
+                self.session.query(User).filter_by(id=correspondent_id).first()
+            )
+            if correspondent:
+                if correspondent.username not in messages:
+                    messages[correspondent.username] = []
+                messages[correspondent.username].append(message)
+
+        return messages
 
     def remove_user(self, username: str) -> None:
         """

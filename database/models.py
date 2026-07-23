@@ -32,7 +32,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, relationship, Session
 import hashlib
 
-
 # Créer la base de données
 engine = create_engine(os.environ["DATABASE_URL"], echo=False)
 Base = declarative_base()
@@ -303,6 +302,7 @@ class Message(Base):
         recipient_id: Foreign key to User (message recipient)
         timestamp: Timestamp of when the message was sent
         content: Text content of the message
+        read: Boolean indicating if the message has been read
     """
 
     __tablename__ = "messages"
@@ -315,6 +315,7 @@ class Message(Base):
     )  # e.g., "message", "friend invite", "game invite", "system message"
     timestamp = Column(DateTime, nullable=False)
     content = Column(Text, nullable=False)
+    read = Column(Integer, nullable=False, default=0)  # 0 = unread, 1 = read
 
     sender = relationship(
         "User", foreign_keys=[sender_id], back_populates="messages_sent"

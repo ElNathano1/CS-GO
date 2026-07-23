@@ -354,53 +354,22 @@ def get_messages(username: str, repo: AccountRepository = Depends(get_repo)):
     if not messages:
         raise HTTPException(status_code=404, detail="No messages found for user")
 
-    sent_messages = messages.get("sent") or []
-    received_messages = messages.get("received") or []
-
-    return {
-        "sent": [
+    res_messages = {}
+    for correspondent_username, msgs in messages.items():
+        res_messages[correspondent_username] = [
             {
-                "recipient": msg.recipient.username if msg.recipient else None,
+                "send": msg.sender.username == username if msg.sender else None,
+                "received": (
+                    msg.recipient.username == username if msg.recipient else None
+                ),
                 "content": msg.content,
                 "timestamp": msg.timestamp,
                 "type": msg.type,
             }
-            for msg in sent_messages
-        ],
-        "received": [
-            {
-                "sender": msg.sender.username if msg.sender else None,
-                "content": msg.content,
-                "timestamp": msg.timestamp,
-                "type": msg.type,
-            }
-            for msg in received_messages
-        ],
-    }
+            for msg in msgs  # type: ignore
+        ]
 
-
-@app.get("/conversations/{username}")
-def get_conversations(username: str, repo: AccountRepository = Depends(get_repo)):
-    account = repo.get_by_username(username)
-    if not account:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    messages = repo.get_messages(username)
-    if not messages:
-        raise HTTPException(status_code=404, detail="No messages found for user")
-
-    conversations = {}
-    for message in (messages.get("sent") or []) + (messages.get("received") or []):
-        if message.recipient and message.recipient.username not in conversations:
-            conversations[message.recipient.username] = [message]
-        elif message.recipient:
-            conversations[message.recipient.username].append(message)
-        elif message.sender and message.sender.username not in conversations:
-            conversations[message.sender.username] = [message]
-        elif message.sender:
-            conversations[message.sender.username].append(message)
-
-    return conversations
+    return res_messages
 
 
 @app.post("/messages/{sender_username}")
