@@ -437,7 +437,32 @@ def send_message(
     )
     return {
         "status": "success",
-        "message": f"Message sent from {sender_username} to {message.recipient_username}:\n({message.type} ; {parsed_timestamp})\n'{message.content}'",
+        "message": {
+            "send": True,
+            "received": False,
+            "content": message.content,
+            "timestamp": parsed_timestamp,
+            "type": message.type,
+            "read": 0,
+        },
+    }
+
+
+@app.post("/messages/{username}/mark_read")
+def mark_read(
+    username: str,
+    correspondent_username: str,
+    repo: AccountRepository = Depends(get_repo),
+):
+    if not repo.get_by_username(username):
+        raise HTTPException(status_code=404, detail="User not found")
+    if not repo.get_by_username(correspondent_username):
+        raise HTTPException(status_code=404, detail="Correspondent not found")
+
+    repo.mark_messages_as_read(username, correspondent_username)
+    return {
+        "status": "success",
+        "message": f"Messages between {username} and {correspondent_username} marked as read",
     }
 
 

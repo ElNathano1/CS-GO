@@ -197,6 +197,20 @@ class AccountRepository:
         self.session.add(message)
         self.session.commit()
 
+    def mark_messages_as_read(self, username: str, correspondent_username: str) -> None:
+        user = self.session.query(User).filter_by(username=username).first()
+        correspondent = (
+            self.session.query(User).filter_by(username=correspondent_username).first()
+        )
+
+        if not user or not correspondent:
+            return
+
+        self.session.query(Message).filter_by(
+            sender_id=correspondent.id, recipient_id=user.id, read=0
+        ).update({"read": 1})
+        self.session.commit()
+
     def add_friend(self, username: str, friend_username: str) -> None:
         """
         Add a friend relationship between two users.
