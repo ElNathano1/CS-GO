@@ -119,6 +119,13 @@ class App(tk.Tk):
         self.username_updated_callback = None
         self.profile_photo_updated_callback = None
         self.connection_strength_callback = None
+        self.conversation_cache_updated_callback = None
+
+        # Conversations cache shared with the messaging UI
+        self._conversations_cache: list[dict] = []
+        self._conversations_cache_signature = None
+        self._conversations_cache_lock = threading.Lock()
+        self._conversations_sync_lock = threading.Lock()
 
         # Connection monitoring
         self._connection_monitor_running = True
@@ -274,6 +281,24 @@ class App(tk.Tk):
             if widget.cget("text") not in excluded_texts and widget_state != "disabled":
                 self.sound_manager.play("click_effect")
 
+        self._clear_entry_focus_on_click(widget)
+
+    def _clear_entry_focus_on_click(self, widget: tk.Misc) -> None:
+        """Remove focus from text inputs when clicking outside of them."""
+
+        if not isinstance(widget, tk.Misc):
+            return
+
+        if isinstance(widget, (tk.Entry, ttk.Entry, tk.Text)):
+            return
+
+        try:
+            toplevel = widget.winfo_toplevel()
+            if isinstance(toplevel, (tk.Tk, tk.Toplevel)) and toplevel.winfo_exists():
+                toplevel.focus_set()
+        except tk.TclError:
+            pass
+
     def _load_banners(self) -> None:
         """
         Load banner image for the application.
@@ -308,6 +333,7 @@ class App(tk.Tk):
             self.iconbitmap(self.icon_path)
 
         icon_size = self.ui.image_size((32, 32)) or (32, 32)
+        unread_size = self.ui.image_size((11, 11)) or (11, 11)
 
         # Load local icon
         self.local_icon_path = images_dir / "local.png"
@@ -590,7 +616,7 @@ class App(tk.Tk):
                 )
             )
 
-        # Load message icon
+        # Load message icons
         self.message_icon_path = images_dir / "message.png"
         if self.message_icon_path.exists():
             self.message_icon = ImageTk.PhotoImage(
@@ -598,10 +624,53 @@ class App(tk.Tk):
                     icon_size, Image.Resampling.LANCZOS
                 )
             )
-        self.hovered_message_icon_path = images_dir / "hovered_message.png"
-        if self.hovered_message_icon_path.exists():
-            self.hovered_message_icon = ImageTk.PhotoImage(
-                Image.open(self.hovered_message_icon_path).resize(
+        self.new_message_icon_path = images_dir / "new_message.png"
+        if self.new_message_icon_path.exists():
+            self.new_message_icon = ImageTk.PhotoImage(
+                Image.open(self.new_message_icon_path).resize(
+                    icon_size, Image.Resampling.LANCZOS
+                )
+            )
+        self.new_conversation_icon_path = images_dir / "new_conversation.png"
+        if self.new_conversation_icon_path.exists():
+            self.new_conversation_icon = ImageTk.PhotoImage(
+                Image.open(self.new_conversation_icon_path).resize(
+                    icon_size, Image.Resampling.LANCZOS
+                )
+            )
+        self.hovered_new_conversation_icon_path = (
+            images_dir / "hovered_new_conversation.png"
+        )
+        if self.hovered_new_conversation_icon_path.exists():
+            self.hovered_new_conversation_icon = ImageTk.PhotoImage(
+                Image.open(self.hovered_new_conversation_icon_path).resize(
+                    icon_size, Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load unread signal for conversations
+        self.unread_icon_path = images_dir / "unread.png"
+        if self.unread_icon_path.exists():
+            self.unread_icon = ImageTk.PhotoImage(
+                Image.open(self.unread_icon_path).resize(
+                    unread_size, Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load send message icon
+        self.send_icon_path = images_dir / "send.png"
+        if self.send_icon_path.exists():
+            self.send_icon = ImageTk.PhotoImage(
+                Image.open(self.send_icon_path).resize(
+                    icon_size, Image.Resampling.LANCZOS
+                )
+            )
+
+        # Load match invitation icon
+        self.match_icon_path = images_dir / "match.png"
+        if self.match_icon_path.exists():
+            self.match_icon = ImageTk.PhotoImage(
+                Image.open(self.match_icon_path).resize(
                     icon_size, Image.Resampling.LANCZOS
                 )
             )
@@ -891,6 +960,36 @@ class App(tk.Tk):
             bordercolor="#f6a90d",
         )
 
+        # Configure conversation frame style
+        style.configure(
+            "Conversation.TFrame",
+            background="#1e1e1e",
+        )
+        style.configure(
+            "ConversationHover.TFrame",
+            background="#494949",
+        )
+        style.map(
+            "Conversation.TFrame",
+            background=[("active", "#494949"), ("!active", "#1e1e1e")],
+        )
+
+        # Configure message entry frame style
+        style.configure(
+            "MessageEntry.TFrame",
+            background="#1e1e1e",
+            borderwidth=self.S(2) or 2,
+            relief=tk.SOLID,
+            bordercolor="black",
+        )
+        style.configure(
+            "MessageEntryFocused.TFrame",
+            background="#1e1e1e",
+            borderwidth=self.S(2) or 2,
+            relief=tk.SOLID,
+            bordercolor="white",
+        )
+
         # Configure button style
         style.configure(
             "TButton",
@@ -949,6 +1048,44 @@ class App(tk.Tk):
             "Account.TLabel",
             font=self.ui.font(("Skranji-Bold", 12)),
             background="#1e1e1e",
+            foreground="white",
+        )
+
+        # Configure conversation label style
+        style.configure(
+            "AccountConversation.TLabel",
+            font=self.ui.font(("Skranji", 12, "bold")),
+            background="#1e1e1e",
+            foreground="white",
+        )
+        style.configure(
+            "AccountConversationHover.TLabel",
+            font=self.ui.font(("Skranji", 12, "bold")),
+            background="#494949",
+            foreground="white",
+        )
+        style.configure(
+            "Conversation.TLabel",
+            font=self.ui.font(("Skranji", 10)),
+            background="#1e1e1e",
+            foreground="#acacac",
+        )
+        style.configure(
+            "ConversationHover.TLabel",
+            font=self.ui.font(("Skranji", 10)),
+            background="#494949",
+            foreground="#acacac",
+        )
+        style.configure(
+            "ConversationUnread.TLabel",
+            font=self.ui.font(("Skranji", 10, "bold")),
+            background="#1e1e1e",
+            foreground="white",
+        )
+        style.configure(
+            "ConversationUnreadHover.TLabel",
+            font=self.ui.font(("Skranji", 10, "bold")),
+            background="#494949",
             foreground="white",
         )
 
@@ -1257,6 +1394,40 @@ class App(tk.Tk):
             cursor="hand2",
         )
         self.message_button.pack(side=tk.RIGHT, padx=(0, self.S(10) or 10))
+        self._update_message_button_icon()
+
+    def _has_unread_messages(self, conversations: list[dict] | None = None) -> bool:
+        """Return True when at least one cached conversation has unread messages."""
+
+        if conversations is None:
+            with self._conversations_cache_lock:
+                conversations = list(self._conversations_cache)
+
+        return any(
+            int(conversation.get("unread_count", 0)) > 0
+            for conversation in conversations
+        )
+
+    def _update_message_button_icon(self, has_unread: bool | None = None) -> None:
+        """Update message button icon to reflect unread messages state."""
+
+        if has_unread is None:
+            has_unread = self._has_unread_messages()
+
+        default_icon = getattr(self, "message_icon", None)
+        unread_icon = getattr(self, "new_message_icon", default_icon)
+        icon = unread_icon if has_unread else default_icon
+
+        if icon is None:
+            return
+
+        if hasattr(self, "message_button") and self.message_button is not None:
+            try:
+                if self.message_button.winfo_exists():
+                    self.message_button.config(image=icon)
+                    self.message_button.image = icon  # type: ignore[attr-defined]
+            except tk.TclError:
+                pass
 
     def _get_display_name(self) -> str:
         if self.name:
@@ -1345,6 +1516,9 @@ class App(tk.Tk):
         # Notify listeners that username and profile photo have been updated
         self.notify_username_updated()
         self.notify_profile_photo_updated()
+
+        # Prime the conversations cache without blocking the UI thread.
+        threading.Thread(target=self._sync_conversations_cache, daemon=True).start()
 
         # Notify connection change (trigger callback if registered)
         self._update_wifi_signal()
@@ -1852,6 +2026,123 @@ class App(tk.Tk):
         if self.profile_photo_updated_callback:
             self.profile_photo_updated_callback()
 
+    def register_conversation_cache_callback(self, callback) -> None:
+        """Register a callback invoked when the conversations cache changes."""
+        self.conversation_cache_updated_callback = callback
+
+    def unregister_conversation_cache_callback(self, callback=None) -> None:
+        """Clear the conversations cache callback when the view is destroyed."""
+        if callback is None or self.conversation_cache_updated_callback == callback:
+            self.conversation_cache_updated_callback = None
+
+    def get_cached_conversations(self, search_text: str = "") -> list[dict]:
+        """Return a filtered copy of the cached conversations."""
+
+        query = search_text.strip().lower()
+        with self._conversations_cache_lock:
+            conversations = [
+                conversation.copy() for conversation in self._conversations_cache
+            ]
+
+        if not query:
+            return conversations
+
+        filtered_conversations = []
+        for conversation in conversations:
+            username = str(conversation.get("username", "")).lower()
+            name = str(conversation.get("name", "")).lower()
+            if username.startswith(query) or name.startswith(query):
+                filtered_conversations.append(conversation)
+
+        return filtered_conversations
+
+    def _fetch_conversations_from_api(self) -> list[dict]:
+        """Fetch conversations and related profile data from the backend API."""
+
+        if self.username is None or self.token is None:
+            return []
+
+        response = requests.get(
+            f"{BASE_URL}/messages/{self.username}/conversations",
+            timeout=5,
+        )
+        if response.status_code != 200:
+            return []
+
+        conversation_payload = response.json()
+        conversations: list[dict] = []
+
+        for username, conversation_data in conversation_payload.items():
+            user_data: dict = {"name": username, "connected": False}
+            try:
+                user_response = requests.get(f"{BASE_URL}/users/{username}", timeout=5)
+                if user_response.status_code == 200:
+                    user_data = user_response.json()
+            except Exception:
+                pass
+
+            last_message_data = conversation_data.get("last_message") or {}
+            if not isinstance(last_message_data, dict):
+                last_message_data = {}
+
+            conversations.append(
+                {
+                    "username": username,
+                    "name": user_data.get("name", username),
+                    "connected": user_data.get("connected", False),
+                    "last_message": last_message_data.get("content", ""),
+                    "timestamp": last_message_data.get("timestamp", ""),
+                    "unread_count": conversation_data.get("unread_count", 0),
+                }
+            )
+
+        return sorted(
+            conversations,
+            key=lambda conversation: conversation.get("timestamp", ""),
+            reverse=True,
+        )
+
+    def _sync_conversations_cache(self, force_notify: bool = False) -> bool:
+        """Refresh the conversations cache and notify listeners if it changed."""
+
+        if not self._conversations_sync_lock.acquire(blocking=False):
+            return False
+
+        try:
+            conversations = self._fetch_conversations_from_api()
+        except Exception:
+            return False
+        try:
+            signature = tuple(
+                (
+                    conversation.get("username"),
+                    conversation.get("name"),
+                    conversation.get("connected"),
+                    conversation.get("last_message"),
+                    conversation.get("timestamp"),
+                    conversation.get("unread_count"),
+                )
+                for conversation in conversations
+            )
+
+            with self._conversations_cache_lock:
+                changed = (
+                    force_notify or signature != self._conversations_cache_signature
+                )
+                if changed:
+                    self._conversations_cache = conversations
+                    self._conversations_cache_signature = signature
+
+            has_unread = self._has_unread_messages(conversations)
+            self.after(0, self._update_message_button_icon, has_unread)
+
+            if changed and self.conversation_cache_updated_callback:
+                self.after(0, self.conversation_cache_updated_callback)
+
+            return changed
+        finally:
+            self._conversations_sync_lock.release()
+
     def _start_connection_monitor(self) -> None:
         """
         Start the connection monitoring thread.
@@ -1872,7 +2163,7 @@ class App(tk.Tk):
         while self._connection_monitor_running:
 
             # Only monitor if user is logged in
-            if self.name is None:
+            if self.name is None or self.username is None or self.token is None:
                 time.sleep(5)
                 continue
 
@@ -1922,6 +2213,9 @@ class App(tk.Tk):
                 self._connection_strength = strength
                 self.after(0, self._update_wifi_signal)
 
+            # Refresh the conversations cache from the same background loop.
+            self._sync_conversations_cache()
+
             # Wait before next check
             time.sleep(5)
 
@@ -1967,6 +2261,15 @@ class App(tk.Tk):
             self.account_panel.place_forget()
         if hasattr(self, "social_panel") and self.social_panel:
             self.social_panel.place_forget()
+
+        with self._conversations_cache_lock:
+            self._conversations_cache = []
+            self._conversations_cache_signature = None
+
+        self._update_message_button_icon(False)
+
+        if self.conversation_cache_updated_callback:
+            self.after(0, self.conversation_cache_updated_callback)
 
         self.preferences["auth_token"] = None
 

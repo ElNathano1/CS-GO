@@ -863,6 +863,7 @@ class TopLevelWindow(tk.Toplevel):
             container.content_frame,
             bd=0,
             highlightbackground="black",
+            highlightcolor="black",
             highlightthickness=1,
             bg="#1e1e1e",
         )

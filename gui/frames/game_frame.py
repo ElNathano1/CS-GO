@@ -879,7 +879,8 @@ class GameFrame(ttk.Frame):
                     self.black_player,
                     game,
                     played_color=self.played_color,
-                )
+                ),
+                show_social_panel=False,
             )
 
     def _on_resign(self) -> None:
@@ -1335,7 +1336,8 @@ class SingleplayerGameFrame(GameFrame):
                     white_player,
                     game,
                     played_color=next_played_color,
-                )
+                ),
+                show_social_panel=False,
             )
 
     def _on_resign(self) -> None:
