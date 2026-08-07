@@ -813,6 +813,13 @@ class MessageryFrame(ttk.Frame):
         except tk.TclError:
             return
 
+    def _refresh_conversations_cache(self) -> None:
+        """Force a refresh of the shared conversations cache when conversation state changes."""
+
+        sync_cache = getattr(self.app, "_sync_conversations_cache", None)
+        if callable(sync_cache):
+            sync_cache(force_notify=True)
+
     def open_conversation(
         self, username: str, user_profile_photo: ImageTk.PhotoImage, name: str
     ) -> None:
@@ -823,6 +830,9 @@ class MessageryFrame(ttk.Frame):
             username (str): The username of the user to open a conversation with.
         """
 
+        if username == self.current_conversation_username:
+            return
+
         self.current_conversation_username = username
         self.message_text_entry.configure(
             state=tk.NORMAL if self.current_conversation_username else tk.DISABLED
@@ -831,6 +841,19 @@ class MessageryFrame(ttk.Frame):
         self._refresh_conversation_canvas_layout()
 
         self.build_messages_from_conversation(user_profile_photo, name)
+
+        response = requests.post(
+            f"{BASE_URL}/messages/{self.app.username}/mark_read",
+            params={"correspondent_username": self.current_conversation_username},
+        )
+        if response.status_code != 200:
+            print(
+                f"Failed to mark messages as read for {self.current_conversation_username}: {response.status_code}"
+            )
+        else:
+            self._refresh_conversations_cache()
+            self._on_conversations_updated()
+
         self._refresh_messages_canvas_layout()
 
     def build_messages_from_conversation(
@@ -1118,8 +1141,8 @@ class MessageryFrame(ttk.Frame):
         if not self.current_conversation_username:
             return
 
-        message = self.message_text_entry.get("1.0", tk.END).strip()
-        if not message or message == "":
+        content = self.message_text_entry.get("1.0", tk.END).strip()
+        if not content:
             return
 
         response = requests.post(
@@ -1127,219 +1150,28 @@ class MessageryFrame(ttk.Frame):
             json={
                 "recipient_username": self.current_conversation_username,
                 "timestamp": "string",
-                "content": message,
+                "content": content,
                 "type": "message",
             },
         )
 
-        if response.status_code == 200:
-            response_data = response.json()
-            print(f"Message sent successfully: {response_data}")
-            message = response_data.get("message", {})
-            self.message_text_entry.delete("1.0", tk.END)
-            self._refresh_conversation_canvas_layout()
-
-            self.sent_message(
-                message,
-                self.profile_photo,
-            )
-
-            self._refresh_messages_canvas_layout()
-
-    def download_profile_picture(self) -> None:
-        """
-        Download the user's profile picture from the backend API and save it locally.
-        """
-
-        self.profile_picture_path = (
-            Path(BASE_FOLDER_PATH)
-            / "gui"
-            / "images"
-            / "profiles"
-            / "current_profile_picture.webp"
-        )
-        default_profile_path = (
-            Path(BASE_FOLDER_PATH)
-            / "gui"
-            / "images"
-            / "profiles"
-            / "default_profile_photo.png"
-        )
-        target_size = (236, 236)
-
-        try:
-            response = requests.get(
-                f"{BASE_URL}/users/{self.app.username}/profile-picture",
-                timeout=5,
-            )
-            if response.status_code == 200:
-                image = Image.open(BytesIO(response.content)).convert("RGBA")
-            else:
-                image = Image.open(default_profile_path).convert("RGBA")
-
-            image = image.resize(target_size, Image.Resampling.LANCZOS)
-            image.save(self.profile_picture_path, format="WEBP")
-
-        except Exception:
-            try:
-                image = Image.open(default_profile_path).convert("RGBA")
-                image = image.resize(target_size, Image.Resampling.LANCZOS)
-                image.save(self.profile_picture_path, format="WEBP")
-            except Exception:
-                self.profile_picture_path = default_profile_path
-
-    def _on_change_profile_picture(self) -> None:
-        """
-        Handle change profile picture action.
-        """
-
-        new_profile_picture = filedialog.askopenfilename(
-            title="Sélectionner une nouvelle photo de profil",
-            filetypes=[("Image files", "*.png *.jpg *.jpeg *.webp")],
-        )
-        if not new_profile_picture:
+        if response.status_code != 200:
             return
 
-        try:
-            picture = Image.open(new_profile_picture).convert("RGBA")
-        except Exception:
-            return
+        response_data = response.json()
+        sent_message_data = response_data.get("message", {})
+        if not isinstance(sent_message_data, dict):
+            sent_message_data = {}
 
-        dialog = TopLevelWindow(self.app, width=835, height=560)
-        frame = UploadProfilePictureFrame(
-            dialog.body_frame,
-            self.app,
-            picture,
-            on_complete=self._on_profile_picture_uploaded,
+        self.message_text_entry.delete("1.0", tk.END)
+        self._refresh_conversation_canvas_layout()
+        self._refresh_conversations_cache()
+        self._on_conversations_updated()
+
+        self.sent_message(
+            sent_message_data,
+            self.profile_photo,
         )
-        frame.pack(fill=tk.BOTH, expand=True)
-        dialog.show(wait=False)
-
-    def _on_profile_picture_uploaded(self, picture_path: Path) -> None:
-        """
-        Refresh the local profile picture preview after a successful upload.
-        """
-
-        self.profile_picture_path = picture_path
-        clear_image_cache(picture_path)
-        self.change_profile_picture_button.configure(texture_path=picture_path)
-        self.app.notify_profile_photo_updated()
-
-    async def fetch_account_statistics(self) -> None:
-        """
-        Fetch the user's account statistics from the backend API.
-        """
-
-        try:
-            async with httpx.AsyncClient(verify=False) as client:
-                response = await client.get(f"{BASE_URL}/games/{self.app.username}")
-                if response.status_code == 200:
-                    data = response.json()
-                    self.account_statistics = {
-                        "games_played": len(data),
-                        "games_won": sum(
-                            1
-                            for game in data
-                            if game.get("result") == "1-0"
-                            and game.get("black_player").get("username")
-                            == self.app.username
-                            or game.get("result") == "0-1"
-                            and game.get("white_player").get("username")
-                            == self.app.username
-                        ),
-                        "recent_games": data[:3],
-                    }
-
-                else:
-                    pass
-
-        except Exception as e:
-            pass
-
-    def _load_statistics_worker(self) -> None:
-        asyncio.run(self.fetch_account_statistics())
-        self.app.after(0, self._refresh_statistics_ui)
-
-    def _refresh_statistics_ui(self) -> None:
-        if not self.winfo_exists():
-            return
-
-        self.games_played_label.set_text(
-            str(self.account_statistics.get("games_played", "0"))
-        )
-        self.games_won_label.set_text(
-            str(self.account_statistics.get("games_won", "0"))
-        )
-
-        for child in self.statistics_frame.grid_slaves():
-            row = int(child.grid_info().get("row", 0))
-            if row >= 2:
-                child.grid_forget()
-        self.draw_recent_games(self.statistics_frame)
-
-    def draw_recent_games(self, parent: tk.Widget) -> None:
-        """
-        Draw a list of the user's 3 most recent games with the result and opponent's name.
-        """
-
-        if not self.account_statistics:
-            return
-
-        for i in range(len(self.account_statistics.get("recent_games", []))):
-            game = self.account_statistics["recent_games"][i]
-            color = (
-                "blancs"
-                if game.get("white_player").get("username") == self.app.username
-                else "noirs"
-            )
-            result = game.get("result", "N/A")
-            opponent = (
-                game.get("black_player").get("name")
-                if game.get("white_player").get("username") == self.app.username
-                else game.get("white_player").get("name")
-            )
-            frame = tk.Frame(
-                parent,
-                bg=(
-                    "green"
-                    if result == "1-0"
-                    and color == "noirs"
-                    or result == "0-1"
-                    and color == "blancs"
-                    else "red" if result in ["1-0", "0-1"] else "#f6a90d"
-                ),
-                bd=0,
-                relief=tk.FLAT,
-            )
-            game_label = ttk.Label(
-                frame,
-                text=f"{"Gagné" if result == "1-0" and color == "noirs" or result == "0-1" and color == "blancs" else "Perdu"} avec les {color} contre {opponent} !",
-                font=("Skranji", 8),
-                background="#1e1e1e" if color == "noirs" else "white",
-                foreground="white" if color == "noirs" else "black",
-                anchor=tk.CENTER,
-            )
-            game_label.pack(fill=tk.BOTH, expand=True, padx=2, pady=2, ipadx=5, ipady=5)
-            frame.grid(
-                row=2 + i,
-                column=0,
-                columnspan=2,
-                sticky="ew",
-                padx=20,
-                pady=(
-                    (0, 20)
-                    if i == len(self.account_statistics.get("recent_games", [])) - 1
-                    else (0, 10)
-                ),
-            )
-
-    def _on_logout(self) -> None:
-        """
-        Handle logout action to log the user out and return to the login screen.
-        """
-
-        self.app._logout()
-        self._on_return()
 
     def destroy(self) -> None:
         self.app.unregister_conversation_cache_callback(self._on_conversations_updated)
